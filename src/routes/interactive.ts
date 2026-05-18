@@ -761,7 +761,9 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             // Rejeitado: abre DM grupo + thread
             if (existing.status !== "rejected" && nextStatus === "rejected") {
               try {
-                const users = Array.from(new Set([existing.createdBySlackId, userSlackId])).join(",");
+                const users = Array.from(
+                  new Set([existing.createdBySlackId, userSlackId, ...getFeedbackAdminIds()])
+                ).join(",");
                 const conv = await slack.conversations.open({ users });
                 const channelId = (conv as any)?.channel?.id as string | undefined;
 
@@ -799,7 +801,9 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             // Done: abre DM grupo + thread
             if (existing.status !== "done" && nextStatus === "done") {
               try {
-                const users = Array.from(new Set([existing.createdBySlackId, userSlackId])).join(",");
+                const users = Array.from(
+                  new Set([existing.createdBySlackId, userSlackId, ...getFeedbackAdminIds()])
+                ).join(",");
                 const conv = await slack.conversations.open({ users });
                 const channelId = (conv as any)?.channel?.id as string | undefined;
 
@@ -940,7 +944,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 });
 
                 if (nextAuto) {
-                  await deleteCalendarEventForTask(nextAuto.id).catch(() => {});
+                  await deleteCalendarEventForTask(nextAuto.id).catch(() => { });
                   await prisma.task.delete({ where: { id: nextAuto.id } });
                   req.log.info({ oldTaskId: oldTask.id, deletedNextId: nextAuto.id }, "[REOPEN] deleted next instance");
                 }
@@ -1083,7 +1087,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             data: { status: "done" },
           });
 
-          void Promise.allSettled(concludedIds.map((id) => syncCalendarEventForTask(id))).catch(() => {});
+          void Promise.allSettled(concludedIds.map((id) => syncCalendarEventForTask(id))).catch(() => { });
 
           const nextResults = await Promise.allSettled(
             concludedIds.map((id) => createNextRecurringTaskFromCompleted({ completedTaskId: id }))
@@ -1685,7 +1689,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           try {
             const meta = JSON.parse(view.private_metadata ?? "{}");
             count = Number(meta.count ?? 1) || 1;
-          } catch {}
+          } catch { }
 
           if (actionId === BATCH_ADD_TASK_ACTION_ID) count += 1;
           if (actionId === BATCH_REMOVE_TASK_ACTION_ID) count -= 1;
@@ -1865,8 +1869,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             slack,
             userSlackId,
             "📦 *Importar atividades em lote*\n\n" +
-              "Envie um arquivo *.xlsx* aqui no DM comigo.\n" +
-              (templateUrl ? `Clique <${templateUrl}|aqui> para baixar o template.\n\n` : "\n")
+            "Envie um arquivo *.xlsx* aqui no DM comigo.\n" +
+            (templateUrl ? `Clique <${templateUrl}|aqui> para baixar o template.\n\n` : "\n")
           );
 
           return reply.status(200).send();
@@ -2109,7 +2113,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           try {
             const meta = JSON.parse(payload.view.private_metadata ?? "{}");
             taskId = String(meta.taskId ?? "");
-          } catch {}
+          } catch { }
 
           if (!taskId) return reply.send({});
 
@@ -2234,7 +2238,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           try {
             const meta = JSON.parse(payload.view.private_metadata ?? "{}");
             taskId = String(meta.taskId ?? "");
-          } catch {}
+          } catch { }
 
           if (!taskId) return reply.send({});
 
@@ -2329,7 +2333,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           try {
             const meta = JSON.parse(payload.view.private_metadata ?? "{}");
             count = Number(meta.count ?? 1) || 1;
-          } catch {}
+          } catch { }
 
           const errors: Record<string, string> = {};
           const tasksInput: Array<{
