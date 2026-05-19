@@ -10,14 +10,7 @@ function pad2(n: number) {
   return String(n).padStart(2, "0");
 }
 
-/**
- * Retorna data ISO YYYY-MM-DD e hora/minuto atuais em SP.
- */
-function getSaoPauloNowParts(now = new Date()): {
-  dateIso: string;
-  hour: number;
-  minute: number;
-} {
+function getSaoPauloNowParts(now = new Date()) {
   const dtf = new Intl.DateTimeFormat("en-CA", {
     timeZone: SAO_PAULO_TZ,
     year: "numeric",
@@ -37,30 +30,11 @@ function getSaoPauloNowParts(now = new Date()): {
   const hour = Number(get("hour"));
   const minute = Number(get("minute"));
 
-  return {
-    dateIso: `${year}-${pad2(month)}-${pad2(day)}`,
-    hour,
-    minute,
-  };
+  return { dateIso: `${year}-${pad2(month)}-${pad2(day)}`, hour, minute };
 }
 
-/**
- * 00:00 SP => 03:00Z (SP -03)
- */
 function saoPauloMidnightUtc(dateIso: string) {
   return new Date(`${dateIso}T03:00:00.000Z`);
-}
-
-/**
- * Turbo: roda a cada 30min (09:00..18:30), só deixa passar se estiver na janela.
- */
-function isWithinTurboWindow(hour: number, minute: number) {
-  const total = hour * 60 + minute;
-  const start = 9 * 60; // 09:00
-  const end = 18 * 60 + 30; // ✅ 18:30 (inclui 18:30)
-
-  const isHalfHour = minute === 0 || minute === 30;
-  return isHalfHour && total >= start && total <= end;
 }
 
 export async function runTurboUrgencyReminderCron() {
@@ -68,31 +42,30 @@ export async function runTurboUrgencyReminderCron() {
   if (!token) throw new Error("Missing SLACK_BOT_TOKEN");
 
   const slack = new WebClient(token);
-
   const { dateIso, hour, minute } = getSaoPauloNowParts(new Date());
 
   const force = process.env.FORCE_TURBO_REMINDER === "1";
-  if (!force && !isWithinTurboWindow(hour, minute)) {
-    console.log(`[turbo-reminder] outside window: ${dateIso} ${pad2(hour)}:${pad2(minute)} (SP)`);
+
+  if (!force && minute !== 0 && minute !== 30) {
+    console.log(
+      `[turbo-reminder] outside half-hour slot: ${dateIso} ${pad2(hour)}:${pad2(minute)} (SP)`
+    );
     return;
   }
 
-  // ✅ Em modo FORCE, use um slot fixo pra não spammar testes
-  // - você pode definir FORCE_TURBO_SLOT="TURBO_09:00" etc
-  const slot =
-    force ? process.env.FORCE_TURBO_SLOT ?? "TURBO_FORCED" : `TURBO_${pad2(hour)}:${pad2(minute)}`;
+  const slot = force
+    ? process.env.FORCE_TURBO_SLOT ?? "TURBO_FORCED"
+    : `TURBO_${pad2(hour)}:${pad2(minute)}`;
 
   const startUtc = saoPauloMidnightUtc(dateIso);
   const endUtc = new Date(startUtc);
   endUtc.setUTCDate(endUtc.getUTCDate() + 1);
 
-  // Turbo lembra tarefas pendentes "até hoje" (overdue + hoje).
   const turboTasks = await prisma.task.findMany({
     where: {
       status: { not: "done" },
       urgency: "turbo" as any,
       term: { not: null, lt: endUtc },
-      // ✅ evita duplicar lembrete (por dateIso + slot)
       reminders: { none: { dateIso, slot } },
     },
     select: {
@@ -105,7 +78,10 @@ export async function runTurboUrgencyReminderCron() {
       slackOpenMessageTs: true,
     },
   });
-  const filteredTasks = turboTasks.filter((t) =>
+
+  type TurboReminderTask = (typeof turboTasks)[number];
+
+  const filteredTasks = turboTasks.filter((t: TurboReminderTask) =>
     shouldSendUrgencyReminder({
       urgency: "turbo",
       reminderMode: t.reminderMode,
@@ -120,13 +96,14 @@ export async function runTurboUrgencyReminderCron() {
     return;
   }
 
-  console.log(`[turbo-reminder] sending reminders: ${filteredTasks.length} tasks • slot=${slot} • date=${dateIso}`);
+  console.log(
+    `[turbo-reminder] sending reminders: ${filteredTasks.length} tasks • slot=${slot} • date=${dateIso}`
+  );
 
-  // ✅ 1 reminder por task (cada task tem uma thread diferente)
   await Promise.allSettled(
-    filteredTasks.map(async (t) => {
-      // cria log ANTES (evita duplicar em multi-instância)
+    filteredTasks.map(async (t: TurboReminderTask) => {
       let logId: string | null = null;
+
       try {
         const log = await prisma.taskReminderLog.create({
           data: { taskId: t.id, dateIso, slot },
@@ -134,7 +111,6 @@ export async function runTurboUrgencyReminderCron() {
         });
         logId = log.id;
       } catch (e: any) {
-        // P2002 = unique constraint (já lembrou)
         if (e?.code === "P2002") return;
         throw e;
       }
@@ -154,7 +130,6 @@ export async function runTurboUrgencyReminderCron() {
           },
         });
       } catch (err) {
-        // se falhou enviar, remove log para permitir retry em execução futura
         if (logId) {
           await prisma.taskReminderLog.delete({ where: { id: logId } }).catch(() => void 0);
         }
@@ -164,7 +139,6 @@ export async function runTurboUrgencyReminderCron() {
   );
 }
 
-// CLI entry
 if (require.main === module) {
   runTurboUrgencyReminderCron()
     .then(() => prisma.$disconnect())
