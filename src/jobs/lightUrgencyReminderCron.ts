@@ -2,6 +2,7 @@
 import { WebClient } from "@slack/web-api";
 import { prisma } from "../lib/prisma";
 import { notifyTaskUrgencyReminder } from "../services/notifyTaskUrgencyReminder";
+import { shouldSendUrgencyReminder } from "./reminderRules";
 
 const SAO_PAULO_TZ = "America/Sao_Paulo";
 
@@ -67,7 +68,8 @@ export async function runLightUrgencyReminderCron() {
   const { dateIso, hour, minute } = getSaoPauloNowParts(new Date());
 
   const force = process.env.FORCE_LIGHT_REMINDER === "1";
-  if (!force && !isLightSlot(hour, minute)) {
+
+  if (!force && minute !== 0) {
     console.log(`[light-reminder] outside slot: ${dateIso} ${pad2(hour)}:${pad2(minute)} (SP)`);
     return;
   }
@@ -97,18 +99,30 @@ export async function runLightUrgencyReminderCron() {
       responsible: true,
       slackOpenChannelId: true,
       slackOpenMessageTs: true,
+      reminderMode: true,
     },
   });
+  const filteredTasks = tasks.filter((t) =>
+    shouldSendUrgencyReminder({
+      urgency: "light",
+      reminderMode: t.reminderMode,
+      deadlineTime: t.deadlineTime,
+      hour,
+      minute,
+    })
+  );
 
-  if (!tasks.length) {
+  if (!filteredTasks.length) {
     console.log(`[light-reminder] no light tasks for ${dateIso} • slot=${slot}`);
     return;
   }
 
-  console.log(`[light-reminder] sending reminders: ${tasks.length} tasks • slot=${slot} • date=${dateIso}`);
+  console.log(
+  `[light-reminder] sending reminders: ${filteredTasks.length} tasks • slot=${slot} • date=${dateIso}`
+);
 
   await Promise.allSettled(
-    tasks.map(async (t) => {
+    filteredTasks.map(async (t) => {
       // ✅ cria log para evitar duplicação (em múltiplas instâncias)
       let logId: string | null = null;
       try {
@@ -140,7 +154,7 @@ export async function runLightUrgencyReminderCron() {
       } catch (err) {
         // se falhar envio, remove o log para permitir retry
         if (logId) {
-          await prisma.taskReminderLog.delete({ where: { id: logId } }).catch(() => {});
+          await prisma.taskReminderLog.delete({ where: { id: logId } }).catch(() => { });
         }
         throw err;
       }

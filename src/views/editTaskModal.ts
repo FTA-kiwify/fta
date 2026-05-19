@@ -31,6 +31,9 @@ export const EDIT_RECURRENCE_ACTION_ID = "edit_recurrence" as const;
 export const EDIT_URGENCY_BLOCK_ID = "edit_urgency_block" as const;
 export const EDIT_URGENCY_ACTION_ID = "edit_urgency" as const;
 
+export const EDIT_REMINDER_MODE_BLOCK_ID = "edit_reminder_mode_block" as const;
+export const EDIT_REMINDER_MODE_ACTION_ID = "reminder_mode" as const;
+
 export const EDIT_CAL_PRIVATE_BLOCK_ID = "edit_cal_private_block" as const;
 export const EDIT_CAL_PRIVATE_ACTION_ID = "edit_cal_private_action" as const;
 
@@ -90,6 +93,7 @@ export function editTaskModalView(args: {
   projects?: EditTaskProjectOption[];
 
   urgency?: "light" | "asap" | "turbo" | string | null;
+  reminderMode?: "until" | "from" | string | null;
   calendarPrivate?: boolean;
 }): View {
   const recurrenceInitial: RecurrenceValue =
@@ -265,6 +269,35 @@ export function editTaskModalView(args: {
         },
         label: { type: "plain_text", text: "Nível de urgência" },
       },
+      {
+        type: "input",
+        block_id: EDIT_REMINDER_MODE_BLOCK_ID,
+        label: { type: "plain_text", text: "Tipo de follow-up" },
+        element: {
+          type: "static_select",
+          action_id: EDIT_REMINDER_MODE_ACTION_ID,
+          initial_option:
+            args.reminderMode === "from"
+              ? {
+                text: { type: "plain_text", text: "▶️ Entregar a partir do prazo" },
+                value: "from",
+              }
+              : {
+                text: { type: "plain_text", text: "⏰ Entregar até o prazo" },
+                value: "until",
+              },
+          options: [
+            {
+              text: { type: "plain_text", text: "⏰ Entregar até o prazo" },
+              value: "until",
+            },
+            {
+              text: { type: "plain_text", text: "▶️ Entregar a partir do prazo" },
+              value: "from",
+            },
+          ],
+        },
+      },
 
       // Recorrência
       {
@@ -303,11 +336,11 @@ export function editTaskModalView(args: {
           ],
           initial_options: args.calendarPrivate
             ? [
-                {
-                  text: { type: "plain_text", text: "🔒 Deixar evento privado" },
-                  value: "private",
-                },
-              ]
+              {
+                text: { type: "plain_text", text: "🔒 Deixar evento privado" },
+                value: "private",
+              },
+            ]
             : undefined,
         },
         label: { type: "plain_text", text: "Google Calendar" },

@@ -50,6 +50,7 @@ model Task {
   status             TaskStatus        @default(pending)
   recurrence         Recurrence?
   urgency            Urgency
+  reminderMode       ReminderMode      @default(until)
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @default(now()) @updatedAt
   projectId          String?
@@ -142,6 +143,11 @@ enum Urgency {
   light
   asap
   turbo
+}
+
+enum ReminderMode {
+  until
+  from
 }
 
 enum TaskStatus {

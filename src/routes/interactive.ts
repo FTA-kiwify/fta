@@ -127,6 +127,8 @@ import {
   EDIT_RECURRENCE_ACTION_ID,
   EDIT_URGENCY_BLOCK_ID,
   EDIT_URGENCY_ACTION_ID,
+  EDIT_REMINDER_MODE_BLOCK_ID,
+  EDIT_REMINDER_MODE_ACTION_ID,
   EDIT_CAL_PRIVATE_BLOCK_ID,
   EDIT_CAL_PRIVATE_ACTION_ID,
   EDIT_PROJECT_BLOCK_ID,
@@ -1985,6 +1987,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const projectId = getSelectedOptionValue(values, TASK_PROJECT_BLOCK_ID, TASK_PROJECT_ACTION_ID);
 
           const urgency = getSelectedOptionValue(values, "urgency_block", "urgency") ?? "light";
+          const reminderMode =
+            getSelectedOptionValue(values, "reminder_mode_block", "reminder_mode") ?? "until";
           const carbonCopies = getSelectedUsers(values, "cc_block", "carbon_copies");
 
           const calendarPrivate =
@@ -2006,6 +2010,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             projectId: projectId ?? null,
             dependsOnId,
             urgency,
+            reminderMode,
             carbonCopies,
             calendarPrivate,
           });
@@ -2096,6 +2101,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const recurrence = recurrenceRaw === "none" ? null : recurrenceRaw;
 
           const urgency = getSelectedOptionValue(values, EDIT_URGENCY_BLOCK_ID, EDIT_URGENCY_ACTION_ID) ?? "light";
+          const reminderMode =
+            getSelectedOptionValue(values, EDIT_REMINDER_MODE_BLOCK_ID, EDIT_REMINDER_MODE_ACTION_ID) ?? "until";
 
           const calendarPrivate = isCheckboxChecked(values, EDIT_CAL_PRIVATE_BLOCK_ID, EDIT_CAL_PRIVATE_ACTION_ID, "private");
 
@@ -2128,6 +2135,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             carbonCopiesSlackIds,
             recurrence,
             urgency,
+            reminderMode,
             calendarPrivate,
             projectId,
           });
@@ -2382,6 +2390,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             const recurrence = recurrenceRaw === "none" ? null : recurrenceRaw;
 
             const urgency = getSelectedOptionValue(values, ids.urgencyBlock, "urgency") ?? "light";
+            const reminderMode =
+              getSelectedOptionValue(values, "reminder_mode_block", "reminder_mode") ?? "until";
             const carbonCopies = getSelectedUsers(values, ids.ccBlock, "carbon_copies");
 
             if (!title) errors[ids.titleBlock] = "Informe o título.";
@@ -2420,6 +2430,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               projectId: t.projectId ?? null,
               dependsOnId: t.dependsOnId ?? null,
               urgency: t.urgency,
+              reminderMode: "until",
               carbonCopies: t.carbonCopies,
             });
 

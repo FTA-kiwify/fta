@@ -40,6 +40,7 @@ const TASK_SELECT = {
   recurrence: true,
   recurrenceAnchor: true,
   urgency: true,
+  reminderMode: true,
   calendarPrivate: true,
   projectId: true, // ✅ NOVO
   createdAt: true,
@@ -57,6 +58,7 @@ type TaskSelected = {
   recurrence: any;
   recurrenceAnchor: Date | null;
   urgency: any;
+  reminderMode: "until" | "from";
   calendarPrivate: boolean;
   projectId: string | null; // ✅ NOVO
   createdAt: Date;
@@ -73,6 +75,7 @@ type TaskSnapshot = {
   deadlineTime: string | null;
   recurrence: string | null;
   urgency: string;
+  reminderMode: "until" | "from";
   calendarPrivate: boolean;
   projectId: string | null; // ✅ NOVO
   createdAt: Date;
@@ -90,6 +93,7 @@ function toSnapshot(t: TaskSelected): TaskSnapshot {
     deadlineTime: t.deadlineTime ?? null,
     recurrence: t.recurrence ? String(t.recurrence) : null,
     urgency: t.urgency ? String(t.urgency) : "light",
+    reminderMode: t.reminderMode === "from" ? "from" : "until",
     calendarPrivate: Boolean(t.calendarPrivate ?? false),
     projectId: t.projectId ?? null, // ✅ NOVO
     createdAt: t.createdAt,
@@ -112,6 +116,7 @@ export async function updateTaskService(args: {
   recurrence: string | null;
 
   urgency: "light" | "asap" | "turbo" | string;
+  reminderMode: "until" | "from" | string;
   calendarPrivate: boolean;
 
   // ✅ NOVO: projeto (null = sem projeto)
@@ -128,6 +133,7 @@ export async function updateTaskService(args: {
     carbonCopiesSlackIds,
     recurrence,
     urgency,
+    reminderMode,
     calendarPrivate,
     projectId,
   } = args;
@@ -199,6 +205,7 @@ export async function updateTaskService(args: {
       recurrence: recurrenceValue as any,
 
       urgency: urgencyValue as any,
+      reminderMode: reminderMode === "from" ? "from" : "until",
       calendarPrivate: Boolean(calendarPrivate),
 
       // ✅ NOVO: vínculo de projeto

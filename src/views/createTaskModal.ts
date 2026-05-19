@@ -17,6 +17,9 @@ export const TASK_PROJECT_ACTION_ID = "project" as const;
 export const TASK_DEPENDS_BLOCK_ID = "depends_block" as const;
 export const TASK_DEPENDS_ACTION_ID = "depends_on" as const;
 
+export const TASK_REMINDER_MODE_BLOCK_ID = "reminder_mode_block" as const;
+export const TASK_REMINDER_MODE_ACTION_ID = "reminder_mode" as const;
+
 export const TASK_CAL_PRIVATE_BLOCK_ID = "task_cal_private_block" as const;
 export const TASK_CAL_PRIVATE_ACTION_ID = "task_cal_private_action" as const;
 
@@ -160,6 +163,23 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
             { text: { type: "plain_text", text: "🟢 Light" }, value: "light" },
             { text: { type: "plain_text", text: "🟡 ASAP" }, value: "asap" },
             { text: { type: "plain_text", text: "🔴 Turbo" }, value: "turbo" },
+          ],
+        },
+      },
+      {
+        type: "input",
+        block_id: TASK_REMINDER_MODE_BLOCK_ID,
+        label: { type: "plain_text", text: "Tipo de follow-up" },
+        element: {
+          type: "static_select",
+          action_id: TASK_REMINDER_MODE_ACTION_ID,
+          initial_option: {
+            text: { type: "plain_text", text: "⏰ Entregar até o prazo" },
+            value: "until",
+          },
+          options: [
+            { text: { type: "plain_text", text: "⏰ Entregar até o prazo" }, value: "until" },
+            { text: { type: "plain_text", text: "▶️ Entregar a partir do prazo" }, value: "from" },
           ],
         },
       },

@@ -2,6 +2,7 @@
 import { WebClient } from "@slack/web-api";
 import { prisma } from "../lib/prisma";
 import { notifyTaskUrgencyReminder } from "../services/notifyTaskUrgencyReminder";
+import { shouldSendUrgencyReminder } from "./reminderRules";
 
 const SAO_PAULO_TZ = "America/Sao_Paulo";
 
@@ -98,22 +99,32 @@ export async function runTurboUrgencyReminderCron() {
       id: true,
       title: true,
       deadlineTime: true,
+      reminderMode: true,
       responsible: true,
       slackOpenChannelId: true,
       slackOpenMessageTs: true,
     },
   });
+  const filteredTasks = turboTasks.filter((t) =>
+    shouldSendUrgencyReminder({
+      urgency: "turbo",
+      reminderMode: t.reminderMode,
+      deadlineTime: t.deadlineTime,
+      hour,
+      minute,
+    })
+  );
 
-  if (!turboTasks.length) {
+  if (!filteredTasks.length) {
     console.log(`[turbo-reminder] no turbo tasks for ${dateIso} • slot=${slot}`);
     return;
   }
 
-  console.log(`[turbo-reminder] sending reminders: ${turboTasks.length} tasks • slot=${slot} • date=${dateIso}`);
+  console.log(`[turbo-reminder] sending reminders: ${filteredTasks.length} tasks • slot=${slot} • date=${dateIso}`);
 
   // ✅ 1 reminder por task (cada task tem uma thread diferente)
   await Promise.allSettled(
-    turboTasks.map(async (t) => {
+    filteredTasks.map(async (t) => {
       // cria log ANTES (evita duplicar em multi-instância)
       let logId: string | null = null;
       try {

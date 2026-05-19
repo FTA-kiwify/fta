@@ -2,6 +2,7 @@
 import { WebClient } from "@slack/web-api";
 import { prisma } from "../lib/prisma";
 import { notifyTaskUrgencyReminder } from "../services/notifyTaskUrgencyReminder";
+import { shouldSendUrgencyReminder } from "./reminderRules";
 
 const SAO_PAULO_TZ = "America/Sao_Paulo";
 
@@ -94,21 +95,31 @@ export async function runAsapUrgencyReminderCron() {
       id: true,
       title: true,
       deadlineTime: true,
+      reminderMode: true,
       responsible: true,
       slackOpenChannelId: true,
       slackOpenMessageTs: true,
     },
   });
+  const filteredTasks = tasks.filter((t) =>
+    shouldSendUrgencyReminder({
+      urgency: "asap",
+      reminderMode: t.reminderMode,
+      deadlineTime: t.deadlineTime,
+      hour,
+      minute,
+    })
+  );
 
-  if (!tasks.length) {
+  if (!filteredTasks.length) {
     console.log(`[asap-reminder] no asap tasks for ${dateIso} • slot=${slot}`);
     return;
   }
 
-  console.log(`[asap-reminder] sending reminders: ${tasks.length} tasks • slot=${slot} • date=${dateIso}`);
+  console.log(`[asap-reminder] sending reminders: ${filteredTasks.length} tasks • slot=${slot} • date=${dateIso}`);
 
   await Promise.allSettled(
-    tasks.map(async (t) => {
+    filteredTasks.map(async (t) => {
       // 1) cria log (único) p/ evitar duplicidade em múltiplas instâncias
       let logId: string | null = null;
       try {
@@ -141,7 +152,7 @@ export async function runAsapUrgencyReminderCron() {
       } catch (err) {
         // se falhou, remove o log pra permitir retry
         if (logId) {
-          await prisma.taskReminderLog.delete({ where: { id: logId } }).catch(() => {});
+          await prisma.taskReminderLog.delete({ where: { id: logId } }).catch(() => { });
         }
         throw err;
       }
