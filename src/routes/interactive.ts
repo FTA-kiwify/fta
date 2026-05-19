@@ -1442,9 +1442,13 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               responsible: true,
               recurrence: true,
               urgency: true,
+              reminderMode: true,
               calendarPrivate: true,
               carbonCopies: { select: { slackUserId: true } },
-              projectId: true,
+              projectId: true,Editar tarefa delegada (abre modal)”. 
+              
+              
+              
             },
           });
 
@@ -1488,6 +1492,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               carbonCopiesSlackIds: task.carbonCopies.map((c) => c.slackUserId),
               recurrence: task.recurrence ?? null,
               urgency: (task as any).urgency ?? "light",
+              reminderMode: (task as any).reminderMode ?? "until",
               calendarPrivate: Boolean((task as any).calendarPrivate ?? false),
               projects,
               currentProjectId: task.projectId ?? null,
