@@ -18,6 +18,9 @@ async function main() {
   app.register(sendMessage);
   app.register(adminRoutes);
 
+  app.register(googleOAuthRoutes, { prefix: "/google" });
+  app.register(googleCalendarTestRoutes, { prefix: "/google" });
+
 
   // ✅ DEBUG rápido: se aparecer undefined aqui, achamos o culpado
   console.log("[register] googleOAuthRoutes:", typeof googleOAuthRoutes);
