@@ -21,21 +21,21 @@ function getCronEnv(name: string, fallback: string) {
 export function startCrons() {
   // 🔴 TURBO: a cada 30 min entre 09:00 e 18:30 (SP)
   cron.schedule(
-    "0,30 9-18 * * *",
+    "0,30 * * * *",
     () => safeRun("turboUrgencyReminderCron", runTurboUrgencyReminderCron),
     { timezone: TZ }
   );
 
   // 🟢 LIGHT: 10:00 e 16:00 (SP)
   cron.schedule(
-    "0 10,16 * * *",
+    "0 * * * *",
     () => safeRun("lightUrgencyReminderCron", runLightUrgencyReminderCron),
     { timezone: TZ }
   );
 
   // 🟡 ASAP: 10:00, 12:00 e 16:00 (SP)
   cron.schedule(
-    "0 10,12,16 * * *",
+    "0 * * * *",
     () => safeRun("asapUrgencyReminderCron", runAsapUrgencyReminderCron),
     { timezone: TZ }
   );
