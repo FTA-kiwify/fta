@@ -2209,6 +2209,9 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 oldUrgency: before.urgency ?? null,
                 newUrgency: after.urgency ?? null,
 
+                oldReminderMode: before.reminderMode ?? null,
+                newReminderMode: after.reminderMode ?? null,
+
                 oldCalendarPrivate: before.calendarPrivate ?? null,
                 newCalendarPrivate: after.calendarPrivate ?? null,
 
