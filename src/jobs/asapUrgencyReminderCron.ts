@@ -52,11 +52,11 @@ function saoPauloMidnightUtc(dateIso: string) {
 }
 
 /**
- * ASAP: dispara SOMENTE às 10:00, 12:00 e 16:00 (SP)
+ * ASAP: roda em toda hora cheia (SP).
+ * A regra fina de envio fica em reminderRules.ts.
  */
 function isAsapSlot(hour: number, minute: number) {
-  if (minute !== 0) return false;
-  return hour === 10 || hour === 12 || hour === 16;
+  return minute === 0;
 }
 
 export async function runAsapUrgencyReminderCron() {
