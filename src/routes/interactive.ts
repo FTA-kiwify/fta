@@ -976,7 +976,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 taskId: newTask.id,
                 delegationSlackId: newTask.delegation ?? userSlackId,
                 responsibleSlackId: newTask.responsible,
-                carbonCopiesSlackIds: newTask.carbonCopies.map((c) => c.slackUserId),
+                carbonCopiesSlackIds: (newTask as any).carbonCopies?.map((c: any) => c.slackUserId) ?? [],
               });
 
               await syncCalendarEventForTask(newTask.id);
@@ -1012,7 +1012,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 createdBy: newTask.delegation ?? userSlackId,
                 taskTitle: newTask.title,
                 responsible: newTask.responsible,
-                carbonCopies: newTask.carbonCopies.map((c) => c.slackUserId),
+                carbonCopies: (newTask as any).carbonCopies?.map((c: any) => c.slackUserId) ?? [],
                 term: newTask.term,
                 deadlineTime: (newTask as any).deadlineTime ?? null,
               });
@@ -1024,7 +1024,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             affected.add(userSlackId);
             affected.add(newTask.responsible);
             if (newTask.delegation) affected.add(newTask.delegation);
-            for (const c of newTask.carbonCopies) affected.add(c.slackUserId);
+            for (const c of (newTask as any).carbonCopies) affected.add(c.slackUserId);
 
             if (newTask.projectId) {
               const proj = await prisma.project.findUnique({
@@ -1445,10 +1445,10 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               reminderMode: true,
               calendarPrivate: true,
               carbonCopies: { select: { slackUserId: true } },
-              projectId: true,Editar tarefa delegada (abre modal)”. 
-              
-              
-              
+              projectId: true,
+
+
+
             },
           });
 
@@ -2029,7 +2029,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 taskId: task.id,
                 delegationSlackId: userSlackId,
                 responsibleSlackId: task.responsible,
-                carbonCopiesSlackIds: task.carbonCopies.map((c) => c.slackUserId),
+                carbonCopiesSlackIds: (task as any).carbonCopies?.map((c: any) => c.slackUserId) ?? [],
               });
 
               await syncCalendarEventForTask(task.id);
@@ -2050,7 +2050,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 createdBy: userSlackId,
                 taskTitle: task.title,
                 responsible: task.responsible,
-                carbonCopies: task.carbonCopies.map((c) => c.slackUserId),
+                carbonCopies: (task as any).carbonCopies?.map((c: any) => c.slackUserId) ?? [],
                 term: task.term,
                 deadlineTime: (task as any).deadlineTime ?? null,
               });
@@ -2062,7 +2062,9 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             affected.add(userSlackId);
             affected.add(task.responsible);
             if (task.delegation) affected.add(task.delegation);
-            for (const c of task.carbonCopies) affected.add(c.slackUserId);
+            for (const c of ((task as any).carbonCopies ?? [])) {
+              affected.add(c.slackUserId);
+            }
 
             if (task.projectId) {
               const proj = await prisma.project.findUnique({

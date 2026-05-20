@@ -116,6 +116,7 @@ export const createTaskSchema = z
       term,
       recurrence,
       deadlineTime,
+      reminderMode: data.reminderMode === "from" ? "from" : "until",
       carbonCopies,
     };
   });

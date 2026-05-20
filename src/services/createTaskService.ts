@@ -1,7 +1,7 @@
 // src/services/createTaskService.ts
 import { prisma } from "../lib/prisma";
 import { createTaskSchema, CreateTaskInput } from "../schema/taskSchema";
-import { Recurrence } from "../generated/prisma/enums";
+import { Recurrence, ReminderMode } from "../generated/prisma/enums";
 import { syncCalendarEventForTask } from "./googleCalendar";
 import { getSlackUserEmail } from "./slackUserEmail";
 
@@ -70,6 +70,7 @@ export async function createTaskService(raw: unknown) {
 
   const term = normalizeTerm(data.term);
   const recurrence = normalizeRecurrence(data.recurrence);
+  const reminderMode: ReminderMode = data.reminderMode === "from" ? "from" : "until";
 
   // ✅ busca emails no Slack antes de salvar (pra o Calendar pegar depois)
   const [delegationEmail, responsibleEmail] = await Promise.all([
@@ -104,7 +105,7 @@ export async function createTaskService(raw: unknown) {
       recurrenceAnchor: recurrence ? term : null,
 
       urgency: data.urgency,
-      reminderMode: data.reminderMode ?? "until",
+      reminderMode,
       status: "pending",
       calendarPrivate: data.calendarPrivate ?? false,
 
