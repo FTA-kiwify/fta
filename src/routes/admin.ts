@@ -710,20 +710,29 @@ export async function adminRoutes(app: FastifyInstance) {
               </div>
             </div>
 
-            <div class="row" style="margin-top:12px;">
-              <div>
-                <label>Prazo (term)</label>
-                <input name="termIso" type="date" value="${escHtml(
-                  task.term ? fmtDate(task.term) : ""
-                )}" />
-              </div>
-              <div>
-                <label>Hora (deadlineTime)</label>
-                <input name="deadlineTime" value="${escHtml(
-                  task.deadlineTime ?? ""
-                )}" placeholder="HH:MM" />
-              </div>
-            </div>
+<div class="row" style="margin-top:12px;">
+  <div>
+    <label>Prazo (term)</label>
+    <input name="termIso" type="date" value="${escHtml(
+      task.term ? fmtDate(task.term) : ""
+    )}" />
+  </div>
+
+  <div>
+    <label>Hora (deadlineTime)</label>
+    <input name="deadlineTime" value="${escHtml(
+      task.deadlineTime ?? ""
+    )}" placeholder="HH:MM" />
+  </div>
+
+  <div>
+    <label>Tipo de prazo</label>
+    <select name="reminderMode">
+      <option value="until" ${((task as any).reminderMode ?? "until") === "until" ? "selected" : ""}>Até o prazo</option>
+      <option value="from" ${(task as any).reminderMode === "from" ? "selected" : ""}>A partir do prazo</option>
+    </select>
+  </div>
+</div>
 
             <div class="row" style="margin-top:12px;">
               <div>
