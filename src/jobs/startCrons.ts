@@ -28,14 +28,14 @@ export function startCrons() {
 
   // 🟢 LIGHT: 10:00 e 16:00 (SP)
   cron.schedule(
-    "0 * * * *",
+    "*/5 * * * *",
     () => safeRun("lightUrgencyReminderCron", runLightUrgencyReminderCron),
     { timezone: TZ }
   );
 
   // 🟡 ASAP: 10:00, 12:00 e 16:00 (SP)
   cron.schedule(
-    "0 * * * *",
+    "*/5 * * * *",
     () => safeRun("asapUrgencyReminderCron", runAsapUrgencyReminderCron),
     { timezone: TZ }
   );
