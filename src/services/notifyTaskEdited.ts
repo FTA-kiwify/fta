@@ -31,6 +31,9 @@ type NotifyTaskEditedArgs = {
   oldUrgency?: string | null;
   newUrgency?: string | null;
 
+  oldReminderMode?: string | null;
+  newReminderMode?: string | null;
+
   oldCalendarPrivate?: boolean | null;
   newCalendarPrivate?: boolean | null;
 
@@ -86,6 +89,12 @@ function urgencyLabel(u?: string | null) {
   if (u === "turbo") return "🔴 Turbo";
   if (u === "asap") return "🟡 ASAP";
   return "🟢 Light";
+}
+
+function reminderModeLabel(mode?: string | null) {
+  return mode === "from"
+    ? "⏩ A partir do prazo"
+    : "⏰ Até o prazo";
 }
 
 function calVisibilityLabel(privateFlag?: boolean | null) {
@@ -180,6 +189,9 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
     oldUrgency,
     newUrgency,
 
+    oldReminderMode,
+    newReminderMode,
+
     oldCalendarPrivate,
     newCalendarPrivate,
 
@@ -220,6 +232,15 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
 
   if ((oldUrgency || newUrgency) && oldUrgency !== newUrgency) {
     changes.push(`• *Urgência:* ${urgencyLabel(oldUrgency ?? null)} → ${urgencyLabel(newUrgency ?? null)}`);
+  }
+
+  if (
+    (oldReminderMode || newReminderMode) &&
+    oldReminderMode !== newReminderMode
+  ) {
+    changes.push(
+      `• *Tipo de prazo:* ${reminderModeLabel(oldReminderMode ?? null)} → ${reminderModeLabel(newReminderMode ?? null)}`
+    );
   }
 
   if (
