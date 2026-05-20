@@ -56,7 +56,7 @@ function saoPauloMidnightUtc(dateIso: string) {
  * A regra fina de envio fica em reminderRules.ts.
  */
 function isAsapSlot(hour: number, minute: number) {
-  return minute === 0;
+  return minute % 5 === 0;
 }
 
 export async function runAsapUrgencyReminderCron() {

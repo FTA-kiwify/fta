@@ -55,7 +55,7 @@ function saoPauloMidnightUtc(dateIso: string) {
  * 🟢 Light: dispara SOMENTE às 16:00 (SP)
  */
 function isLightSlot(hour: number, minute: number) {
-  if (minute !== 0) return false;
+  if (minute % 5 !== 0) return false;
   return hour === 16;
 }
 
@@ -69,7 +69,7 @@ export async function runLightUrgencyReminderCron() {
 
   const force = process.env.FORCE_LIGHT_REMINDER === "1";
 
-  if (!force && minute !== 0) {
+  if (!force && minute % 5 !== 0) {
     console.log(`[light-reminder] outside slot: ${dateIso} ${pad2(hour)}:${pad2(minute)} (SP)`);
     return;
   }
