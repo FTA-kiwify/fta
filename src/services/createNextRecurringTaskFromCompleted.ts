@@ -67,6 +67,7 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       responsible: true,
       responsibleEmail: true,
       term: true,
+      recurrenceAnchor: true,
       deadlineTime: true,
       recurrence: true,
       projectId: true,
@@ -82,7 +83,10 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
   const recurrence = completed.recurrence as Recurrence;
 
   // base: se a task tinha term, usa; senão usa "hoje"
-  const base = completed.term ?? toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()));
+  const base =
+    completed.recurrenceAnchor ??
+    completed.term ??
+    toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()));
   const next = nextTermFromRecurrence(base, recurrence);
 
   const nextIso = toIsoFromDateUTC(next);
@@ -148,14 +152,14 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
 
       carbonCopies: completed.carbonCopies.length
         ? {
-            createMany: {
-              data: completed.carbonCopies.map((c) => ({
-                slackUserId: c.slackUserId,
-                email: c.email ?? null,
-              })),
-              skipDuplicates: true,
-            },
-          }
+          createMany: {
+            data: completed.carbonCopies.map((c) => ({
+              slackUserId: c.slackUserId,
+              email: c.email ?? null,
+            })),
+            skipDuplicates: true,
+          },
+        }
         : undefined,
     },
     select: {
