@@ -504,6 +504,51 @@ async function syncTaskParticipantEmails(args: {
 
 export async function interactive(app: FastifyInstance, slack: WebClient) {
   app.register(formbody);
+  /**
+ * ✅ /slack/commands
+ * Slash command para abrir o modal de criação de tarefa.
+ */
+  app.post("/commands", async (req, reply) => {
+    const body = req.body as any;
+
+    const triggerId = String(body?.trigger_id ?? "");
+    const userSlackId = String(body?.user_id ?? "");
+
+    if (!triggerId || !userSlackId) {
+      return reply.status(200).send();
+    }
+
+    const projects = await prisma.project.findMany({
+      where: {
+        status: "active",
+        OR: [
+          { createdBySlackId: userSlackId },
+          { members: { some: { slackUserId: userSlackId } } },
+          {
+            tasks: {
+              some: {
+                OR: [
+                  { delegation: userSlackId },
+                  { responsible: userSlackId },
+                  { carbonCopies: { some: { slackUserId: userSlackId } } },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      orderBy: { name: "asc" },
+      take: 100,
+      select: { id: true, name: true },
+    });
+
+    await slack.views.open({
+      trigger_id: triggerId,
+      view: createTaskModalView({ projects }),
+    });
+
+    return reply.status(200).send();
+  });
 
   /**
    * ✅ /slack/options
