@@ -225,6 +225,7 @@ export async function importTasksFromExcelSlackFile(args: {
     description?: number;
     responsibleEmail?: number;
     responsibleSlackId?: number;
+    reminderMode?: number;
 
     // ✅ NOVO: delegador por linha (fallback = uploadedBySlackId)
     delegationSlackId?: number;
@@ -275,6 +276,10 @@ export async function importTasksFromExcelSlackFile(args: {
 
     if (["urgencia", "urgency"].includes(h)) cols.urgency = colNumber;
     if (["recorrencia", "recurrence"].includes(h)) cols.recurrence = colNumber;
+
+    if (["tipo_de_prazo", "tipo_prazo", "reminder_mode", "remindermode"].includes(h)) {
+      cols.reminderMode = colNumber;
+    }
 
     if (["nome_do_projeto", "project_name"].includes(h)) cols.projectName = colNumber;
     if (["id_projeto", "project_id"].includes(h)) cols.projectId = colNumber;
@@ -391,7 +396,18 @@ export async function importTasksFromExcelSlackFile(args: {
     const urgencyRaw = cellToString(row.getCell(cols.urgency).value);
     const urgency = parseUrgency(urgencyRaw);
 
-    const recurrence = cols.recurrence ? parseRecurrence(cellToString(row.getCell(cols.recurrence).value)) : null;
+    const recurrence = cols.recurrence
+      ? parseRecurrence(cellToString(row.getCell(cols.recurrence).value))
+      : null;
+
+    const reminderModeRaw = cols.reminderMode
+      ? cellToString(row.getCell(cols.reminderMode).value).toLowerCase().trim()
+      : "";
+
+    const reminderMode =
+      ["a partir", "apartir", "from"].includes(reminderModeRaw)
+        ? "from"
+        : "until";
 
     // CCs: junta slack ids + emails (resolvendo email -> slack)
     const ccSlackIds = cols.ccSlackIds ? parseSlackIdsList(cellToString(row.getCell(cols.ccSlackIds).value)) : [];
@@ -443,14 +459,15 @@ export async function importTasksFromExcelSlackFile(args: {
       const task = await createTaskService({
         title,
         description: description?.trim() ? description : undefined,
-        delegation: delegationSlackId, // ✅ usa delegador da linha (ou fallback)
+        delegation: delegationSlackId,
         responsible: responsibleSlackId,
         term,
         deadlineTime,
         recurrence,
         projectId,
-        dependsOnId: null, // ✅ removido do template
+        dependsOnId: null,
         urgency,
+        reminderMode,
         carbonCopies,
       });
 
