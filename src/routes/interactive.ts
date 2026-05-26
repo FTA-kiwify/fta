@@ -1965,7 +1965,14 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const feedbackFileText = feedbackFiles.length
             ? "\n\n📎 *Anexos:*\n" +
             feedbackFiles
-              .map((f: any) => `• ${f.name ?? "arquivo"} — ID: \`${f.id}\``)
+              .map((f: any) => {
+                const name = f.name ?? "arquivo";
+                const url = f.url_private ?? f.permalink ?? null;
+
+                return url
+                  ? `• <${url}|${name}>`
+                  : `• ${name} — ID: \`${f.id}\``;
+              })
               .join("\n")
             : "";
 
