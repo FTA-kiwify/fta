@@ -73,7 +73,20 @@ export async function runCutoffRolloverCron() {
     const responsibleSlackId = r.responsible;
     if (!responsibleSlackId) continue;
 
-    const result = await rolloverOverdueTasksForResponsible({ slackUserId: responsibleSlackId });
+    let result: Awaited<ReturnType<typeof rolloverOverdueTasksForResponsible>>;
+
+    try {
+      result = await rolloverOverdueTasksForResponsible({ slackUserId: responsibleSlackId });
+    } catch (e) {
+      console.error("[cutoffRolloverCron] rolloverOverdueTasksForResponsible failed:", responsibleSlackId, e);
+      continue;
+    }
+
+    console.log("[cutoffRolloverCron] rollover result", {
+      responsibleSlackId,
+      movedCount: result?.moved?.length ?? 0,
+    });
+
     if (!result?.moved?.length) continue;
 
     // ✅ Notifica que reprogramou (thread da msg principal ou DM fallback)
