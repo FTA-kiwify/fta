@@ -137,14 +137,23 @@ export async function rolloverOverdueTasksForResponsible(args: { slackUserId: st
   const afterCutoff = nowMinutes >= cutoffMinutes;
 
   // Pega todas as tasks abertas do responsável com prazo definido
+  const tomorrowUtc = saoPauloIsoToUtcDate(addDaysIso(todayIso, 1));
+
   const tasks = await prisma.task.findMany({
     where: {
       status: { not: "done" },
       responsible: slackUserId,
-      term: { not: null },
+      term: { not: null, lt: tomorrowUtc },
     },
     select: { id: true, title: true, term: true },
-    take: 500,
+    orderBy: [{ term: "asc" }, { createdAt: "asc" }],
+  });
+  console.log("[rollover] responsible scan", {
+    slackUserId,
+    todayIso,
+    afterCutoff,
+    tasksFound: tasks.length,
+    oldestTerm: tasks[0]?.term?.toISOString?.() ?? null,
   });
 
   const moved: MovedItem[] = [];
