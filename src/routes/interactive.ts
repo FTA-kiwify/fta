@@ -2022,6 +2022,23 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const responsible = getSelectedUser(values, "resp_block", "responsible") ?? "";
 
           const dueDate = getSelectedDate(values, "due_block", "due_date");
+
+          const todayIsoCreate = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Sao_Paulo",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(new Date());
+
+          if (dueDate && dueDate < todayIsoCreate) {
+            return reply.send({
+              response_action: "errors",
+              errors: {
+                due_block: "Não é permitido criar atividade com data passada.",
+              },
+            });
+          }
+
           const termDate: Date | null = dueDate ? new Date(`${dueDate}T03:00:00.000Z`) : null;
 
           const deadlineTime = getSelectedTime(values, TASK_TIME_BLOCK_ID, TASK_TIME_ACTION_ID);
@@ -2136,6 +2153,22 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const description = descRaw?.trim() ? descRaw.trim() : null;
 
           const termIso = getSelectedDate(values, EDIT_TERM_BLOCK_ID, EDIT_TERM_ACTION_ID) ?? null;
+
+          const todayIsoEdit = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Sao_Paulo",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(new Date());
+
+          if (termIso && termIso < todayIsoEdit) {
+            return reply.send({
+              response_action: "errors",
+              errors: {
+                [EDIT_TERM_BLOCK_ID]: "Não é permitido salvar atividade com data passada.",
+              },
+            });
+          }
           const deadlineTime = getSelectedTime(values, EDIT_TIME_BLOCK_ID, EDIT_TIME_ACTION_ID) ?? null;
 
           const responsibleSlackId = getSelectedUser(values, EDIT_RESP_BLOCK_ID, EDIT_RESP_ACTION_ID) ?? "";
@@ -2282,15 +2315,37 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
           const values = payload.view?.state?.values;
 
-          const newDateIso: string | null =
-            values?.[RESCHEDULE_TERM_BLOCK_ID]?.[RESCHEDULE_TERM_ACTION_ID]?.selected_date ?? null;
+          const newDateIso =
+            values?.[RESCHEDULE_TERM_BLOCK_ID]?.[RESCHEDULE_TERM_ACTION_ID]?.selected_date;
 
           const newTime: string | null =
             values?.[RESCHEDULE_TIME_BLOCK_ID]?.[RESCHEDULE_TIME_ACTION_ID]?.selected_time ?? null;
 
           if (!newDateIso) {
-            return reply.send({ response_action: "errors", errors: { [RESCHEDULE_TERM_BLOCK_ID]: "Informe a data do novo prazo." } });
+            return reply.send({
+              response_action: "errors",
+              errors: {
+                [RESCHEDULE_TERM_BLOCK_ID]: "Informe a data do novo prazo.",
+              },
+            });
           }
+
+          const todayIsoReschedule = new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Sao_Paulo",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(new Date());
+
+          if (newDateIso < todayIsoReschedule) {
+            return reply.send({
+              response_action: "errors",
+              errors: {
+                [RESCHEDULE_TERM_BLOCK_ID]: "Não é permitido reprogramar para uma data passada.",
+              },
+            });
+          }
+
 
           let taskId = "";
           try {

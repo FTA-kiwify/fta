@@ -391,6 +391,23 @@ export async function importTasksFromExcelSlackFile(args: {
       continue;
     }
 
+    const todayIsoImport = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+
+    const termIso = term.toISOString().slice(0, 10);
+
+    if (termIso < todayIsoImport) {
+      failed.push({
+        row: r,
+        reason: `Prazo não pode ser uma data passada: "${termIso}"`,
+      });
+      continue;
+    }
+
     const deadlineTime = cols.deadlineTime ? parseTime(row.getCell(cols.deadlineTime).value) : null;
 
     const urgencyRaw = cellToString(row.getCell(cols.urgency).value);
