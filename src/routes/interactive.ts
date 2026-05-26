@@ -756,6 +756,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                     type: true,
                     title: true,
                     description: true,
+                    attachmentsJson: true,
                     status: true,
                     createdBySlackId: true,
                     createdAt: true,
@@ -2012,11 +2013,18 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             return reply.send({ response_action: "errors", errors });
           }
 
+          const feedbackAttachments = feedbackFiles.map((f: any) => ({
+            id: f.id ?? null,
+            name: f.name ?? "arquivo",
+            url: f.url_private ?? f.permalink ?? null,
+          }));
+
           const created = await prisma.feedback.create({
             data: {
               type: type as any,
               title,
               description,
+              attachmentsJson: feedbackAttachments,
               status: "pending",
               createdBySlackId: userSlackId,
             },

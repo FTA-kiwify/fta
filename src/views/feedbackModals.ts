@@ -45,6 +45,7 @@ export type FeedbackItem = {
   type: "bug" | "suggestion";
   title: string;
   description: string;
+  attachmentsJson?: any;
   status: "pending" | "wip" | "done" | "rejected";
   createdBySlackId: string;
   createdAt: Date;
@@ -341,6 +342,21 @@ export function feedbackAdminModalView(args: {
 export function feedbackDetailsModalView(args: { item: FeedbackItem }): ModalView {
   const { item } = args;
 
+  const attachments = Array.isArray((item as any).attachmentsJson)
+    ? (item as any).attachmentsJson
+    : [];
+
+  const attachmentText = attachments.length
+    ? "\n\n*Anexos:*\n" +
+    attachments
+      .map((f: any) =>
+        f.url
+          ? `• <${f.url}|${f.name ?? "arquivo"}>`
+          : `• ${f.name ?? "arquivo"}`
+      )
+      .join("\n")
+    : "";
+
   const view: ModalView = {
     type: "modal",
     callback_id: FEEDBACK_DETAILS_MODAL_CALLBACK_ID,
@@ -366,7 +382,7 @@ export function feedbackDetailsModalView(args: { item: FeedbackItem }): ModalVie
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Descrição:*\n${item.description || "_Sem descrição._"}`,
+          text: `*Descrição:*\n${item.description || "_Sem descrição._"}${attachmentText}`,
         },
       },
     ] as any,

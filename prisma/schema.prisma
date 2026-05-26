@@ -128,6 +128,7 @@ model Feedback {
   type             FeedbackType
   title            String
   description      String
+  attachmentsJson  Json?
   status           FeedbackStatus @default(pending)
   createdBySlackId String
   createdAt        DateTime       @default(now())
