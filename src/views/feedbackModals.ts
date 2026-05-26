@@ -9,10 +9,12 @@ export const FEEDBACK_CREATE_CALLBACK_ID = "feedback_create" as const;
 export const FEEDBACK_TYPE_BLOCK_ID = "feedback_type_block" as const;
 export const FEEDBACK_TITLE_BLOCK_ID = "feedback_title_block" as const;
 export const FEEDBACK_DESC_BLOCK_ID = "feedback_desc_block" as const;
+export const FEEDBACK_FILES_BLOCK_ID = "feedback_files_block" as const;
 
 export const FEEDBACK_TYPE_SELECT_ACTION_ID = "feedback_type_select" as const;
 export const FEEDBACK_TITLE_INPUT_ACTION_ID = "feedback_title" as const;
 export const FEEDBACK_DESC_INPUT_ACTION_ID = "feedback_desc" as const;
+export const FEEDBACK_FILES_ACTION_ID = "feedback_files" as const;
 
 // Modal de listagem
 export const FEEDBACK_ADMIN_MODAL_CALLBACK_ID = "feedback_admin" as const;
@@ -165,6 +167,18 @@ export function feedbackCreateModalView(): ModalView {
           placeholder: { type: "plain_text", text: "Explique o que aconteceu / o que você esperava." },
         },
       },
+      {
+        type: "input",
+        block_id: FEEDBACK_FILES_BLOCK_ID,
+        optional: true,
+        label: { type: "plain_text", text: "Anexo / print" },
+        element: {
+          type: "file_input",
+          action_id: FEEDBACK_FILES_ACTION_ID,
+          filetypes: ["jpg", "jpeg", "png"],
+          max_files: 3,
+        },
+      },
     ] as any,
   };
 
@@ -293,16 +307,16 @@ export function feedbackAdminModalView(args: {
           text: { type: "mrkdwn", text: `${header}\n_${meta}_\n${desc}` },
           ...(showMenu
             ? {
-                accessory: {
-                  type: "overflow",
-                  action_id: FEEDBACK_STATUS_MENU_ACTION_ID,
-                  options: [
-                    { text: { type: "plain_text", text: "❌ Rejeitar" }, value: `${f.id}|rejected` },
-                    { text: { type: "plain_text", text: "🛠️ WIP" }, value: `${f.id}|wip` },
-                    { text: { type: "plain_text", text: "✅ Done" }, value: `${f.id}|done` },
-                  ],
-                },
-              }
+              accessory: {
+                type: "overflow",
+                action_id: FEEDBACK_STATUS_MENU_ACTION_ID,
+                options: [
+                  { text: { type: "plain_text", text: "❌ Rejeitar" }, value: `${f.id}|rejected` },
+                  { text: { type: "plain_text", text: "🛠️ WIP" }, value: `${f.id}|wip` },
+                  { text: { type: "plain_text", text: "✅ Done" }, value: `${f.id}|done` },
+                ],
+              },
+            }
             : {}),
         },
         { type: "divider" }

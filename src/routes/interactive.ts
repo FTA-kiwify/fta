@@ -81,6 +81,8 @@ import {
   FEEDBACK_TYPE_BLOCK_ID,
   FEEDBACK_TITLE_BLOCK_ID,
   FEEDBACK_DESC_BLOCK_ID,
+  FEEDBACK_FILES_BLOCK_ID,
+  FEEDBACK_FILES_ACTION_ID,
   FEEDBACK_TITLE_INPUT_ACTION_ID,
   FEEDBACK_DESC_INPUT_ACTION_ID,
 
@@ -1957,6 +1959,15 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const type = getSelectedOptionValue(values, FEEDBACK_TYPE_BLOCK_ID, FEEDBACK_TYPE_SELECT_ACTION_ID);
           const title = (getInputValue(values, FEEDBACK_TITLE_BLOCK_ID, FEEDBACK_TITLE_INPUT_ACTION_ID) ?? "").trim();
           const description = (getInputValue(values, FEEDBACK_DESC_BLOCK_ID, FEEDBACK_DESC_INPUT_ACTION_ID) ?? "").trim();
+          const feedbackFiles =
+            values?.[FEEDBACK_FILES_BLOCK_ID]?.[FEEDBACK_FILES_ACTION_ID]?.files ?? [];
+
+          const feedbackFileText = feedbackFiles.length
+            ? "\n\n📎 *Anexos:*\n" +
+            feedbackFiles
+              .map((f: any) => `• ${f.name ?? "arquivo"} — ID: \`${f.id}\``)
+              .join("\n")
+            : "";
 
           const errors: Record<string, string> = {};
           if (!type) errors[FEEDBACK_TYPE_BLOCK_ID] = "Selecione o tipo.";
@@ -1996,7 +2007,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                   sendBotDm(
                     slack,
                     adminId,
-                    `🆕 Novo(a) ${label} enviado por <@${userSlackId}>:\n• *${created.title}*\nUID: \`${created.id}\``
+                    `🆕 Novo(a) ${label} enviado por <@${userSlackId}>:\n• *${created.title}*\nUID: \`${created.id}\`${feedbackFileText}`
                   )
                 )
               );
