@@ -97,6 +97,7 @@ export async function createTaskService(raw: unknown) {
       responsibleEmail,
 
       term,
+      originalTerm: term,
       deadlineTime: data.deadlineTime ?? null,
       recurrence,
       projectId: data.projectId ?? null,

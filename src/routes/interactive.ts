@@ -1604,6 +1604,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               title: true,
               description: true,
               term: true,
+              originalTerm: true,
               deadlineTime: true,
               urgency: true,
               recurrence: true,
@@ -1621,6 +1622,10 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
           const dueDateIso = task.term ? task.term.toISOString().slice(0, 10) : null;
 
+          const originalDueDateIso = task.originalTerm
+            ? task.originalTerm.toISOString().slice(0, 10)
+            : dueDateIso;
+
           let projectNameOrId: string | null = task.projectId ?? null;
           if (task.projectId) {
             const proj = await prisma.project.findUnique({ where: { id: task.projectId }, select: { name: true } });
@@ -1635,6 +1640,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               responsibleSlackId: task.responsible,
               delegationSlackId: task.delegation ?? null,
               dueDateIso,
+              originalDueDateIso,
               deadlineTime: task.deadlineTime ?? null,
               urgency: task.urgency as any,
               recurrence: (task.recurrence as any) ?? null,

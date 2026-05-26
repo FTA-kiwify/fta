@@ -24,6 +24,7 @@ export function taskDetailsModalView(args: {
   responsibleSlackId: string;
   delegationSlackId: string | null;
   dueDateIso: string | null; // YYYY-MM-DD
+  originalDueDateIso: string | null; // YYYY-MM-DD
   deadlineTime: string | null; // HH:MM
   urgency: Urgency;
   recurrence: string | null;
@@ -39,6 +40,13 @@ export function taskDetailsModalView(args: {
       ? `${dueBr} às ${args.deadlineTime}`
       : dueBr
     : "Sem prazo";
+  const originalDueBr = formatDateBRFromIso(args.originalDueDateIso);
+
+  const originalDueText = originalDueBr
+    ? args.deadlineTime
+      ? `${originalDueBr} às ${args.deadlineTime}`
+      : originalDueBr
+    : "—";
 
   const delegatedText = args.delegationSlackId ? `<@${args.delegationSlackId}>` : "—";
   const projectText = args.projectNameOrId ?? "—";
@@ -58,7 +66,8 @@ export function taskDetailsModalView(args: {
       fields: [
         { type: "mrkdwn", text: `*Responsável:*\n<@${args.responsibleSlackId}>\n\n` },
         { type: "mrkdwn", text: `*Delegado por:*\n${delegatedText}\n\n` },
-        { type: "mrkdwn", text: `*Prazo:*\n${dueText}` },
+        { type: "mrkdwn", text: `*Prazo atual:*\n${dueText}` },
+        { type: "mrkdwn", text: `*Prazo original:*\n${originalDueText}` },
         { type: "mrkdwn", text: `*Urgência:*\n${urgencyLabel(args.urgency)}\n\n` },
         { type: "mrkdwn", text: `*Recorrência:*\n${recurrenceText}\n\n` },
         { type: "mrkdwn", text: `*Projeto:*\n${projectText}\n\n` },

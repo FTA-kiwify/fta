@@ -46,6 +46,7 @@ model Task {
   responsible        String
   responsibleEmail   String?
   term               DateTime?
+  originalTerm       DateTime?
   deadlineTime       String?
   status             TaskStatus        @default(pending)
   recurrence         Recurrence?
