@@ -102,6 +102,13 @@ export async function runTurboUrgencyReminderCron() {
 
   await Promise.allSettled(
     filteredTasks.map(async (t: TurboReminderTask) => {
+      const freshTask = await prisma.task.findUnique({
+        where: { id: t.id },
+        select: { status: true },
+      });
+
+      if (freshTask?.status !== "pending") return;
+
       let logId: string | null = null;
 
       try {

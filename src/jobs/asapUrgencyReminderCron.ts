@@ -120,7 +120,13 @@ export async function runAsapUrgencyReminderCron() {
 
   await Promise.allSettled(
     filteredTasks.map(async (t) => {
-      // 1) cria log (único) p/ evitar duplicidade em múltiplas instâncias
+      const freshTask = await prisma.task.findUnique({
+        where: { id: t.id },
+        select: { status: true },
+      });
+
+      if (freshTask?.status !== "pending") return;
+
       let logId: string | null = null;
       try {
         const log = await prisma.taskReminderLog.create({

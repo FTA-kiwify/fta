@@ -118,12 +118,18 @@ export async function runLightUrgencyReminderCron() {
   }
 
   console.log(
-  `[light-reminder] sending reminders: ${filteredTasks.length} tasks • slot=${slot} • date=${dateIso}`
-);
+    `[light-reminder] sending reminders: ${filteredTasks.length} tasks • slot=${slot} • date=${dateIso}`
+  );
 
   await Promise.allSettled(
     filteredTasks.map(async (t) => {
-      // ✅ cria log para evitar duplicação (em múltiplas instâncias)
+      const freshTask = await prisma.task.findUnique({
+        where: { id: t.id },
+        select: { status: true },
+      });
+
+      if (freshTask?.status !== "pending") return;
+
       let logId: string | null = null;
       try {
         const log = await prisma.taskReminderLog.create({
