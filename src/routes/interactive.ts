@@ -74,6 +74,7 @@ import {
 import {
   feedbackCreateModalView,
   feedbackAdminModalView,
+  feedbackDetailsModalView,
 
   FEEDBACK_CREATE_CALLBACK_ID,
 
@@ -746,6 +747,32 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               const raw = String(action?.selected_option?.value ?? "");
               const [id, st] = raw.split("|");
               feedbackId = String(id ?? "").trim();
+
+              if (st === "details") {
+                const item = await prisma.feedback.findUnique({
+                  where: { id: feedbackId },
+                  select: {
+                    id: true,
+                    type: true,
+                    title: true,
+                    description: true,
+                    status: true,
+                    createdBySlackId: true,
+                    createdAt: true,
+                    updatedAt: true,
+                  },
+                });
+
+                if (item && payload.trigger_id) {
+                  await slack.views.push({
+                    trigger_id: payload.trigger_id,
+                    view: feedbackDetailsModalView({ item: item as any }),
+                  });
+                }
+
+                return;
+              }
+
               if (st === "rejected" || st === "wip" || st === "done") nextStatus = st;
             } else {
               feedbackId = String(action?.value ?? "").trim();

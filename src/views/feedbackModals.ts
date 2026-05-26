@@ -32,6 +32,7 @@ export const FEEDBACK_SET_DONE_ACTION_ID = "feedback_set_done" as const;
 
 // ✅ menu compacto (fica à direita do texto)
 export const FEEDBACK_STATUS_MENU_ACTION_ID = "feedback_status_menu" as const;
+export const FEEDBACK_DETAILS_MODAL_CALLBACK_ID = "feedback_details" as const;
 
 // ==============================
 // Types
@@ -220,6 +221,7 @@ export function feedbackAdminModalView(args: {
     },
   ];
 
+
   // ✅ Meus tickets abertos (sempre aparece pra todos)
   const mine = (myOpenItems ?? []).filter((x) => x && x.status !== "done" && x.status !== "rejected");
   if (mine.length) {
@@ -311,6 +313,7 @@ export function feedbackAdminModalView(args: {
                 type: "overflow",
                 action_id: FEEDBACK_STATUS_MENU_ACTION_ID,
                 options: [
+                  { text: { type: "plain_text", text: "👀 Ver detalhes" }, value: `${f.id}|details` },
                   { text: { type: "plain_text", text: "❌ Rejeitar" }, value: `${f.id}|rejected` },
                   { text: { type: "plain_text", text: "🛠️ WIP" }, value: `${f.id}|wip` },
                   { text: { type: "plain_text", text: "✅ Done" }, value: `${f.id}|done` },
@@ -331,6 +334,42 @@ export function feedbackAdminModalView(args: {
     close: { type: "plain_text", text: "Fechar" },
     private_metadata: JSON.stringify({ typeFilter, statusFilter }),
     blocks: blocks as any,
+  };
+
+  return view;
+}
+export function feedbackDetailsModalView(args: { item: FeedbackItem }): ModalView {
+  const { item } = args;
+
+  const view: ModalView = {
+    type: "modal",
+    callback_id: FEEDBACK_DETAILS_MODAL_CALLBACK_ID,
+    title: { type: "plain_text", text: "Detalhes" },
+    close: { type: "plain_text", text: "Fechar" },
+
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text:
+            `*${item.title}*\n` +
+            `${emojiType(item.type)} ${labelType(item.type)} • ${emojiStatus(item.status)} *${labelStatus(item.status)}*\n` +
+            `Criado por: <@${item.createdBySlackId}>\n` +
+            `Data: ${formatDate(new Date(item.createdAt))}`,
+        },
+      },
+
+      { type: "divider" },
+
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Descrição:*\n${item.description || "_Sem descrição._"}`,
+        },
+      },
+    ] as any,
   };
 
   return view;
