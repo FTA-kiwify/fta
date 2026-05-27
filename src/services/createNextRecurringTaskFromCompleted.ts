@@ -85,9 +85,16 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
 
   // base: se a task tinha term, usa; senão usa "hoje"
   const base =
-    completed.recurrenceAnchor ??
-    completed.term ??
-    toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()));
+    recurrence === "daily"
+      ? (
+        completed.term ??
+        toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()))
+      )
+      : (
+        completed.recurrenceAnchor ??
+        completed.term ??
+        toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()))
+      );
   const next = nextTermFromRecurrence(base, recurrence);
 
   const nextIso = toIsoFromDateUTC(next);

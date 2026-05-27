@@ -93,8 +93,17 @@ export async function completeTasksService(args: {
         continue;
       }
 
-      const base = t.recurrenceAnchor ?? t.term ?? toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()));
-      const next = nextTermFromRecurrence(base, recurrence);
+      const base =
+        recurrence === "daily"
+          ? (
+            t.term ??
+            toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()))
+          )
+          : (
+            t.recurrenceAnchor ??
+            t.term ??
+            toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()))
+          ); const next = nextTermFromRecurrence(base, recurrence);
       const nextIso = toIsoFromDateUTC(next);
       const nextSafeDate = toSafeUtcDateFromIso(nextIso);
 
@@ -112,7 +121,7 @@ export async function completeTasksService(args: {
   });
 
   // ✅ sync calendário depois do commit
-  void Promise.allSettled([...doneIds, ...rolledIds].map((id) => syncCalendarEventForTask(id))).catch(() => {});
+  void Promise.allSettled([...doneIds, ...rolledIds].map((id) => syncCalendarEventForTask(id))).catch(() => { });
 
   return { doneTasks: doneIds, rolledTasks: rolledIds };
 }
