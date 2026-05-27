@@ -34,29 +34,31 @@ export async function notifyTasksReplanned(args: {
   if (!items.length) return;
 
   for (const it of items) {
-    const from = formatPtBr(it.fromIso);
-    const to = formatPtBr(it.toIso);
+    try {
+      const from = formatPtBr(it.fromIso);
+      const to = formatPtBr(it.toIso);
 
-    // ✅ menciona o responsável
-    const text = `🔁 ${mention(responsibleSlackId)} *${it.taskTitle}*: prazo mudou de *${from}* para *${to}*.`;
+      const text = `🔁 ${mention(responsibleSlackId)} *${it.taskTitle}*: prazo mudou de *${from}* para *${to}*.`;
 
-    // ✅ tenta postar na thread da abertura
-    const task = await prisma.task.findUnique({
-      where: { id: it.taskId },
-      select: { slackOpenChannelId: true, slackOpenMessageTs: true },
-    });
+      const task = await prisma.task.findUnique({
+        where: { id: it.taskId },
+        select: { slackOpenChannelId: true, slackOpenMessageTs: true },
+      });
 
-    if (task?.slackOpenChannelId && task?.slackOpenMessageTs) {
+      if (!task?.slackOpenChannelId || !task?.slackOpenMessageTs) {
+        const channel = await openDmChannel(slack, responsibleSlackId);
+        await slack.chat.postMessage({ channel, text });
+        continue;
+      }
+
       await slack.chat.postMessage({
         channel: task.slackOpenChannelId,
         text,
         thread_ts: task.slackOpenMessageTs,
       });
+    } catch (e) {
+      console.error("[notifyTasksReplanned] failed for task:", it.taskId, e);
       continue;
     }
-
-    // fallback: DM direto (caso task antiga sem campos)
-    const channel = await openDmChannel(slack, responsibleSlackId);
-    await slack.chat.postMessage({ channel, text });
   }
 }
