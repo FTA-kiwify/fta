@@ -74,6 +74,8 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       dependsOnId: true,
       urgency: true,
       reminderMode: true,
+      turboPreviousDay: true,
+      turboStartTime: true,
       calendarPrivate: true,
       carbonCopies: { select: { slackUserId: true, email: true } },
     },
@@ -154,6 +156,10 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
 
       urgency: completed.urgency as any,
       reminderMode: (completed as any).reminderMode ?? "until",
+
+      turboPreviousDay: (completed as any).turboPreviousDay ?? false,
+      turboStartTime: (completed as any).turboStartTime ?? null,
+
       projectId: completed.projectId ?? null,
       dependsOnId: completed.dependsOnId ?? null,
 

@@ -58,21 +58,24 @@ export async function runTurboUrgencyReminderCron() {
     : `TURBO_${pad2(hour)}:${pad2(minute)}`;
 
   const startUtc = saoPauloMidnightUtc(dateIso);
-  const endUtc = new Date(startUtc);
-  endUtc.setUTCDate(endUtc.getUTCDate() + 1);
 
+  const turboWindowEndUtc = new Date(startUtc);
+  turboWindowEndUtc.setUTCDate(turboWindowEndUtc.getUTCDate() + 2);
   const turboTasks = await prisma.task.findMany({
     where: {
       status: { not: "done" },
       urgency: "turbo" as any,
-      term: { not: null, lt: endUtc },
+      term: { not: null, lt: turboWindowEndUtc },
       reminders: { none: { dateIso, slot } },
     },
     select: {
       id: true,
       title: true,
+      term: true,
       deadlineTime: true,
       reminderMode: true,
+      turboPreviousDay: true,
+      turboStartTime: true,
       responsible: true,
       slackOpenChannelId: true,
       slackOpenMessageTs: true,
@@ -81,15 +84,43 @@ export async function runTurboUrgencyReminderCron() {
 
   type TurboReminderTask = (typeof turboTasks)[number];
 
-  const filteredTasks = turboTasks.filter((t: TurboReminderTask) =>
-    shouldSendUrgencyReminder({
+  const filteredTasks = turboTasks.filter((t: TurboReminderTask) => {
+    if (t.turboPreviousDay && t.term) {
+      const taskDateIso = t.term.toISOString().slice(0, 10);
+
+      const previousDay = new Date(t.term);
+      previousDay.setUTCDate(previousDay.getUTCDate() - 1);
+
+      const previousDayIso = previousDay.toISOString().slice(0, 10);
+
+      if (dateIso === previousDayIso) {
+        if (!t.turboStartTime) {
+          return true;
+        }
+
+        const [startHour, startMinute] = t.turboStartTime
+          .split(":")
+          .map(Number);
+
+        const currentMinutes = hour * 60 + minute;
+        const startMinutes = startHour * 60 + startMinute;
+
+        return currentMinutes >= startMinutes;
+      }
+
+      if (dateIso !== taskDateIso) {
+        return false;
+      }
+    }
+
+    return shouldSendUrgencyReminder({
       urgency: "turbo",
       reminderMode: t.reminderMode,
       deadlineTime: t.deadlineTime,
       hour,
       minute,
-    })
-  );
+    });
+  });
 
   if (!filteredTasks.length) {
     console.log(`[turbo-reminder] no turbo tasks for ${dateIso} • slot=${slot}`);

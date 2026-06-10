@@ -117,6 +117,8 @@ export async function updateTaskService(args: {
 
   urgency: "light" | "asap" | "turbo" | string;
   reminderMode: "until" | "from" | string;
+  turboPreviousDay: boolean;
+  turboStartTime: string | null;
   calendarPrivate: boolean;
 
   // ✅ NOVO: projeto (null = sem projeto)
@@ -134,6 +136,8 @@ export async function updateTaskService(args: {
     recurrence,
     urgency,
     reminderMode,
+    turboPreviousDay,
+    turboStartTime,
     calendarPrivate,
     projectId,
   } = args;
@@ -207,6 +211,8 @@ export async function updateTaskService(args: {
       urgency: urgencyValue as any,
       reminderMode: reminderMode === "from" ? "from" : "until",
       calendarPrivate: Boolean(calendarPrivate),
+      turboPreviousDay: Boolean(turboPreviousDay),
+      turboStartTime: turboStartTime,
 
       // ✅ NOVO: vínculo de projeto
       projectId: normalizedProjectId,

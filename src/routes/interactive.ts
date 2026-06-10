@@ -1514,6 +1514,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               urgency: true,
               reminderMode: true,
               calendarPrivate: true,
+              turboPreviousDay: true,
+              turboStartTime: true,
               carbonCopies: { select: { slackUserId: true } },
               projectId: true,
 
@@ -1564,6 +1566,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               urgency: (task as any).urgency ?? "light",
               reminderMode: (task as any).reminderMode ?? "until",
               calendarPrivate: Boolean((task as any).calendarPrivate ?? false),
+              turboPreviousDay: Boolean((task as any).turboPreviousDay ?? false),
+              turboStartTime: (task as any).turboStartTime ?? null,
               projects,
               currentProjectId: task.projectId ?? null,
             } as any),
@@ -2251,6 +2255,12 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const urgency = getSelectedOptionValue(values, EDIT_URGENCY_BLOCK_ID, EDIT_URGENCY_ACTION_ID) ?? "light";
           const reminderMode =
             getSelectedOptionValue(values, EDIT_REMINDER_MODE_BLOCK_ID, EDIT_REMINDER_MODE_ACTION_ID) ?? "until";
+          const turboPreviousDay =
+            (values?.["turbo_previous_day_block"]?.["turbo_previous_day"]?.selected_options ?? [])
+              .some((o: any) => String(o?.value ?? "") === "yes");
+
+          const turboStartTime =
+            getSelectedTime(values, "turbo_start_time_block", "turbo_start_time") ?? null;
 
           const calendarPrivate = isCheckboxChecked(values, EDIT_CAL_PRIVATE_BLOCK_ID, EDIT_CAL_PRIVATE_ACTION_ID, "private");
 
@@ -2284,6 +2294,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             recurrence,
             urgency,
             reminderMode,
+            turboPreviousDay,
+            turboStartTime,
             calendarPrivate,
             projectId,
           });

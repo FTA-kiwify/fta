@@ -95,6 +95,8 @@ export function editTaskModalView(args: {
   urgency?: "light" | "asap" | "turbo" | string | null;
   reminderMode?: "until" | "from" | string | null;
   calendarPrivate?: boolean;
+  turboPreviousDay?: boolean;
+  turboStartTime?: string | null;
 }): View {
   const recurrenceInitial: RecurrenceValue =
     (args.recurrence as RecurrenceValue) && args.recurrence !== "null"
@@ -296,6 +298,52 @@ export function editTaskModalView(args: {
               value: "from",
             },
           ],
+        },
+      },
+      {
+        type: "input",
+        optional: true,
+        block_id: "turbo_previous_day_block",
+        element: {
+          type: "checkboxes",
+          action_id: "turbo_previous_day",
+          ...(args.turboPreviousDay
+            ? {
+              initial_options: [
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Iniciar follow-ups antes do prazo",
+                  },
+                  value: "yes",
+                },
+              ],
+            }
+            : {}),
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "Iniciar follow-ups antes do prazo",
+              },
+              value: "yes",
+            },
+          ],
+        },
+        label: { type: "plain_text", text: "Turbo avançado" },
+      },
+      {
+        type: "input",
+        optional: true,
+        block_id: "turbo_start_time_block",
+        element: {
+          type: "timepicker",
+          action_id: "turbo_start_time",
+          initial_time: args.turboStartTime ?? undefined,
+        },
+        label: {
+          type: "plain_text",
+          text: "Horário de início dos follow-ups",
         },
       },
 
