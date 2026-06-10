@@ -194,7 +194,7 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         type: "input",
         optional: true,
         block_id: "turbo_previous_day_block",
-        label: { type: "plain_text", text: "Turbo avançado" },
+        label: { type: "plain_text", text: "Turbo avançado (somente para urgência Turbo)" },
         element: {
           type: "checkboxes",
           action_id: "turbo_previous_day",
@@ -213,7 +213,10 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         type: "input",
         optional: true,
         block_id: "turbo_start_time_block",
-        label: { type: "plain_text", text: "Horário de início dos follow-ups" },
+        label: {
+          type: "plain_text",
+          text: "Horário de início dos follow-ups (somente Turbo)",
+        },
         element: {
           type: "timepicker",
           action_id: "turbo_start_time",
