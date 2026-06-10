@@ -22,6 +22,10 @@ import {
   TASK_DEPENDS_ACTION_ID,
   TASK_CAL_PRIVATE_BLOCK_ID,
   TASK_CAL_PRIVATE_ACTION_ID,
+  TASK_URGENCY_BLOCK_ID,
+  TASK_URGENCY_ACTION_ID,
+  TASK_REMINDER_MODE_BLOCK_ID,
+  TASK_REMINDER_MODE_ACTION_ID,
 } from "../views/createTaskModal";
 
 import { sendBatchModalView, SEND_BATCH_MODAL_CALLBACK_ID } from "../views/sendBatchModal";
@@ -618,6 +622,32 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
         // ✅ Debug rápido (se quiser manter)
         req.log.info({ actionId, blockId: action?.block_id, value: action?.value }, "[INTERACTIVE] action");
+
+        // =========================================================
+        // ✅ CREATE TASK - URGENCY DYNAMIC
+        // =========================================================
+        if (
+          payload.view?.callback_id === CREATE_TASK_MODAL_CALLBACK_ID &&
+          actionId === TASK_URGENCY_ACTION_ID
+        ) {
+          reply.status(200).send();
+
+          void (async () => {
+            const selectedUrgency =
+              String((action as any)?.selected_option?.value ?? "") || "light";
+
+            req.log.info(
+              { selectedUrgency },
+              "[CREATE_TASK_MODAL] urgency changed"
+            );
+
+            // só para validar se o evento está chegando
+          })().catch((e) => {
+            req.log.error({ e }, "[CREATE_TASK_MODAL] urgency failed");
+          });
+
+          return;
+        }
 
         // =========================================================
         // ✅ HOME PAGER (Futuras)
