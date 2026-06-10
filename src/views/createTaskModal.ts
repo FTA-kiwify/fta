@@ -24,15 +24,60 @@ export const TASK_CAL_PRIVATE_BLOCK_ID = "task_cal_private_block" as const;
 export const TASK_CAL_PRIVATE_ACTION_ID = "task_cal_private_action" as const;
 
 export type ProjectOption = { id: string; name: string };
+export const TASK_URGENCY_BLOCK_ID = "urgency_block" as const;
+export const TASK_URGENCY_ACTION_ID = "urgency" as const;
 
 type CreateTaskModalArgs = {
   projects?: ProjectOption[];
-  initialProjectId?: string | null; // ✅ suporte à pré-seleção
+  initialProjectId?: string | null;
+
+  showTurboFields?: boolean;
+
+  initialTitle?: string;
+  initialDescription?: string;
+  initialResponsible?: string;
+  initialDueDate?: string | null;
+  initialDeadlineTime?: string | null;
+  initialDependsOnOption?: any;
+  initialRecurrence?: string | null;
+  initialUrgency?: string | null;
+  initialReminderMode?: string | null;
+  initialCarbonCopies?: string[];
+  initialCalendarPrivate?: boolean;
+  initialTurboPreviousDay?: boolean;
+  initialTurboStartTime?: string | null;
 };
 
 export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
   const projects = args?.projects ?? [];
   const initialProjectId = args?.initialProjectId ?? null;
+  const showTurboFields = Boolean(args?.showTurboFields);
+
+  const recurrenceValue = args?.initialRecurrence ?? "none";
+  const urgencyValue = args?.initialUrgency ?? "light";
+  const reminderModeValue = args?.initialReminderMode ?? "until";
+
+  const recurrenceOptions = [
+    { text: { type: "plain_text" as const, text: "Sem recorrência" }, value: "none" },
+    { text: { type: "plain_text" as const, text: "Diária" }, value: "daily" },
+    { text: { type: "plain_text" as const, text: "Semanal" }, value: "weekly" },
+    { text: { type: "plain_text" as const, text: "Quinzenal" }, value: "biweekly" },
+    { text: { type: "plain_text" as const, text: "Mensal" }, value: "monthly" },
+    { text: { type: "plain_text" as const, text: "Trimestral" }, value: "quarterly" },
+    { text: { type: "plain_text" as const, text: "Semestral" }, value: "semiannual" },
+    { text: { type: "plain_text" as const, text: "Anual" }, value: "annual" },
+  ];
+
+  const urgencyOptions = [
+    { text: { type: "plain_text" as const, text: "🟢 Light" }, value: "light" },
+    { text: { type: "plain_text" as const, text: "🟡 ASAP" }, value: "asap" },
+    { text: { type: "plain_text" as const, text: "🔴 Turbo" }, value: "turbo" },
+  ];
+
+  const reminderModeOptions = [
+    { text: { type: "plain_text" as const, text: "⏰ Entregar até o prazo" }, value: "until" },
+    { text: { type: "plain_text" as const, text: "▶️ Entregar a partir do prazo" }, value: "from" },
+  ];
 
   const projectOptions = projects.slice(0, 100).map((p) => ({
     text: { type: "plain_text" as const, text: p.name.slice(0, 75) },
@@ -154,16 +199,16 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
 
       {
         type: "input",
-        block_id: "urgency_block",
+        block_id: TASK_URGENCY_BLOCK_ID,
+        dispatch_action: true,
         label: { type: "plain_text", text: "Nível de urgência" },
         element: {
           type: "static_select",
-          action_id: "urgency",
-          options: [
-            { text: { type: "plain_text", text: "🟢 Light" }, value: "light" },
-            { text: { type: "plain_text", text: "🟡 ASAP" }, value: "asap" },
-            { text: { type: "plain_text", text: "🔴 Turbo" }, value: "turbo" },
-          ],
+          action_id: TASK_URGENCY_ACTION_ID,
+          initial_option:
+            urgencyOptions.find((o) => o.value === urgencyValue) ??
+            urgencyOptions[0],
+          options: urgencyOptions,
         },
       },
       {
