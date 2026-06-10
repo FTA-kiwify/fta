@@ -2110,6 +2110,13 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const urgency = getSelectedOptionValue(values, "urgency_block", "urgency") ?? "light";
           const reminderMode =
             getSelectedOptionValue(values, "reminder_mode_block", "reminder_mode") ?? "until";
+
+          const turboPreviousDay =
+            (values?.["turbo_previous_day_block"]?.["turbo_previous_day"]?.selected_options ?? [])
+              .some((o: any) => String(o?.value ?? "") === "yes");
+
+          const turboStartTime =
+            getSelectedTime(values, "turbo_start_time_block", "turbo_start_time") ?? null;
           const carbonCopies = getSelectedUsers(values, "cc_block", "carbon_copies");
 
           const calendarPrivate =
@@ -2132,6 +2139,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             dependsOnId,
             urgency,
             reminderMode,
+            turboPreviousDay,
+            turboStartTime,
             carbonCopies,
             calendarPrivate,
           });

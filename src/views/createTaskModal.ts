@@ -46,22 +46,22 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
   const projectBlock: KnownBlock =
     projects.length > 0
       ? ({
-          type: "input",
-          optional: true,
-          block_id: TASK_PROJECT_BLOCK_ID,
-          label: { type: "plain_text", text: "Projeto" },
-          element: {
-            type: "static_select",
-            action_id: TASK_PROJECT_ACTION_ID,
-            placeholder: { type: "plain_text", text: "Selecione um projeto" },
-            options: projectOptions,
-            ...(initialProjectOption ? { initial_option: initialProjectOption } : {}), // ✅ pré-seleção
-          },
-        } as const)
+        type: "input",
+        optional: true,
+        block_id: TASK_PROJECT_BLOCK_ID,
+        label: { type: "plain_text", text: "Projeto" },
+        element: {
+          type: "static_select",
+          action_id: TASK_PROJECT_ACTION_ID,
+          placeholder: { type: "plain_text", text: "Selecione um projeto" },
+          options: projectOptions,
+          ...(initialProjectOption ? { initial_option: initialProjectOption } : {}), // ✅ pré-seleção
+        },
+      } as const)
       : ({
-          type: "section",
-          text: { type: "mrkdwn", text: "_Nenhum projeto cadastrado ainda._" },
-        } as const);
+        type: "section",
+        text: { type: "mrkdwn", text: "_Nenhum projeto cadastrado ainda._" },
+      } as const);
 
   return {
     type: "modal",
@@ -189,6 +189,39 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         block_id: "cc_block",
         label: { type: "plain_text", text: "Pessoas em cópia" },
         element: { type: "multi_users_select", action_id: "carbon_copies" },
+      },
+      {
+        type: "input",
+        optional: true,
+        block_id: "turbo_previous_day_block",
+        label: { type: "plain_text", text: "Turbo avançado" },
+        element: {
+          type: "checkboxes",
+          action_id: "turbo_previous_day",
+          options: [
+            {
+              text: {
+                type: "plain_text",
+                text: "Iniciar follow-ups antes do prazo",
+              },
+              value: "yes",
+            },
+          ],
+        },
+      },
+      {
+        type: "input",
+        optional: true,
+        block_id: "turbo_start_time_block",
+        label: { type: "plain_text", text: "Horário de início dos follow-ups" },
+        element: {
+          type: "timepicker",
+          action_id: "turbo_start_time",
+          placeholder: {
+            type: "plain_text",
+            text: "Ex: 20:00",
+          },
+        },
       },
       {
         type: "input",
