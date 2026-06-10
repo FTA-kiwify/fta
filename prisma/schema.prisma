@@ -52,6 +52,8 @@ model Task {
   recurrence         Recurrence?
   urgency            Urgency
   reminderMode       ReminderMode      @default(until)
+  turboPreviousDay   Boolean           @default(false)
+  turboStartTime     String?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @default(now()) @updatedAt
   projectId          String?

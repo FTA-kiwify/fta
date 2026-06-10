@@ -107,6 +107,10 @@ export async function createTaskService(raw: unknown) {
 
       urgency: data.urgency,
       reminderMode,
+
+      turboPreviousDay: data.turboPreviousDay ?? false,
+      turboStartTime: data.turboStartTime ?? null,
+
       status: "pending",
       calendarPrivate: data.calendarPrivate ?? false,
 

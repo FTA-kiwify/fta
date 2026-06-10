@@ -96,6 +96,14 @@ export const createTaskSchema = z
 
     reminderMode: reminderModeSchema.optional().default("until"),
 
+    turboPreviousDay: z.boolean().optional().default(false),
+
+    turboStartTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/)
+      .nullable()
+      .optional(),
+
     carbonCopies: z.array(slackUserIdSchema).optional().default([]),
 
     // ✅ NOVO
@@ -117,6 +125,10 @@ export const createTaskSchema = z
       recurrence,
       deadlineTime,
       reminderMode: data.reminderMode === "from" ? "from" : "until",
+
+      turboPreviousDay: data.turboPreviousDay ?? false,
+      turboStartTime: data.turboStartTime ?? null,
+
       carbonCopies,
     };
   });
