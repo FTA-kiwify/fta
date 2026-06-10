@@ -641,7 +641,42 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               "[CREATE_TASK_MODAL] urgency changed"
             );
 
-            // só para validar se o evento está chegando
+            const view = payload.view;
+            if (!view?.id) return;
+
+            const projects = await prisma.project.findMany({
+              where: {
+                status: "active",
+                OR: [
+                  { createdBySlackId: userSlackId },
+                  { members: { some: { slackUserId: userSlackId } } },
+                  {
+                    tasks: {
+                      some: {
+                        OR: [
+                          { delegation: userSlackId },
+                          { responsible: userSlackId },
+                          { carbonCopies: { some: { slackUserId: userSlackId } } },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              },
+              orderBy: { name: "asc" },
+              take: 100,
+              select: { id: true, name: true },
+            });
+
+            await slack.views.update({
+              view_id: view.id,
+              hash: view.hash,
+              view: createTaskModalView({
+                projects,
+                showTurboFields: selectedUrgency === "turbo",
+                initialUrgency: selectedUrgency,
+              }),
+            });
           })().catch((e) => {
             req.log.error({ e }, "[CREATE_TASK_MODAL] urgency failed");
           });
