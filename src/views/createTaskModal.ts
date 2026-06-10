@@ -52,6 +52,7 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
   const projects = args?.projects ?? [];
   const initialProjectId = args?.initialProjectId ?? null;
   const showTurboFields = Boolean(args?.showTurboFields);
+  console.log("[MODAL] showTurboFields =", showTurboFields);
 
   const recurrenceValue = args?.initialRecurrence ?? "none";
   const urgencyValue = args?.initialUrgency ?? "light";
@@ -234,43 +235,47 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         block_id: "cc_block",
         label: { type: "plain_text", text: "Pessoas em cópia" },
         element: { type: "multi_users_select", action_id: "carbon_copies" },
-      },
-      {
-        type: "input",
-        optional: true,
-        block_id: "turbo_previous_day_block",
-        label: { type: "plain_text", text: "Turbo avançado (somente para urgência Turbo)" },
-        element: {
-          type: "checkboxes",
-          action_id: "turbo_previous_day",
-          options: [
+      }, 
+        ...((showTurboFields
+          ? [
             {
-              text: {
-                type: "plain_text",
-                text: "Iniciar follow-ups antes do prazo",
+              type: "input",
+              optional: true,
+              block_id: "turbo_previous_day_block",
+              label: { type: "plain_text", text: "Turbo avançado" },
+              element: {
+                type: "checkboxes",
+                action_id: "turbo_previous_day",
+                options: [
+                  {
+                    text: {
+                      type: "plain_text",
+                      text: "Iniciar follow-ups antes do prazo",
+                    },
+                    value: "yes",
+                  },
+                ],
               },
-              value: "yes",
             },
-          ],
-        },
-      },
-      {
-        type: "input",
-        optional: true,
-        block_id: "turbo_start_time_block",
-        label: {
-          type: "plain_text",
-          text: "Horário de início dos follow-ups (somente Turbo)",
-        },
-        element: {
-          type: "timepicker",
-          action_id: "turbo_start_time",
-          placeholder: {
-            type: "plain_text",
-            text: "Ex: 20:00",
-          },
-        },
-      },
+            {
+              type: "input",
+              optional: true,
+              block_id: "turbo_start_time_block",
+              label: {
+                type: "plain_text",
+                text: "Horário de início dos follow-ups",
+              },
+              element: {
+                type: "timepicker",
+                action_id: "turbo_start_time",
+                placeholder: {
+                  type: "plain_text",
+                  text: "Ex: 20:00",
+                },
+              },
+            },
+          ]
+          : []) as KnownBlock[]),
       {
         type: "input",
         optional: true,
