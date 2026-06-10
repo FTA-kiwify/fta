@@ -667,6 +667,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               take: 100,
               select: { id: true, name: true },
             });
+            req.log.info("[CREATE_TASK_MODAL] before views.update");
+
 
             await slack.views.update({
               view_id: view.id,
@@ -677,6 +679,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 initialUrgency: selectedUrgency,
               }),
             });
+            req.log.info("[CREATE_TASK_MODAL] after views.update");
           })().catch((e) => {
             req.log.error({ e }, "[CREATE_TASK_MODAL] urgency failed");
           });
