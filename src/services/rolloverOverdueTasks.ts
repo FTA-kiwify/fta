@@ -186,7 +186,7 @@ export async function rolloverOverdueTasksForResponsible(args: { slackUserId: st
 
     // 2) Se é PARA HOJE (term == hoje) e passou do cutoff:
     //    - move para PRÓXIMO DIA ÚTIL
-    if (termSpIso === todayIso) {
+    if (termSpIso === todayIso && afterCutoff) {
       const toIso = nextBusinessIso;
 
       await prisma.task.update({
