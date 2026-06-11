@@ -94,6 +94,14 @@ export async function runTurboUrgencyReminderCron() {
       const previousDayIso = previousDay.toISOString().slice(0, 10);
 
       if (dateIso === previousDayIso) {
+        console.log("[TURBO-CHECK]", {
+          title: t.title,
+          dateIso,
+          previousDayIso,
+          turboStartTime: t.turboStartTime,
+          currentHour: hour,
+          currentMinute: minute,
+        });
         if (!t.turboStartTime) {
           return true;
         }
