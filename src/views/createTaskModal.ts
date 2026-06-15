@@ -250,7 +250,7 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
                   {
                     text: {
                       type: "plain_text",
-                      text: "Iniciar follow-ups antes do prazo",
+                      text: "Iniciar follow-ups no dia anterior ao prazo",
                     },
                     value: "yes",
                   },

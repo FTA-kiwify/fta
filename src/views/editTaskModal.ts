@@ -313,7 +313,7 @@ export function editTaskModalView(args: {
                 {
                   text: {
                     type: "plain_text",
-                    text: "Iniciar follow-ups antes do prazo",
+                    text: "Iniciar follow-ups no dia anterior ao prazo",
                   },
                   value: "yes",
                 },
@@ -324,7 +324,7 @@ export function editTaskModalView(args: {
             {
               text: {
                 type: "plain_text",
-                text: "Iniciar follow-ups antes do prazo",
+                text: "Iniciar follow-ups no dia anterior ao prazo",
               },
               value: "yes",
             },
