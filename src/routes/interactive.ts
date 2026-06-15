@@ -757,7 +757,16 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             if (!userSlackId) return;
 
             const v = JSON.parse(String(action?.value ?? "{}")) as {
-              scope?: "my" | "delegated" | "cc";
+              scope?:
+              | "my_today"
+              | "my_tomorrow"
+              | "my_future"
+              | "delegated_today"
+              | "delegated_tomorrow"
+              | "delegated_future"
+              | "cc_today"
+              | "cc_tomorrow"
+              | "cc_future";
               page?: number;
             };
 
@@ -769,8 +778,16 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             }
 
             const nextState = {
+              myTodayPage: Number(meta.myTodayPage ?? 0),
+              myTomorrowPage: Number(meta.myTomorrowPage ?? 0),
               myFuturePage: Number(meta.myFuturePage ?? 0),
+
+              delegatedTodayPage: Number(meta.delegatedTodayPage ?? 0),
+              delegatedTomorrowPage: Number(meta.delegatedTomorrowPage ?? 0),
               delegatedFuturePage: Number(meta.delegatedFuturePage ?? 0),
+
+              ccTodayPage: Number(meta.ccTodayPage ?? 0),
+              ccTomorrowPage: Number(meta.ccTomorrowPage ?? 0),
               ccFuturePage: Number(meta.ccFuturePage ?? 0),
 
               myDelegatorFilter: meta.myDelegatorFilter ?? null,
@@ -779,9 +796,17 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             };
 
             const nextPage = Number(v.page ?? 0);
-            if (v.scope === "my") nextState.myFuturePage = nextPage;
-            if (v.scope === "delegated") nextState.delegatedFuturePage = nextPage;
-            if (v.scope === "cc") nextState.ccFuturePage = nextPage;
+            if (v.scope === "my_today") nextState.myTodayPage = nextPage;
+            if (v.scope === "my_tomorrow") nextState.myTomorrowPage = nextPage;
+            if (v.scope === "my_future") nextState.myFuturePage = nextPage;
+
+            if (v.scope === "delegated_today") nextState.delegatedTodayPage = nextPage;
+            if (v.scope === "delegated_tomorrow") nextState.delegatedTomorrowPage = nextPage;
+            if (v.scope === "delegated_future") nextState.delegatedFuturePage = nextPage;
+
+            if (v.scope === "cc_today") nextState.ccTodayPage = nextPage;
+            if (v.scope === "cc_tomorrow") nextState.ccTomorrowPage = nextPage;
+            if (v.scope === "cc_future") nextState.ccFuturePage = nextPage;
 
             // ✅ evita erro de tipagem se publishHome ainda não tiver 3º arg tipado
             await (publishHome as any)(slack, userSlackId, { state: nextState });

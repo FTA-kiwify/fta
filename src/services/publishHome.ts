@@ -146,8 +146,16 @@ function paginate<T>(items: T[], page: number, pageSize: number) {
 }
 
 type HomePaginationState = {
+  myTodayPage: number;
+  myTomorrowPage: number;
   myFuturePage: number;
+
+  delegatedTodayPage: number;
+  delegatedTomorrowPage: number;
   delegatedFuturePage: number;
+
+  ccTodayPage: number;
+  ccTomorrowPage: number;
   ccFuturePage: number;
 
   myDelegatorFilter: string | null;
@@ -156,8 +164,16 @@ type HomePaginationState = {
 };
 
 const DEFAULT_STATE: HomePaginationState = {
+  myTodayPage: 0,
+  myTomorrowPage: 0,
   myFuturePage: 0,
+
+  delegatedTodayPage: 0,
+  delegatedTomorrowPage: 0,
   delegatedFuturePage: 0,
+
+  ccTodayPage: 0,
+  ccTomorrowPage: 0,
   ccFuturePage: 0,
 
   myDelegatorFilter: null,
@@ -256,7 +272,18 @@ export async function publishHome(
   const myTomorrowAll = myTasks.filter((t) => bucketByIso(t.term, todayIso) === "tomorrow");
   const myFutureAll = myTasks.filter((t) => bucketByIso(t.term, todayIso) === "future");
 
-  const tasksToday = myTodayAll.slice(0, TODAY_MAX).map((t) => ({
+  const myTodayPag = paginate(
+    myTodayAll,
+    state.myTodayPage,
+    TODAY_MAX
+  );
+
+  const myTomorrowPag = paginate(
+    myTomorrowAll,
+    state.myTomorrowPage,
+    TOMORROW_MAX
+  );
+  const tasksToday = myTodayPag.items.map((t) => ({
     id: t.id,
     title: t.title,
     description: t.description,
@@ -266,7 +293,7 @@ export async function publishHome(
     urgency: t.urgency,
   }));
 
-  const tasksTomorrow = myTomorrowAll.slice(0, TOMORROW_MAX).map((t) => ({
+  const tasksTomorrow = myTomorrowPag.items.map((t) => ({
     id: t.id,
     title: t.title,
     description: t.description,
@@ -574,6 +601,20 @@ export async function publishHome(
         status: f.status as any,
         updatedAt: f.updatedAt,
       })),
+
+      myTodayPager: {
+        scope: "my",
+        page: myTodayPag.page,
+        pageSize: myTodayPag.pageSize,
+        total: myTodayPag.total,
+      },
+
+      myTomorrowPager: {
+        scope: "my",
+        page: myTomorrowPag.page,
+        pageSize: myTomorrowPag.pageSize,
+        total: myTomorrowPag.total,
+      },
 
       // ✅ pager infos
       myFuturePager: { scope: "my", page: myFuturePag.page, pageSize: myFuturePag.pageSize, total: myFuturePag.total },

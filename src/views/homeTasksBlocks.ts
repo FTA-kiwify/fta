@@ -93,8 +93,18 @@ export const PROJECT_EDIT_ACTION_ID = "project_edit" as const;
 export const PROJECT_CONCLUDE_ACTION_ID = "project_conclude" as const;
 
 export type PagerInfo = {
-  scope: "my" | "delegated" | "cc";
-  page: number; // 0-based
+  scope:
+  | "my_today"
+  | "my_tomorrow"
+  | "my_future"
+  | "delegated_today"
+  | "delegated_tomorrow"
+  | "delegated_future"
+  | "cc_today"
+  | "cc_tomorrow"
+  | "cc_future";
+
+  page: number;
   pageSize: number;
   total: number;
 };
@@ -179,7 +189,23 @@ function renderPager(p?: PagerInfo | null): KnownBlock[] {
   const canNext = page < totalPages - 1;
 
   const labelScope =
-    p.scope === "my" ? "Suas futuras" : p.scope === "delegated" ? "Demandas futuras" : "Futuras (cópia)";
+    p.scope === "my_today"
+      ? "Suas tarefas - Hoje"
+      : p.scope === "my_tomorrow"
+        ? "Suas tarefas - Amanhã"
+        : p.scope === "my_future"
+          ? "Suas tarefas - Futuras"
+          : p.scope === "delegated_today"
+            ? "Suas demandas - Hoje"
+            : p.scope === "delegated_tomorrow"
+              ? "Suas demandas - Amanhã"
+              : p.scope === "delegated_future"
+                ? "Suas demandas - Futuras"
+                : p.scope === "cc_today"
+                  ? "Acompanhando - Hoje"
+                  : p.scope === "cc_tomorrow"
+                    ? "Acompanhando - Amanhã"
+                    : "Acompanhando - Futuras";
 
   const actions: any[] = [];
 
@@ -403,6 +429,9 @@ export function homeTasksBlocks(args: {
 
 
   // pager (somente Futuras)
+
+  myTodayPager?: PagerInfo | null;
+  myTomorrowPager?: PagerInfo | null;
   myFuturePager?: PagerInfo | null;
   delegatedFuturePager?: PagerInfo | null;
   ccFuturePager?: PagerInfo | null;
@@ -439,11 +468,13 @@ export function homeTasksBlocks(args: {
   blocks.push(
     ...groupWithCheckboxes({ title: "Hoje", blockIdPrefix: "my_today", options: renderMyOptions(args.tasksToday) })
   );
+  blocks.push(...renderPager(args.myTodayPager));
   pushDivider();
 
   blocks.push(
     ...groupWithCheckboxes({ title: "Amanhã", blockIdPrefix: "my_tomorrow", options: renderMyOptions(args.tasksTomorrow) })
   );
+  blocks.push(...renderPager(args.myTomorrowPager));
   pushDivider();
 
   blocks.push(
