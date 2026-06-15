@@ -152,6 +152,7 @@ type HomePaginationState = {
 
   myDelegatorFilter: string | null;
   delegatedResponsibleFilter: string | null;
+  ccResponsibleFilter: string | null;
 };
 
 const DEFAULT_STATE: HomePaginationState = {
@@ -161,6 +162,7 @@ const DEFAULT_STATE: HomePaginationState = {
 
   myDelegatorFilter: null,
   delegatedResponsibleFilter: null,
+  ccResponsibleFilter: null,
 };
 
 type RawTask = {
@@ -361,6 +363,11 @@ export async function publishHome(
     where: {
       status: { not: "done" },
       carbonCopies: { some: { slackUserId: userSlackId } },
+
+      ...(state.ccResponsibleFilter
+        ? { responsible: state.ccResponsibleFilter }
+        : {}),
+
       AND: [visibleWhere],
     },
     select: {
@@ -391,6 +398,16 @@ export async function publishHome(
     slack,
     ccTasks.flatMap((t) => [t.responsible, t.delegation])
   );
+
+  const ccResponsibleOptions = Array.from(
+    new Set(ccTasks.map((t) => t.responsible))
+  )
+    .filter(Boolean)
+    .map((slackId) => ({
+      slackId,
+      name: ccNameMap.get(slackId) ?? slackId,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const ccTodayAll = ccTasks.filter((t) => bucketByIso(t.term, todayIso) === "today");
   const ccTomorrowAll = ccTasks.filter((t) => bucketByIso(t.term, todayIso) === "tomorrow");
@@ -510,6 +527,8 @@ export async function publishHome(
       })),
       delegatedResponsibleFilter: state.delegatedResponsibleFilter,
       delegatedResponsibleOptions,
+      ccResponsibleFilter: state.ccResponsibleFilter,
+      ccResponsibleOptions,
 
       ccToday: ccToday.map((t) => ({
         id: t.id,
@@ -585,6 +604,7 @@ export async function publishHome(
 
         myDelegatorFilter: state.myDelegatorFilter,
         delegatedResponsibleFilter: state.delegatedResponsibleFilter,
+        ccResponsibleFilter: state.ccResponsibleFilter,
       }),
       blocks,
     },

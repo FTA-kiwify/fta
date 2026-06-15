@@ -74,6 +74,7 @@ export const HOME_PAGER_NEXT_ACTION_ID = "home_pager_next" as const;
 
 export const HOME_MYTASKS_FILTER_ACTION_ID = "home_mytasks_filter" as const;
 export const HOME_DELEGATED_FILTER_ACTION_ID = "home_delegated_filter" as const;
+export const HOME_CC_FILTER_ACTION_ID = "home_cc_filter" as const;
 
 // placeholders
 export const DELEGATED_SEND_FUP_ACTION_ID = "delegated_send_fup" as const;
@@ -389,6 +390,7 @@ export function homeTasksBlocks(args: {
   ccToday: CcTaskItem[];
   ccTomorrow: CcTaskItem[];
   ccFuture: CcTaskItem[];
+  ccResponsibleFilter?: string | null;
 
   // recorrências
   recurrences: RecurrenceItem[];
@@ -398,6 +400,7 @@ export function homeTasksBlocks(args: {
 
   // feedback
   myOpenFeedback?: FeedbackHomeItem[];
+
 
   // pager (somente Futuras)
   myFuturePager?: PagerInfo | null;
@@ -516,6 +519,25 @@ export function homeTasksBlocks(args: {
   // EM CÓPIA
   // =========================
   pushHeader("📌 Acompanhando (você está em cópia)");
+
+  blocks.push({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: "*Responsável*",
+    },
+    accessory: {
+      type: "users_select",
+      action_id: HOME_CC_FILTER_ACTION_ID,
+      placeholder: {
+        type: "plain_text",
+        text: "Todos",
+      },
+      ...(args.ccResponsibleFilter
+        ? { initial_user: args.ccResponsibleFilter }
+        : {}),
+    },
+  } as any);
 
   blocks.push(
     ...groupWithCheckboxes({ title: "Hoje", blockIdPrefix: "cc_today", options: renderCcOptions(args.ccToday) })
