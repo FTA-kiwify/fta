@@ -377,10 +377,26 @@ export async function publishHome(
     (t) => bucketByIso(t.term, todayIso) === "future" || bucketByIso(t.term, todayIso) === "overdue"
   );
 
-  const delegatedToday = delegatedTodayAll.slice(0, TODAY_MAX);
-  const delegatedTomorrow = delegatedTomorrowAll.slice(0, TOMORROW_MAX);
+  const delegatedTodayPag = paginate(
+    delegatedTodayAll,
+    state.delegatedTodayPage,
+    TODAY_MAX
+  );
 
-  const delegatedFuturePag = paginate(delegatedFutureAll, state.delegatedFuturePage, FUTURE_PAGE_SIZE);
+  const delegatedTomorrowPag = paginate(
+    delegatedTomorrowAll,
+    state.delegatedTomorrowPage,
+    TOMORROW_MAX
+  );
+
+  const delegatedFuturePag = paginate(
+    delegatedFutureAll,
+    state.delegatedFuturePage,
+    FUTURE_PAGE_SIZE
+  );
+
+  const delegatedToday = delegatedTodayPag.items;
+  const delegatedTomorrow = delegatedTomorrowPag.items;
   const delegatedFuture = delegatedFuturePag.items;
 
   // =========================================================
@@ -442,10 +458,26 @@ export async function publishHome(
     (t) => bucketByIso(t.term, todayIso) === "future" || bucketByIso(t.term, todayIso) === "overdue"
   );
 
-  const ccToday = ccTodayAll.slice(0, TODAY_MAX);
-  const ccTomorrow = ccTomorrowAll.slice(0, TOMORROW_MAX);
+  const ccTodayPag = paginate(
+    ccTodayAll,
+    state.ccTodayPage,
+    TODAY_MAX
+  );
 
-  const ccFuturePag = paginate(ccFutureAll, state.ccFuturePage, FUTURE_PAGE_SIZE);
+  const ccTomorrowPag = paginate(
+    ccTomorrowAll,
+    state.ccTomorrowPage,
+    TOMORROW_MAX
+  );
+
+  const ccFuturePag = paginate(
+    ccFutureAll,
+    state.ccFuturePage,
+    FUTURE_PAGE_SIZE
+  );
+
+  const ccToday = ccTodayPag.items;
+  const ccTomorrow = ccTomorrowPag.items;
   const ccFuture = ccFuturePag.items;
 
   // =========================================================
@@ -603,28 +635,57 @@ export async function publishHome(
       })),
 
       myTodayPager: {
-        scope: "my",
+        scope: "my_today",
         page: myTodayPag.page,
         pageSize: myTodayPag.pageSize,
         total: myTodayPag.total,
       },
 
       myTomorrowPager: {
-        scope: "my",
+        scope: "my_tomorrow",
         page: myTomorrowPag.page,
         pageSize: myTomorrowPag.pageSize,
         total: myTomorrowPag.total,
       },
 
+      delegatedTodayPager: {
+        scope: "delegated_today",
+        page: delegatedTodayPag.page,
+        pageSize: delegatedTodayPag.pageSize,
+        total: delegatedTodayPag.total,
+      },
+
+      delegatedTomorrowPager: {
+        scope: "delegated_tomorrow",
+        page: delegatedTomorrowPag.page,
+        pageSize: delegatedTomorrowPag.pageSize,
+        total: delegatedTomorrowPag.total,
+      },
+
+      ccTodayPager: {
+        scope: "cc_today",
+        page: ccTodayPag.page,
+        pageSize: ccTodayPag.pageSize,
+        total: ccTodayPag.total,
+      },
+
+      ccTomorrowPager: {
+        scope: "cc_tomorrow",
+        page: ccTomorrowPag.page,
+        pageSize: ccTomorrowPag.pageSize,
+        total: ccTomorrowPag.total,
+      },
+
+
       // ✅ pager infos
-      myFuturePager: { scope: "my", page: myFuturePag.page, pageSize: myFuturePag.pageSize, total: myFuturePag.total },
+      myFuturePager: { scope: "my_future", page: myFuturePag.page, pageSize: myFuturePag.pageSize, total: myFuturePag.total },
       delegatedFuturePager: {
-        scope: "delegated",
+        scope: "delegated_future",
         page: delegatedFuturePag.page,
         pageSize: delegatedFuturePag.pageSize,
         total: delegatedFuturePag.total,
       },
-      ccFuturePager: { scope: "cc", page: ccFuturePag.page, pageSize: ccFuturePag.pageSize, total: ccFuturePag.total },
+      ccFuturePager: { scope: "cc_future", page: ccFuturePag.page, pageSize: ccFuturePag.pageSize, total: ccFuturePag.total },
     } as any)
   );
 
@@ -639,8 +700,16 @@ export async function publishHome(
     view: {
       type: "home",
       private_metadata: JSON.stringify({
+        myTodayPage: myTodayPag.page,
+        myTomorrowPage: myTomorrowPag.page,
         myFuturePage: myFuturePag.page,
+
+        delegatedTodayPage: delegatedTodayPag.page,
+        delegatedTomorrowPage: delegatedTomorrowPag.page,
         delegatedFuturePage: delegatedFuturePag.page,
+
+        ccTodayPage: ccTodayPag.page,
+        ccTomorrowPage: ccTomorrowPag.page,
         ccFuturePage: ccFuturePag.page,
 
         myDelegatorFilter: state.myDelegatorFilter,

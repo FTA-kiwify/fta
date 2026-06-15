@@ -433,7 +433,13 @@ export function homeTasksBlocks(args: {
   myTodayPager?: PagerInfo | null;
   myTomorrowPager?: PagerInfo | null;
   myFuturePager?: PagerInfo | null;
+
+  delegatedTodayPager?: PagerInfo | null;
+  delegatedTomorrowPager?: PagerInfo | null;
   delegatedFuturePager?: PagerInfo | null;
+
+  ccTodayPager?: PagerInfo | null;
+  ccTomorrowPager?: PagerInfo | null;
   ccFuturePager?: PagerInfo | null;
 }): KnownBlock[] {
   const blocks: KnownBlock[] = [];
@@ -521,11 +527,13 @@ export function homeTasksBlocks(args: {
   blocks.push(
     ...groupWithCheckboxes({ title: "Hoje", blockIdPrefix: "del_today", options: renderDelegatedOptions(args.delegatedToday) })
   );
+  blocks.push(...renderPager(args.delegatedTodayPager));
   pushDivider();
 
   blocks.push(
     ...groupWithCheckboxes({ title: "Amanhã", blockIdPrefix: "del_tomorrow", options: renderDelegatedOptions(args.delegatedTomorrow) })
   );
+  blocks.push(...renderPager(args.delegatedTomorrowPager));
   pushDivider();
 
   blocks.push(
@@ -573,11 +581,13 @@ export function homeTasksBlocks(args: {
   blocks.push(
     ...groupWithCheckboxes({ title: "Hoje", blockIdPrefix: "cc_today", options: renderCcOptions(args.ccToday) })
   );
+  blocks.push(...renderPager(args.ccTodayPager));
   pushDivider();
 
   blocks.push(
     ...groupWithCheckboxes({ title: "Amanhã", blockIdPrefix: "cc_tomorrow", options: renderCcOptions(args.ccTomorrow) })
   );
+  blocks.push(...renderPager(args.ccTomorrowPager));
   pushDivider();
 
   blocks.push(
