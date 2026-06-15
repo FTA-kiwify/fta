@@ -72,6 +72,9 @@ export const TASKS_REFRESH_ACTION_ID = "tasks_refresh" as const;
 export const HOME_PAGER_PREV_ACTION_ID = "home_pager_prev" as const;
 export const HOME_PAGER_NEXT_ACTION_ID = "home_pager_next" as const;
 
+export const HOME_MYTASKS_FILTER_ACTION_ID = "home_mytasks_filter" as const;
+export const HOME_DELEGATED_FILTER_ACTION_ID = "home_delegated_filter" as const;
+
 // placeholders
 export const DELEGATED_SEND_FUP_ACTION_ID = "delegated_send_fup" as const;
 export const DELEGATED_EDIT_ACTION_ID = "delegated_edit" as const;
@@ -363,11 +366,24 @@ export function homeTasksBlocks(args: {
   tasksToday: HomeTaskItem[];
   tasksTomorrow: HomeTaskItem[];
   tasksFuture: HomeTaskItem[];
+  myDelegatorFilter?: string | null;
+
+  myDelegatorOptions?: Array<{
+    slackId: string;
+    name: string;
+  }>;
 
   // você delegou
   delegatedToday: DelegatedTaskItem[];
   delegatedTomorrow: DelegatedTaskItem[];
   delegatedFuture: DelegatedTaskItem[];
+
+  delegatedResponsibleFilter?: string | null;
+
+  delegatedResponsibleOptions?: Array<{
+    slackId: string;
+    name: string;
+  }>;
 
   // você está em cópia
   ccToday: CcTaskItem[];
@@ -397,6 +413,25 @@ export function homeTasksBlocks(args: {
   // SUAS TAREFAS (RESPONSÁVEL)
   // =========================
   pushHeader("📌 Suas tarefas (você é responsável)");
+
+  blocks.push({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: "*Delegado por*",
+    },
+    accessory: {
+      type: "users_select",
+      action_id: HOME_MYTASKS_FILTER_ACTION_ID,
+      placeholder: {
+        type: "plain_text",
+        text: "Todos",
+      },
+      ...(args.myDelegatorFilter
+        ? { initial_user: args.myDelegatorFilter }
+        : {}),
+    },
+  } as any);
 
   blocks.push(
     ...groupWithCheckboxes({ title: "Hoje", blockIdPrefix: "my_today", options: renderMyOptions(args.tasksToday) })
@@ -429,6 +464,25 @@ export function homeTasksBlocks(args: {
   // SUAS DEMANDAS (DELEGOU)
   // =========================
   pushHeader("📌 Suas demandas (você delegou)");
+
+  blocks.push({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: "*Responsável*",
+    },
+    accessory: {
+      type: "users_select",
+      action_id: HOME_DELEGATED_FILTER_ACTION_ID,
+      placeholder: {
+        type: "plain_text",
+        text: "Todos",
+      },
+      ...(args.delegatedResponsibleFilter
+        ? { initial_user: args.delegatedResponsibleFilter }
+        : {}),
+    },
+  } as any);
 
   blocks.push(
     ...groupWithCheckboxes({ title: "Hoje", blockIdPrefix: "del_today", options: renderDelegatedOptions(args.delegatedToday) })

@@ -73,6 +73,8 @@ import {
   // ✅ home pager
   HOME_PAGER_PREV_ACTION_ID,
   HOME_PAGER_NEXT_ACTION_ID,
+  HOME_MYTASKS_FILTER_ACTION_ID,
+  HOME_DELEGATED_FILTER_ACTION_ID,
 } from "../views/homeTasksBlocks";
 
 import {
@@ -687,6 +689,56 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           return;
         }
 
+        if (
+          actionId === HOME_MYTASKS_FILTER_ACTION_ID ||
+          actionId === HOME_DELEGATED_FILTER_ACTION_ID
+        ) {
+          reply.status(200).send();
+
+          void (async () => {
+            if (!userSlackId) return;
+
+            let meta: any = {};
+
+            try {
+              meta = JSON.parse(payload.view?.private_metadata ?? "{}");
+            } catch {
+              meta = {};
+            }
+
+            const nextState = {
+              myFuturePage: Number(meta.myFuturePage ?? 0),
+              delegatedFuturePage: Number(meta.delegatedFuturePage ?? 0),
+              ccFuturePage: Number(meta.ccFuturePage ?? 0),
+
+              myDelegatorFilter: meta.myDelegatorFilter ?? null,
+              delegatedResponsibleFilter: meta.delegatedResponsibleFilter ?? null,
+            };
+
+            const selectedUser =
+              (action as any)?.selected_user ?? null;
+
+            if (actionId === HOME_MYTASKS_FILTER_ACTION_ID) {
+              nextState.myDelegatorFilter = selectedUser;
+              nextState.myFuturePage = 0;
+            }
+
+            if (actionId === HOME_DELEGATED_FILTER_ACTION_ID) {
+              nextState.delegatedResponsibleFilter = selectedUser;
+              nextState.delegatedFuturePage = 0;
+            }
+
+            await (publishHome as any)(
+              slack,
+              userSlackId,
+              { state: nextState }
+            );
+          })().catch((e) =>
+            req.log.error({ e }, "[HOME] filter failed")
+          );
+
+          return;
+        }
         // =========================================================
         // ✅ HOME PAGER (Futuras)
         // - lê view.private_metadata e chama publishHome(...) com state
@@ -713,6 +765,9 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               myFuturePage: Number(meta.myFuturePage ?? 0),
               delegatedFuturePage: Number(meta.delegatedFuturePage ?? 0),
               ccFuturePage: Number(meta.ccFuturePage ?? 0),
+
+              myDelegatorFilter: meta.myDelegatorFilter ?? null,
+              delegatedResponsibleFilter: meta.delegatedResponsibleFilter ?? null,
             };
 
             const nextPage = Number(v.page ?? 0);

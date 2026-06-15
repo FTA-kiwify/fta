@@ -149,12 +149,18 @@ type HomePaginationState = {
   myFuturePage: number;
   delegatedFuturePage: number;
   ccFuturePage: number;
+
+  myDelegatorFilter: string | null;
+  delegatedResponsibleFilter: string | null;
 };
 
 const DEFAULT_STATE: HomePaginationState = {
   myFuturePage: 0,
   delegatedFuturePage: 0,
   ccFuturePage: 0,
+
+  myDelegatorFilter: null,
+  delegatedResponsibleFilter: null,
 };
 
 type RawTask = {
@@ -220,12 +226,29 @@ export async function publishHome(
     },
   })) as unknown as RawTask[];
 
-  const myTasks = sortTasks(myTasksRaw);
+  const myTasksUnfiltered = sortTasks(myTasksRaw);
+
+  const myTasks =
+    state.myDelegatorFilter
+      ? myTasksUnfiltered.filter(
+        (t) => t.delegation === state.myDelegatorFilter
+      )
+      : myTasksUnfiltered;
 
   const myDelegationNameMap = await resolveSlackNames(
     slack,
     myTasks.map((t) => t.delegation)
   );
+
+  const myDelegatorOptions = Array.from(
+    new Set(myTasksUnfiltered.map((t) => t.delegation))
+  )
+    .filter(Boolean)
+    .map((slackId) => ({
+      slackId,
+      name: myDelegationNameMap.get(slackId) ?? slackId,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const myTodayAll = myTasks.filter((t) => bucketByIso(t.term, todayIso) === "today");
   const myTomorrowAll = myTasks.filter((t) => bucketByIso(t.term, todayIso) === "tomorrow");
@@ -295,12 +318,29 @@ export async function publishHome(
     createdAt: Date;
   }>;
 
-  const delegated = sortTasks(delegatedRaw);
+  const delegatedUnfiltered = sortTasks(delegatedRaw);
+
+  const delegated =
+    state.delegatedResponsibleFilter
+      ? delegatedUnfiltered.filter(
+        (t) => t.responsible === state.delegatedResponsibleFilter
+      )
+      : delegatedUnfiltered;
 
   const delegatedResponsibleNameMap = await resolveSlackNames(
     slack,
     delegated.map((t) => t.responsible)
   );
+
+  const delegatedResponsibleOptions = Array.from(
+    new Set(delegatedUnfiltered.map((t) => t.responsible))
+  )
+    .filter(Boolean)
+    .map((slackId) => ({
+      slackId,
+      name: delegatedResponsibleNameMap.get(slackId) ?? slackId,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const delegatedTodayAll = delegated.filter((t) => bucketByIso(t.term, todayIso) === "today");
   const delegatedTomorrowAll = delegated.filter((t) => bucketByIso(t.term, todayIso) === "tomorrow");
@@ -438,6 +478,9 @@ export async function publishHome(
       tasksTomorrow,
       tasksFuture,
 
+      myDelegatorFilter: state.myDelegatorFilter,
+      myDelegatorOptions,
+
       delegatedToday: delegatedToday.map((t) => ({
         id: t.id,
         title: t.title,
@@ -465,6 +508,8 @@ export async function publishHome(
         responsible: t.responsible,
         responsibleName: delegatedResponsibleNameMap.get(t.responsible) ?? null,
       })),
+      delegatedResponsibleFilter: state.delegatedResponsibleFilter,
+      delegatedResponsibleOptions,
 
       ccToday: ccToday.map((t) => ({
         id: t.id,
@@ -537,6 +582,9 @@ export async function publishHome(
         myFuturePage: myFuturePag.page,
         delegatedFuturePage: delegatedFuturePag.page,
         ccFuturePage: ccFuturePag.page,
+
+        myDelegatorFilter: state.myDelegatorFilter,
+        delegatedResponsibleFilter: state.delegatedResponsibleFilter,
       }),
       blocks,
     },
