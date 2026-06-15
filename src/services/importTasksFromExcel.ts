@@ -433,7 +433,7 @@ export async function importTasksFromExcelSlackFile(args: {
     const ccFromEmails = await Promise.all(ccEmails.map((em) => slackUserIdFromEmail(slack, em)));
     const carbonCopies = Array.from(
       new Set([...ccSlackIds, ...ccFromEmails.filter(Boolean)].filter((x): x is string => Boolean(x)))
-    ).filter((id) => id !== responsibleSlackId);
+    )
 
     // Projeto: por ID (uuid) ou Nome (exato)
     // ✅ Agora valida acesso considerando uploader OU delegador da linha
