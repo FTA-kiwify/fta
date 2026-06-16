@@ -121,6 +121,13 @@ export async function runTurboUrgencyReminderCron() {
       }
     }
 
+    if (t.term) {
+      const taskDateIso = t.term.toISOString().slice(0, 10);
+
+      if (dateIso !== taskDateIso) {
+        return false;
+      }
+    }
     return shouldSendUrgencyReminder({
       urgency: "turbo",
       reminderMode: t.reminderMode,
