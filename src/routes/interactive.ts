@@ -76,6 +76,7 @@ import {
   HOME_MYTASKS_FILTER_ACTION_ID,
   HOME_DELEGATED_FILTER_ACTION_ID,
   HOME_CC_FILTER_ACTION_ID,
+  HOME_MYTASKS_CC_FILTER_ACTION_ID,
 } from "../views/homeTasksBlocks";
 
 import {
@@ -692,6 +693,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
         if (
           actionId === HOME_MYTASKS_FILTER_ACTION_ID ||
+          actionId === HOME_MYTASKS_CC_FILTER_ACTION_ID ||
           actionId === HOME_DELEGATED_FILTER_ACTION_ID ||
           actionId === HOME_CC_FILTER_ACTION_ID
         ) {
@@ -714,6 +716,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               ccFuturePage: Number(meta.ccFuturePage ?? 0),
 
               myDelegatorFilter: meta.myDelegatorFilter ?? null,
+              myCcFilter: meta.myCcFilter ?? null,
+
               delegatedResponsibleFilter: meta.delegatedResponsibleFilter ?? null,
               ccResponsibleFilter: meta.ccResponsibleFilter ?? null,
             };
@@ -723,6 +727,10 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
             if (actionId === HOME_MYTASKS_FILTER_ACTION_ID) {
               nextState.myDelegatorFilter = selectedUser;
+              nextState.myFuturePage = 0;
+            }
+            if (actionId === HOME_MYTASKS_CC_FILTER_ACTION_ID) {
+              nextState.myCcFilter = selectedUser;
               nextState.myFuturePage = 0;
             }
 
