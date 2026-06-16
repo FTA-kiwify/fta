@@ -1,35 +1,42 @@
 import { prisma } from "../lib/prisma";
 
 export type TaskAuditAction =
-  | "TASK_CREATED"
-  | "TASK_COMPLETED"
-  | "TASK_REOPENED"
-  | "TASK_RESCHEDULED"
-  | "TASK_EDITED"
-  | "TASK_CANCELLED";
+    | "TASK_CREATED"
+    | "TASK_COMPLETED"
+    | "TASK_REOPENED"
+    | "TASK_RESCHEDULED"
+    | "TASK_EDITED"
+    | "TASK_CANCELLED";
 
 export async function createTaskAuditLog(args: {
-  taskId: string;
+    taskId: string;
 
-  action: TaskAuditAction;
+    action: TaskAuditAction;
 
-  actorSlackId?: string | null;
-  actorName?: string | null;
+    actorSlackId?: string | null;
+    actorName?: string | null;
 
-  beforeJson?: unknown;
-  afterJson?: unknown;
+    beforeJson?: unknown;
+    afterJson?: unknown;
 }) {
-  return prisma.taskAuditLog.create({
-    data: {
-      taskId: args.taskId,
+    console.log("[AUDIT]", {
+        action: args.action,
+        taskId: args.taskId,
+        actorSlackId: args.actorSlackId,
+    });
 
-      action: args.action,
 
-      actorSlackId: args.actorSlackId ?? null,
-      actorName: args.actorName ?? null,
+    return prisma.taskAuditLog.create({
+        data: {
+            taskId: args.taskId,
 
-      beforeJson: args.beforeJson as any,
-      afterJson: args.afterJson as any,
-    },
-  });
+            action: args.action,
+
+            actorSlackId: args.actorSlackId ?? null,
+            actorName: args.actorName ?? null,
+
+            beforeJson: args.beforeJson as any,
+            afterJson: args.afterJson as any,
+        },
+    });
 }
