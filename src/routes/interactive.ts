@@ -1231,6 +1231,16 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               urgency: (oldTask.urgency as any) ?? "light",
               carbonCopies: oldTask.carbonCopies.map((c) => c.slackUserId),
             });
+            await prisma.taskAuditLog.create({
+              data: {
+                taskId: newTask.id,
+                action: "TASK_REOPENED",
+                actorSlackId: userSlackId,
+                afterJson: {
+                  reopenedFromTaskId: oldTask.id,
+                },
+              },
+            });
 
             try {
               await syncTaskParticipantEmails({
@@ -1653,6 +1663,18 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             );
 
             await Promise.allSettled(tasksToDelete.map((t) => deleteCalendarEventForTask(t.id)));
+
+            await Promise.all(
+              tasksToDelete.map((t) =>
+                prisma.taskAuditLog.create({
+                  data: {
+                    taskId: t.id,
+                    action: "TASK_CANCELLED",
+                    actorSlackId: userSlackId,
+                  },
+                })
+              )
+            );
 
             await prisma.task.deleteMany({
               where: { id: { in: tasksToDelete.map((t) => t.id) }, delegation: userSlackId },

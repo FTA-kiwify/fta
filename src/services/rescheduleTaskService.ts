@@ -53,6 +53,23 @@ export async function rescheduleTaskService(args: {
       deadlineTime: true,
     },
   });
+  await prisma.taskAuditLog.create({
+    data: {
+      taskId: updated.id,
+      action: "TASK_RESCHEDULED",
+      actorSlackId: args.requesterSlackId,
+
+      beforeJson: {
+        term: task.term,
+        deadlineTime: task.deadlineTime,
+      },
+
+      afterJson: {
+        term: updated.term,
+        deadlineTime: updated.deadlineTime,
+      },
+    },
+  });
 
   void syncCalendarEventForTask(args.taskId).catch((e) => {
     console.error("[calendar] sync failed (rescheduleTaskService):", args.taskId, e);
