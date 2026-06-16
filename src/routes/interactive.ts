@@ -725,6 +725,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               ccResponsibleFilter: meta.ccResponsibleFilter ?? null,
             };
 
+
             const selectedUser =
               (action as any)?.selected_user ?? null;
 
@@ -742,6 +743,13 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               nextState.delegatedFuturePage = 0;
             }
             if (actionId === HOME_DELEGATED_CC_FILTER_ACTION_ID) {
+              console.log(
+                "[DELEGATED_CC_FILTER]",
+                {
+                  current: nextState.delegatedCcFilter,
+                  selected: selectedUser,
+                }
+              );
               nextState.delegatedCcFilter = selectedUser;
               nextState.delegatedFuturePage = 0;
             }
