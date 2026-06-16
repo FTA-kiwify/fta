@@ -96,7 +96,7 @@ export async function completeTasksService(args: {
         await tx.taskAuditLog.create({
           data: {
             taskId: t.id,
-            action: "TASK_COMPLETED",
+            action: "TASK_DONE",
             actorSlackId: args.requesterSlackId,
           },
         });
