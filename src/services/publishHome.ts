@@ -163,6 +163,7 @@ type HomePaginationState = {
 
   delegatedResponsibleFilter: string | null;
   ccResponsibleFilter: string | null;
+  delegatedCcFilter: string | null;
 };
 
 const DEFAULT_STATE: HomePaginationState = {
@@ -183,6 +184,7 @@ const DEFAULT_STATE: HomePaginationState = {
 
   delegatedResponsibleFilter: null,
   ccResponsibleFilter: null,
+  delegatedCcFilter: null,
 };
 
 type RawTask = {
@@ -386,6 +388,12 @@ export async function publishHome(
       urgency: true,
       responsible: true,
       createdAt: true,
+
+      carbonCopies: {
+        select: {
+          slackUserId: true,
+        },
+      },
     },
     take: 200,
   })) as unknown as Array<{
@@ -396,16 +404,32 @@ export async function publishHome(
     urgency: "light" | "asap" | "turbo";
     responsible: string;
     createdAt: Date;
+    carbonCopies?: Array<{
+      slackUserId: string;
+    }>;
   }>;
 
   const delegatedUnfiltered = sortTasks(delegatedRaw);
 
-  const delegated =
-    state.delegatedResponsibleFilter
-      ? delegatedUnfiltered.filter(
-        (t) => t.responsible === state.delegatedResponsibleFilter
+  const delegated = delegatedUnfiltered.filter((t) => {
+    if (
+      state.delegatedResponsibleFilter &&
+      t.responsible !== state.delegatedResponsibleFilter
+    ) {
+      return false;
+    }
+
+    if (
+      state.delegatedCcFilter &&
+      !t.carbonCopies?.some(
+        (c) => c.slackUserId === state.delegatedCcFilter
       )
-      : delegatedUnfiltered;
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 
   const delegatedResponsibleNameMap = await resolveSlackNames(
     slack,
@@ -419,6 +443,31 @@ export async function publishHome(
     .map((slackId) => ({
       slackId,
       name: delegatedResponsibleNameMap.get(slackId) ?? slackId,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const delegatedCcNameMap = await resolveSlackNames(
+    slack,
+    Array.from(
+      new Set(
+        delegatedUnfiltered.flatMap(
+          (t) => t.carbonCopies?.map((c) => c.slackUserId) ?? []
+        )
+      )
+    )
+  );
+
+  const delegatedCcOptions = Array.from(
+    new Set(
+      delegatedUnfiltered.flatMap(
+        (t) => t.carbonCopies?.map((c) => c.slackUserId) ?? []
+      )
+    )
+  )
+    .filter(Boolean)
+    .map((slackId) => ({
+      slackId,
+      name: delegatedCcNameMap.get(slackId) ?? slackId,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -642,6 +691,8 @@ export async function publishHome(
       delegatedResponsibleOptions,
       ccResponsibleFilter: state.ccResponsibleFilter,
       ccResponsibleOptions,
+      delegatedCcFilter: state.delegatedCcFilter,
+      delegatedCcOptions,
 
       ccToday: ccToday.map((t) => ({
         id: t.id,
@@ -771,6 +822,7 @@ export async function publishHome(
 
         delegatedResponsibleFilter: state.delegatedResponsibleFilter,
         ccResponsibleFilter: state.ccResponsibleFilter,
+        delegatedCcFilter: state.delegatedCcFilter,
       }),
       blocks,
     },

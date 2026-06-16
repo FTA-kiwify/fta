@@ -74,6 +74,7 @@ export const HOME_PAGER_NEXT_ACTION_ID = "home_pager_next" as const;
 
 export const HOME_MYTASKS_FILTER_ACTION_ID = "home_mytasks_filter" as const;
 export const HOME_DELEGATED_FILTER_ACTION_ID = "home_delegated_filter" as const;
+export const HOME_DELEGATED_CC_FILTER_ACTION_ID = "home_delegated_cc_filter" as const;
 export const HOME_CC_FILTER_ACTION_ID = "home_cc_filter" as const;
 export const HOME_MYTASKS_CC_FILTER_ACTION_ID = "home_mytasks_cc_filter" as const;
 
@@ -420,6 +421,13 @@ export function homeTasksBlocks(args: {
     name: string;
   }>;
 
+  delegatedCcFilter?: string | null;
+
+  delegatedCcOptions?: Array<{
+    slackId: string;
+    name: string;
+  }>;
+
   // você está em cópia
   ccToday: CcTaskItem[];
   ccTomorrow: CcTaskItem[];
@@ -547,6 +555,25 @@ export function homeTasksBlocks(args: {
       },
       ...(args.delegatedResponsibleFilter
         ? { initial_user: args.delegatedResponsibleFilter }
+        : {}),
+    },
+  } as any);
+
+  blocks.push({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: "*Em cópia*",
+    },
+    accessory: {
+      type: "users_select",
+      action_id: HOME_DELEGATED_CC_FILTER_ACTION_ID,
+      placeholder: {
+        type: "plain_text",
+        text: "Todos",
+      },
+      ...(args.delegatedCcFilter
+        ? { initial_user: args.delegatedCcFilter }
         : {}),
     },
   } as any);
