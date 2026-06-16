@@ -4,6 +4,7 @@ import { createTaskSchema, CreateTaskInput } from "../schema/taskSchema";
 import { Recurrence, ReminderMode } from "../generated/prisma/enums";
 import { syncCalendarEventForTask } from "./googleCalendar";
 import { getSlackUserEmail } from "./slackUserEmail";
+import { createTaskAuditLog } from "./createTaskAuditLog";
 
 const SP_OFFSET_HOURS = 3;
 
@@ -123,6 +124,26 @@ export async function createTaskService(raw: unknown) {
         : {}),
     },
     include: { carbonCopies: true },
+  });
+
+  await createTaskAuditLog({
+    taskId: task.id,
+
+    action: "TASK_CREATED",
+
+    actorSlackId: data.delegation,
+
+    afterJson: {
+      title: task.title,
+      responsible: task.responsible,
+      delegation: task.delegation,
+
+      term: task.term,
+      deadlineTime: task.deadlineTime,
+
+      urgency: task.urgency,
+      recurrence: task.recurrence,
+    },
   });
 
   // ✅ cria evento no Google Calendar (não trava criação da task)
