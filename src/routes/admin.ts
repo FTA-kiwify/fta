@@ -254,6 +254,7 @@ export async function adminRoutes(app: FastifyInstance) {
           skip: (page - 1) * pageSize,
           take: pageSize,
         }),
+
       ]);
 
       // ✅ Resolve nomes apenas dos IDs da página (leve)
@@ -295,13 +296,11 @@ export async function adminRoutes(app: FastifyInstance) {
         .join("");
 
       const projectOptions = [
-        `<option value="all" ${
-          projectId === "all" || !projectId ? "selected" : ""
+        `<option value="all" ${projectId === "all" || !projectId ? "selected" : ""
         }>Todos</option>`,
         ...projects.map(
           (p) =>
-            `<option value="${escHtml(p.id)}" ${
-              p.id === projectId ? "selected" : ""
+            `<option value="${escHtml(p.id)}" ${p.id === projectId ? "selected" : ""
             }>${escHtml(p.name)}</option>`
         ),
       ].join("");
@@ -309,8 +308,7 @@ export async function adminRoutes(app: FastifyInstance) {
       const statusOptions = ["all", "pending", "blocked", "overdue", "done"]
         .map(
           (s) =>
-            `<option value="${s}" ${
-              s === (status || "all") ? "selected" : ""
+            `<option value="${s}" ${s === (status || "all") ? "selected" : ""
             }>${s}</option>`
         )
         .join("");
@@ -319,26 +317,24 @@ export async function adminRoutes(app: FastifyInstance) {
         <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px;">
           <div class="small">${total} tasks • página ${page} / ${totalPages}</div>
           <div style="display:flex; gap:10px;">
-            ${
-              prev
-                ? `<a class="pill" href="/admin/tasks?${new URLSearchParams({
-                    q,
-                    status: status || "all",
-                    projectId: projectId || "all",
-                    page: String(prev),
-                  }).toString()}">← Anterior</a>`
-                : ""
-            }
-            ${
-              next
-                ? `<a class="pill" href="/admin/tasks?${new URLSearchParams({
-                    q,
-                    status: status || "all",
-                    projectId: projectId || "all",
-                    page: String(next),
-                  }).toString()}">Próxima →</a>`
-                : ""
-            }
+            ${prev
+          ? `<a class="pill" href="/admin/tasks?${new URLSearchParams({
+            q,
+            status: status || "all",
+            projectId: projectId || "all",
+            page: String(prev),
+          }).toString()}">← Anterior</a>`
+          : ""
+        }
+            ${next
+          ? `<a class="pill" href="/admin/tasks?${new URLSearchParams({
+            q,
+            status: status || "all",
+            projectId: projectId || "all",
+            page: String(next),
+          }).toString()}">Próxima →</a>`
+          : ""
+        }
           </div>
         </div>
       `;
@@ -396,6 +392,87 @@ export async function adminRoutes(app: FastifyInstance) {
       reply
         .type("text/html")
         .send(layout({ title: "FTA Admin - Tasks", user, flash, body }));
+    });
+
+    protectedApp.get("/admin/audit", async (request, reply) => {
+      const flash = readFlash(request);
+      const user = getAdminUser(request);
+
+      const logs = await prisma.taskAuditLog.findMany({
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 500,
+        include: {
+          task: {
+            select: {
+              title: true,
+            },
+          },
+        },
+      });
+
+      const actorIds = logs
+        .map((l) => l.actorSlackId)
+        .filter(Boolean) as string[];
+
+      const actorNameById = await resolveManySlackNames(actorIds);
+
+      const rows = logs
+        .map((l) => {
+          const actor =
+            actorNameById[l.actorSlackId ?? ""] ??
+            l.actorSlackId ??
+            "-";
+
+          return `
+        <tr>
+          <td>${escHtml(fmtDateTime(l.createdAt))}</td>
+          <td><span class="pill">${escHtml(l.action)}</span></td>
+          <td>${escHtml(actor)}</td>
+          <td>${escHtml(l.task?.title ?? "(tarefa removida)")}</td>
+          <td>${escHtml(l.taskId)}</td>
+        </tr>
+      `;
+        })
+        .join("");
+
+      const body = `
+    <div class="topbar">
+      <h1>Auditoria</h1>
+    </div>
+
+    <div class="card" style="margin-top:12px; overflow:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Data/Hora</th>
+            <th>Ação</th>
+            <th>Usuário</th>
+            <th>Tarefa</th>
+            <th>Task ID</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          ${rows ||
+        `<tr><td colspan="5">Nenhum log encontrado.</td></tr>`
+        }
+        </tbody>
+      </table>
+    </div>
+  `;
+
+      reply
+        .type("text/html")
+        .send(
+          layout({
+            title: "FTA Admin - Auditoria",
+            user,
+            flash,
+            body,
+          })
+        );
     });
 
     // TASKS (NEW)
@@ -575,16 +652,16 @@ export async function adminRoutes(app: FastifyInstance) {
           calendarPrivate,
           ...(ccs.length
             ? {
-                carbonCopies: {
-                  createMany: {
-                    data: ccs.map((slackUserId) => ({
-                      slackUserId,
-                      email: null,
-                    })),
-                    skipDuplicates: true,
-                  },
+              carbonCopies: {
+                createMany: {
+                  data: ccs.map((slackUserId) => ({
+                    slackUserId,
+                    email: null,
+                  })),
+                  skipDuplicates: true,
                 },
-              }
+              },
+            }
             : {}),
         },
       });
@@ -635,8 +712,7 @@ export async function adminRoutes(app: FastifyInstance) {
         `<option value="">(sem projeto)</option>`,
         ...projects.map(
           (p) =>
-            `<option value="${escHtml(p.id)}" ${
-              p.id === task.projectId ? "selected" : ""
+            `<option value="${escHtml(p.id)}" ${p.id === task.projectId ? "selected" : ""
             }>${escHtml(p.name)}</option>`
         ),
       ].join("");
@@ -677,13 +753,12 @@ export async function adminRoutes(app: FastifyInstance) {
                 <label>Status</label>
                 <select name="status">
                   ${["pending", "blocked", "overdue", "done"]
-                    .map(
-                      (s) =>
-                        `<option value="${s}" ${
-                          s === task.status ? "selected" : ""
-                        }>${s}</option>`
-                    )
-                    .join("")}
+          .map(
+            (s) =>
+              `<option value="${s}" ${s === task.status ? "selected" : ""
+              }>${s}</option>`
+          )
+          .join("")}
                 </select>
               </div>
             </div>
@@ -691,22 +766,22 @@ export async function adminRoutes(app: FastifyInstance) {
             <div style="margin-top:12px;">
               <label>Descrição</label>
               <textarea name="description">${escHtml(
-                task.description ?? ""
-              )}</textarea>
+            task.description ?? ""
+          )}</textarea>
             </div>
 
             <div class="row" style="margin-top:12px;">
               <div>
                 <label>Delegador (digite nome ou cole ID) *</label>
                 <input name="delegation" list="slackUsers" required value="${escHtml(
-                  task.delegation
-                )}" />
+            task.delegation
+          )}" />
               </div>
               <div>
                 <label>Responsável (digite nome ou cole ID) *</label>
                 <input name="responsible" list="slackUsers" required value="${escHtml(
-                  task.responsible
-                )}" />
+            task.responsible
+          )}" />
               </div>
             </div>
 
@@ -714,15 +789,15 @@ export async function adminRoutes(app: FastifyInstance) {
   <div>
     <label>Prazo (term)</label>
     <input name="termIso" type="date" value="${escHtml(
-      task.term ? fmtDate(task.term) : ""
-    )}" />
+            task.term ? fmtDate(task.term) : ""
+          )}" />
   </div>
 
   <div>
     <label>Hora (deadlineTime)</label>
     <input name="deadlineTime" value="${escHtml(
-      task.deadlineTime ?? ""
-    )}" placeholder="HH:MM" />
+            task.deadlineTime ?? ""
+          )}" placeholder="HH:MM" />
   </div>
 
   <div>
@@ -739,37 +814,34 @@ export async function adminRoutes(app: FastifyInstance) {
                 <label>Urgência</label>
                 <select name="urgency">
                   ${["light", "asap", "turbo"]
-                    .map(
-                      (u) =>
-                        `<option value="${u}" ${
-                          u === task.urgency ? "selected" : ""
-                        }>${u}</option>`
-                    )
-                    .join("")}
+          .map(
+            (u) =>
+              `<option value="${u}" ${u === task.urgency ? "selected" : ""
+              }>${u}</option>`
+          )
+          .join("")}
                 </select>
               </div>
               <div>
                 <label>Recorrência</label>
                 <select name="recurrence">
-                  <option value="" ${
-                    !recurrenceValue ? "selected" : ""
-                  }>(sem recorrência)</option>
+                  <option value="" ${!recurrenceValue ? "selected" : ""
+        }>(sem recorrência)</option>
                   ${[
-                    "daily",
-                    "weekly",
-                    "biweekly",
-                    "monthly",
-                    "quarterly",
-                    "semiannual",
-                    "annual",
-                  ]
-                    .map(
-                      (r) =>
-                        `<option value="${r}" ${
-                          r === recurrenceValue ? "selected" : ""
-                        }>${r}</option>`
-                    )
-                    .join("")}
+          "daily",
+          "weekly",
+          "biweekly",
+          "monthly",
+          "quarterly",
+          "semiannual",
+          "annual",
+        ]
+          .map(
+            (r) =>
+              `<option value="${r}" ${r === recurrenceValue ? "selected" : ""
+              }>${r}</option>`
+          )
+          .join("")}
                 </select>
                 <div class="small">Pra cancelar recorrência: selecione “(sem recorrência)”.</div>
               </div>
@@ -783,15 +855,14 @@ export async function adminRoutes(app: FastifyInstance) {
               <div>
                 <label>DependsOnId</label>
                 <input name="dependsOnId" value="${escHtml(
-                  task.dependsOnId ?? ""
-                )}" />
+            task.dependsOnId ?? ""
+          )}" />
               </div>
             </div>
 
             <div style="margin-top:12px;">
-              <label><input type="checkbox" name="calendarPrivate" ${
-                task.calendarPrivate ? "checked" : ""
-              } /> Calendar privado</label>
+              <label><input type="checkbox" name="calendarPrivate" ${task.calendarPrivate ? "checked" : ""
+        } /> Calendar privado</label>
               <div class="small">Se houver term, ao salvar tentamos sincronizar o Google Calendar (se configurado).</div>
             </div>
 
@@ -808,8 +879,8 @@ export async function adminRoutes(app: FastifyInstance) {
         <div class="card">
           <div>${ccList || `<span class="muted">Sem CCs.</span>`}</div>
           <form method="post" action="/admin/tasks/${escHtml(
-            task.id
-          )}/cc" style="margin-top:12px;">
+          task.id
+        )}/cc" style="margin-top:12px;">
             ${known.datalistHtml}
             <div class="row">
               <div>
@@ -1144,8 +1215,8 @@ export async function adminRoutes(app: FastifyInstance) {
               <div>
                 <label>End date</label>
                 <input type="date" name="endDateIso" value="${escHtml(
-                  project.endDate ? fmtDate(project.endDate) : ""
-                )}" />
+        project.endDate ? fmtDate(project.endDate) : ""
+      )}" />
               </div>
               <div>
                 <label>Criado por (Slack ID)</label>
