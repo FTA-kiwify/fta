@@ -88,7 +88,19 @@ export async function completeTasksService(args: {
       const recurrence = t.recurrence as Recurrence | null;
 
       if (!recurrence) {
-        await tx.task.update({ where: { id: t.id }, data: { status: "done" } });
+        await tx.task.update({
+          where: { id: t.id },
+          data: { status: "done" }
+        });
+
+        await tx.taskAuditLog.create({
+          data: {
+            taskId: t.id,
+            action: "TASK_COMPLETED",
+            actorSlackId: args.requesterSlackId,
+          },
+        });
+
         doneIds.push(t.id);
         continue;
       }
