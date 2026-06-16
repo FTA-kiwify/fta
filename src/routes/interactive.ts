@@ -730,31 +730,44 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               (action as any)?.selected_user ?? null;
 
             if (actionId === HOME_MYTASKS_FILTER_ACTION_ID) {
-              nextState.myDelegatorFilter = selectedUser;
+              nextState.myDelegatorFilter =
+                nextState.myDelegatorFilter === selectedUser
+                  ? null
+                  : selectedUser;
+
               nextState.myFuturePage = 0;
             }
             if (actionId === HOME_MYTASKS_CC_FILTER_ACTION_ID) {
-              nextState.myCcFilter = selectedUser;
+              nextState.myCcFilter =
+                nextState.myCcFilter === selectedUser
+                  ? null
+                  : selectedUser;
+
               nextState.myFuturePage = 0;
             }
 
             if (actionId === HOME_DELEGATED_FILTER_ACTION_ID) {
-              nextState.delegatedResponsibleFilter = selectedUser;
+              nextState.delegatedResponsibleFilter =
+                nextState.delegatedResponsibleFilter === selectedUser
+                  ? null
+                  : selectedUser;
+
               nextState.delegatedFuturePage = 0;
             }
             if (actionId === HOME_DELEGATED_CC_FILTER_ACTION_ID) {
-              console.log(
-                "[DELEGATED_CC_FILTER]",
-                {
-                  current: nextState.delegatedCcFilter,
-                  selected: selectedUser,
-                }
-              );
-              nextState.delegatedCcFilter = selectedUser;
+              nextState.delegatedCcFilter =
+                nextState.delegatedCcFilter === selectedUser
+                  ? null
+                  : selectedUser;
+
               nextState.delegatedFuturePage = 0;
             }
             if (actionId === HOME_CC_FILTER_ACTION_ID) {
-              nextState.ccResponsibleFilter = selectedUser;
+              nextState.ccResponsibleFilter =
+                nextState.ccResponsibleFilter === selectedUser
+                  ? null
+                  : selectedUser;
+
               nextState.ccFuturePage = 0;
             }
 
