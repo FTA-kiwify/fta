@@ -469,41 +469,31 @@ export function homeTasksBlocks(args: {
   pushHeader("📌 Suas tarefas (você é responsável)");
 
   blocks.push({
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: "*Delegado por*",
-    },
-    accessory: {
-      type: "users_select",
-      action_id: HOME_MYTASKS_FILTER_ACTION_ID,
-      placeholder: {
-        type: "plain_text",
-        text: "Todos",
+    type: "actions",
+    elements: [
+      {
+        type: "users_select",
+        action_id: HOME_MYTASKS_FILTER_ACTION_ID,
+        placeholder: {
+          type: "plain_text",
+          text: "👤 Delegado por",
+        },
+        ...(args.myDelegatorFilter
+          ? { initial_user: args.myDelegatorFilter }
+          : {}),
       },
-      ...(args.myDelegatorFilter
-        ? { initial_user: args.myDelegatorFilter }
-        : {}),
-    },
-  } as any);
-
-  blocks.push({
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: "*Em cópia*",
-    },
-    accessory: {
-      type: "users_select",
-      action_id: HOME_MYTASKS_CC_FILTER_ACTION_ID,
-      placeholder: {
-        type: "plain_text",
-        text: "Todos",
+      {
+        type: "users_select",
+        action_id: HOME_MYTASKS_CC_FILTER_ACTION_ID,
+        placeholder: {
+          type: "plain_text",
+          text: "👥 Em cópia",
+        },
+        ...(args.myCcFilter
+          ? { initial_user: args.myCcFilter }
+          : {}),
       },
-      ...(args.myCcFilter
-        ? { initial_user: args.myCcFilter }
-        : {}),
-    },
+    ],
   } as any);
 
   blocks.push(
@@ -541,41 +531,31 @@ export function homeTasksBlocks(args: {
   pushHeader("📌 Suas demandas (você delegou)");
 
   blocks.push({
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: "*Responsável*",
-    },
-    accessory: {
-      type: "users_select",
-      action_id: HOME_DELEGATED_FILTER_ACTION_ID,
-      placeholder: {
-        type: "plain_text",
-        text: "Todos",
+    type: "actions",
+    elements: [
+      {
+        type: "users_select",
+        action_id: HOME_DELEGATED_FILTER_ACTION_ID,
+        placeholder: {
+          type: "plain_text",
+          text: "👤 Responsável",
+        },
+        ...(args.delegatedResponsibleFilter
+          ? { initial_user: args.delegatedResponsibleFilter }
+          : {}),
       },
-      ...(args.delegatedResponsibleFilter
-        ? { initial_user: args.delegatedResponsibleFilter }
-        : {}),
-    },
-  } as any);
-
-  blocks.push({
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: "*Em cópia*",
-    },
-    accessory: {
-      type: "users_select",
-      action_id: HOME_DELEGATED_CC_FILTER_ACTION_ID,
-      placeholder: {
-        type: "plain_text",
-        text: "Todos",
+      {
+        type: "users_select",
+        action_id: HOME_DELEGATED_CC_FILTER_ACTION_ID,
+        placeholder: {
+          type: "plain_text",
+          text: "👥 Em cópia",
+        },
+        ...(args.delegatedCcFilter
+          ? { initial_user: args.delegatedCcFilter }
+          : {}),
       },
-      ...(args.delegatedCcFilter
-        ? { initial_user: args.delegatedCcFilter }
-        : {}),
-    },
+    ],
   } as any);
 
   blocks.push(
@@ -614,22 +594,20 @@ export function homeTasksBlocks(args: {
   pushHeader("📌 Acompanhando (você está em cópia)");
 
   blocks.push({
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: "*Responsável*",
-    },
-    accessory: {
-      type: "users_select",
-      action_id: HOME_CC_FILTER_ACTION_ID,
-      placeholder: {
-        type: "plain_text",
-        text: "Todos",
+    type: "actions",
+    elements: [
+      {
+        type: "users_select",
+        action_id: HOME_CC_FILTER_ACTION_ID,
+        placeholder: {
+          type: "plain_text",
+          text: "👤 Responsável",
+        },
+        ...(args.ccResponsibleFilter
+          ? { initial_user: args.ccResponsibleFilter }
+          : {}),
       },
-      ...(args.ccResponsibleFilter
-        ? { initial_user: args.ccResponsibleFilter }
-        : {}),
-    },
+    ],
   } as any);
 
   blocks.push(
