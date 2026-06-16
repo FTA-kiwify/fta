@@ -34,6 +34,15 @@ type NotifyTaskEditedArgs = {
   oldReminderMode?: string | null;
   newReminderMode?: string | null;
 
+  oldTurboPreviousDay?: boolean | null;
+  newTurboPreviousDay?: boolean | null;
+
+  oldTurboStartTime?: string | null;
+  newTurboStartTime?: string | null;
+
+  oldProjectId?: string | null;
+  newProjectId?: string | null;
+
   oldCalendarPrivate?: boolean | null;
   newCalendarPrivate?: boolean | null;
 
@@ -192,6 +201,15 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
     oldReminderMode,
     newReminderMode,
 
+    oldTurboPreviousDay,
+    newTurboPreviousDay,
+
+    oldTurboStartTime,
+    newTurboStartTime,
+
+    oldProjectId,
+    newProjectId,
+
     oldCalendarPrivate,
     newCalendarPrivate,
 
@@ -240,6 +258,40 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
   ) {
     changes.push(
       `• *Tipo de prazo:* ${reminderModeLabel(oldReminderMode ?? null)} → ${reminderModeLabel(newReminderMode ?? null)}`
+    );
+  }
+
+  if (
+    oldTurboPreviousDay !== undefined &&
+    newTurboPreviousDay !== undefined &&
+    Boolean(oldTurboPreviousDay) !== Boolean(newTurboPreviousDay)
+  ) {
+    changes.push(
+      `• *FUP dia anterior:* ${Boolean(oldTurboPreviousDay) ? "Sim" : "Não"
+      } → ${Boolean(newTurboPreviousDay) ? "Sim" : "Não"
+      }`
+    );
+  }
+
+  if (
+    (oldTurboStartTime || newTurboStartTime) &&
+    oldTurboStartTime !== newTurboStartTime
+  ) {
+    changes.push(
+      `• *Início turbo:* ${oldTurboStartTime ?? "_vazio_"
+      } → ${newTurboStartTime ?? "_vazio_"
+      }`
+    );
+  }
+
+  if (
+    (oldProjectId || newProjectId) &&
+    oldProjectId !== newProjectId
+  ) {
+    changes.push(
+      `• *Projeto:* ${oldProjectId ?? "_nenhum_"
+      } → ${newProjectId ?? "_nenhum_"
+      }`
     );
   }
 

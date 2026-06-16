@@ -2514,6 +2514,16 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             projectId,
           });
 
+          await prisma.taskAuditLog.create({
+            data: {
+              taskId,
+              action: "TASK_EDITED",
+              actorSlackId: userSlackId,
+              beforeJson: updated.before as any,
+              afterJson: updated.after as any,
+            },
+          });
+
           reply.send({}); // ACK
 
           void (async () => {
@@ -2578,6 +2588,15 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
                 oldReminderMode: before.reminderMode ?? null,
                 newReminderMode: after.reminderMode ?? null,
+
+                oldTurboPreviousDay: before.turboPreviousDay ?? null,
+                newTurboPreviousDay: after.turboPreviousDay ?? null,
+
+                oldTurboStartTime: before.turboStartTime ?? null,
+                newTurboStartTime: after.turboStartTime ?? null,
+
+                oldProjectId: before.projectId ?? null,
+                newProjectId: after.projectId ?? null,
 
                 oldCalendarPrivate: before.calendarPrivate ?? null,
                 newCalendarPrivate: after.calendarPrivate ?? null,

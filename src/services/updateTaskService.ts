@@ -44,6 +44,8 @@ const TASK_SELECT = {
   calendarPrivate: true,
   projectId: true, // ✅ NOVO
   createdAt: true,
+  turboPreviousDay: true,
+  turboStartTime: true,
   carbonCopies: { select: { slackUserId: true } },
 } as const;
 
@@ -60,6 +62,8 @@ type TaskSelected = {
   urgency: any;
   reminderMode: "until" | "from";
   calendarPrivate: boolean;
+  turboPreviousDay: boolean;
+  turboStartTime: string | null;
   projectId: string | null; // ✅ NOVO
   createdAt: Date;
   carbonCopies: { slackUserId: string }[];
@@ -77,6 +81,8 @@ type TaskSnapshot = {
   urgency: string;
   reminderMode: "until" | "from";
   calendarPrivate: boolean;
+  turboPreviousDay: boolean;
+  turboStartTime: string | null;
   projectId: string | null; // ✅ NOVO
   createdAt: Date;
   carbonCopies: string[];
@@ -95,6 +101,8 @@ function toSnapshot(t: TaskSelected): TaskSnapshot {
     urgency: t.urgency ? String(t.urgency) : "light",
     reminderMode: t.reminderMode === "from" ? "from" : "until",
     calendarPrivate: Boolean(t.calendarPrivate ?? false),
+    turboPreviousDay: Boolean(t.turboPreviousDay ?? false),
+    turboStartTime: t.turboStartTime ?? null,
     projectId: t.projectId ?? null, // ✅ NOVO
     createdAt: t.createdAt,
     carbonCopies: (t.carbonCopies ?? []).map((c) => c.slackUserId),
