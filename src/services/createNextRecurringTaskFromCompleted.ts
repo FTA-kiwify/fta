@@ -106,7 +106,7 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
   // se já existe uma próxima instância com a mesma recurrenceAnchor, não cria outra.
   const existing = await prisma.task.findFirst({
     where: {
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       recurrence: completed.recurrence as any,
       recurrenceAnchor: nextSafeDate,
       responsible: completed.responsible,

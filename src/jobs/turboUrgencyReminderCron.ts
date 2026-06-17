@@ -63,7 +63,7 @@ export async function runTurboUrgencyReminderCron() {
   turboWindowEndUtc.setUTCDate(turboWindowEndUtc.getUTCDate() + 2);
   const turboTasks = await prisma.task.findMany({
     where: {
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       urgency: "turbo" as any,
       term: { not: null, lt: turboWindowEndUtc },
       reminders: { none: { dateIso, slot } },

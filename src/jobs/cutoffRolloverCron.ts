@@ -62,7 +62,7 @@ export async function runCutoffRolloverCron() {
   // ✅ Só roda para quem tem task com prazo <= hoje (term < amanhã 00:00 SP)
   const responsibles = await prisma.task.findMany({
     where: {
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       term: { not: null, lt: tomorrowUtc },
     },
     select: { responsible: true },

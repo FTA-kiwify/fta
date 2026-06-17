@@ -86,7 +86,7 @@ export async function runLightUrgencyReminderCron() {
   // Light lembra tarefas pendentes "até hoje" (overdue + hoje).
   const tasks = await prisma.task.findMany({
     where: {
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       urgency: "light" as any,
       term: { not: null, lt: endUtc },
       // ✅ evita duplicar (mesmo slot no mesmo dia)

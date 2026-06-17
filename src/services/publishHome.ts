@@ -237,7 +237,7 @@ export async function publishHome(
   const myTasksRaw = (await prisma.task.findMany({
     where: {
       responsible: userSlackId,
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       AND: [visibleWhere, excludeSelfDelegatedFromResponsible],
     },
     select: {
@@ -377,7 +377,7 @@ export async function publishHome(
   const delegatedRaw = (await prisma.task.findMany({
     where: {
       delegation: userSlackId,
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       AND: [visibleWhere],
     },
     select: {
@@ -504,7 +504,7 @@ export async function publishHome(
   // =========================================================
   const ccRaw = (await prisma.task.findMany({
     where: {
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       carbonCopies: { some: { slackUserId: userSlackId } },
 
       ...(state.ccResponsibleFilter
@@ -586,7 +586,7 @@ export async function publishHome(
   const recurrenceTasks = (await prisma.task.findMany({
     where: {
       responsible: userSlackId,
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       recurrence: { not: null },
       AND: [visibleWhere, excludeSelfDelegatedFromResponsible],
     },
@@ -624,10 +624,10 @@ export async function publishHome(
   const projectsWithCounts = await Promise.all(
     projects.map(async (p) => {
       const [openCount, doneCount, overdueCount] = await Promise.all([
-        prisma.task.count({ where: { projectId: p.id, status: { not: "done" }, AND: [visibleWhere] } }),
+        prisma.task.count({ where: { projectId: p.id, status: { notIn: ["done", "cancelled"] }, AND: [visibleWhere] } }),
         prisma.task.count({ where: { projectId: p.id, status: "done" } }),
         prisma.task.count({
-          where: { projectId: p.id, status: { not: "done" }, term: { lt: todayUtc }, AND: [visibleWhere] },
+          where: { projectId: p.id, status: { notIn: ["done", "cancelled"] }, term: { lt: todayUtc }, AND: [visibleWhere] },
         }),
       ]);
       return { id: p.id, name: p.name, openCount, doneCount, overdueCount };

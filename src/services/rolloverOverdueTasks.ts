@@ -141,7 +141,7 @@ export async function rolloverOverdueTasksForResponsible(args: { slackUserId: st
 
   const tasks = await prisma.task.findMany({
     where: {
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       responsible: slackUserId,
       term: { not: null, lt: tomorrowUtc },
     },

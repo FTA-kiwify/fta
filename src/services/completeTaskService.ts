@@ -66,7 +66,7 @@ export async function completeTasksService(args: {
     where: {
       id: { in: ids },
       responsible: args.requesterSlackId,
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
     },
     select: {
       id: true,

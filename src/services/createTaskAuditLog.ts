@@ -2,7 +2,7 @@ import { prisma } from "../lib/prisma";
 
 export type TaskAuditAction =
     | "TASK_CREATED"
-    | "TASK_COMPLETED"
+    | "TASK_DONE"
     | "TASK_REOPENED"
     | "TASK_RESCHEDULED"
     | "TASK_EDITED"

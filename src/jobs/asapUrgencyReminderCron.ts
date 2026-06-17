@@ -85,7 +85,7 @@ export async function runAsapUrgencyReminderCron() {
   // ASAP lembra tarefas pendentes "até hoje" (overdue + hoje).
   const tasks = await prisma.task.findMany({
     where: {
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       urgency: "asap" as any,
       term: { not: null, lt: endUtc },
       // ✅ evita duplicar lembrete (por dateIso + slot)

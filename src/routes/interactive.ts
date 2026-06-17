@@ -539,7 +539,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
     if (actionId !== TASK_DEPENDS_ACTION_ID) return reply.status(200).send({ options: [] });
 
     const where: any = {
-      status: { not: "done" },
+      status: { notIn: ["done", "cancelled"] },
       OR: [
         { responsible: userSlackId },
         { delegation: userSlackId },
@@ -1191,7 +1191,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
                 const whereNext: any = {
                   id: { not: oldTask.id },
-                  status: { not: "done" },
+                  status: { notIn: ["done", "cancelled"] },
                   recurrence: oldTask.recurrence,
                   responsible: oldTask.responsible,
                   projectId: oldTask.projectId ?? null,
@@ -1333,7 +1333,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const tasksToConclude = await prisma.task.findMany({
             where: {
               id: { in: selectedIds },
-              status: { not: "done" },
+              status: { notIn: ["done", "cancelled"] },
               OR: [{ responsible: userSlackId }, { delegation: userSlackId }],
             },
             select: {
@@ -1367,12 +1367,12 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           await prisma.task.updateMany({
             where: {
               id: { in: concludedIds },
-              status: { not: "done" },
+              status: { notIn: ["done", "cancelled"] },
               OR: [{ responsible: userSlackId }, { delegation: userSlackId }],
             },
             data: { status: "done" },
           });
-          
+
           void Promise.allSettled(concludedIds.map((id) => syncCalendarEventForTask(id))).catch(() => { });
 
           const nextResults = await Promise.allSettled(
@@ -1635,7 +1635,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               where: {
                 id: { in: selectedIds },
                 delegation: userSlackId,
-                status: { not: "done" },
+                status: { notIn: ["done", "cancelled"] },
               },
               select: {
                 id: true,
@@ -1688,8 +1688,14 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               )
             );
 
-            await prisma.task.deleteMany({
-              where: { id: { in: tasksToDelete.map((t) => t.id) }, delegation: userSlackId },
+            await prisma.task.updateMany({
+              where: {
+                id: { in: tasksToDelete.map((t) => t.id) },
+                delegation: userSlackId,
+              },
+              data: {
+                status: "cancelled",
+              },
             });
 
             const affectedUsers = new Set<string>();
@@ -1726,7 +1732,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const task = await prisma.task.findFirst({
             where: {
               id: taskId,
-              status: { not: "done" },
+              status: { notIn: ["done", "cancelled"] },
               delegation: userSlackId,
             },
             select: {

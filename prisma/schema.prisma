@@ -160,6 +160,7 @@ enum TaskStatus {
   blocked
   done
   overdue
+  cancelled
 }
 
 enum Recurrence {
