@@ -1352,6 +1352,18 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
           const concludedIds = tasksToConclude.map((t) => t.id);
 
+          await Promise.all(
+            concludedIds.map((taskId) =>
+              prisma.taskAuditLog.create({
+                data: {
+                  taskId,
+                  action: "TASK_DONE",
+                  actorSlackId: userSlackId,
+                },
+              })
+            )
+          );
+
           await prisma.task.updateMany({
             where: {
               id: { in: concludedIds },
@@ -1360,7 +1372,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             },
             data: { status: "done" },
           });
-
+          
           void Promise.allSettled(concludedIds.map((id) => syncCalendarEventForTask(id))).catch(() => { });
 
           const nextResults = await Promise.allSettled(
