@@ -26,6 +26,8 @@ import {
   TASK_URGENCY_ACTION_ID,
   TASK_REMINDER_MODE_BLOCK_ID,
   TASK_REMINDER_MODE_ACTION_ID,
+  TASK_NOTION_PROCESS_BLOCK_ID,
+  TASK_NOTION_PROCESS_ACTION_ID,
 } from "../views/createTaskModal";
 
 import { sendBatchModalView, SEND_BATCH_MODAL_CALLBACK_ID } from "../views/sendBatchModal";
@@ -129,6 +131,8 @@ import {
   EDIT_DESC_ACTION_ID,
   EDIT_TERM_BLOCK_ID,
   EDIT_TERM_ACTION_ID,
+  EDIT_NOTION_PROCESS_BLOCK_ID,
+  EDIT_NOTION_PROCESS_ACTION_ID,
   EDIT_TIME_BLOCK_ID,
   EDIT_TIME_ACTION_ID,
   EDIT_RESP_BLOCK_ID,
@@ -1166,6 +1170,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 id: true,
                 title: true,
                 description: true,
+                notionProcessUrl: true,
                 delegation: true,
                 responsible: true,
                 term: true,
@@ -1221,6 +1226,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             const newTask = await createTaskService({
               title: oldTask.title,
               description: oldTask.description ?? undefined,
+              notionProcessUrl: oldTask.notionProcessUrl ?? undefined,
               delegation: oldTask.delegation ?? userSlackId,
               responsible: oldTask.responsible,
               term: oldTask.term ?? null,
@@ -1790,6 +1796,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               taskId: task.id,
               title: task.title,
               description: task.description ?? null,
+              notionProcessUrl: (task as any).notionProcessUrl ?? null,
               currentDateIso,
               currentTime: task.deadlineTime ?? null,
               responsibleSlackId: task.responsible,
@@ -2314,6 +2321,16 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const descriptionRaw = getInputValue(values, "desc_block", "description");
           const description = descriptionRaw?.trim() ? descriptionRaw.trim() : undefined;
 
+          const notionRaw = getInputValue(
+            values,
+            TASK_NOTION_PROCESS_BLOCK_ID,
+            TASK_NOTION_PROCESS_ACTION_ID
+          );
+
+          const notionProcessUrl = notionRaw?.trim()
+            ? notionRaw.trim()
+            : null;
+
           const responsible = getSelectedUser(values, "resp_block", "responsible") ?? "";
 
           const dueDate = getSelectedDate(values, "due_block", "due_date");
@@ -2366,6 +2383,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const task = await createTaskService({
             title,
             description,
+            notionProcessUrl,
             delegation: userSlackId,
             responsible,
             term: termDate,
@@ -2456,6 +2474,14 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const descRaw = getInputValue(values, EDIT_DESC_BLOCK_ID, EDIT_DESC_ACTION_ID);
           const description = descRaw?.trim() ? descRaw.trim() : null;
 
+          const notionRaw = getInputValue(
+            values,
+            EDIT_NOTION_PROCESS_BLOCK_ID,
+            EDIT_NOTION_PROCESS_ACTION_ID
+          );
+
+          const notionProcessUrl = notionRaw?.trim() ? notionRaw.trim() : null;
+
           const termIso = getSelectedDate(values, EDIT_TERM_BLOCK_ID, EDIT_TERM_ACTION_ID) ?? null;
 
           const todayIsoEdit = new Intl.DateTimeFormat("en-CA", {
@@ -2520,6 +2546,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             title,
             description,
             termIso,
+            notionProcessUrl,
             deadlineTime,
             responsibleSlackId,
             carbonCopiesSlackIds,

@@ -33,6 +33,7 @@ const TASK_SELECT = {
   id: true,
   title: true,
   description: true,
+  notionProcessUrl: true,
   delegation: true,
   responsible: true,
   term: true,
@@ -53,6 +54,7 @@ type TaskSelected = {
   id: string;
   title: string;
   description: string | null;
+  notionProcessUrl: string | null;
   delegation: string | null;
   responsible: string;
   term: Date | null;
@@ -73,6 +75,7 @@ type TaskSnapshot = {
   id: string;
   title: string;
   description: string | null;
+  notionProcessUrl: string | null;
   delegation: string | null;
   responsible: string;
   term: Date | null;
@@ -93,6 +96,7 @@ function toSnapshot(t: TaskSelected): TaskSnapshot {
     id: t.id,
     title: t.title,
     description: t.description,
+    notionProcessUrl: t.notionProcessUrl ?? null,
     delegation: t.delegation ?? null,
     responsible: t.responsible,
     term: t.term,
@@ -115,6 +119,7 @@ export async function updateTaskService(args: {
 
   title: string;
   description: string | null;
+  notionProcessUrl: string | null;
 
   termIso: string | null; // YYYY-MM-DD
   deadlineTime: string | null; // HH:MM | null
@@ -137,6 +142,7 @@ export async function updateTaskService(args: {
     delegationSlackId,
     title,
     description,
+    notionProcessUrl,
     termIso,
     deadlineTime,
     responsibleSlackId,
@@ -162,6 +168,7 @@ export async function updateTaskService(args: {
   const recurrenceValue = normalizeRecurrence(recurrence);
   const urgencyValue = normalizeUrgency(urgency);
   const normalizedProjectId = normalizeProjectId(projectId);
+  const normalizedNotionProcessUrl = notionProcessUrl?.trim() ? notionProcessUrl.trim() : null;
 
   const newTerm = termIso ? toSaoPauloMidnightDate(termIso) : null;
   const newTime = deadlineTime?.trim() ? deadlineTime.trim() : null;
@@ -209,6 +216,7 @@ export async function updateTaskService(args: {
     data: {
       title: trimmedTitle,
       description: description?.trim() ? description.trim() : null,
+      notionProcessUrl: normalizedNotionProcessUrl,
 
       term: newTerm,
       deadlineTime: newTime,

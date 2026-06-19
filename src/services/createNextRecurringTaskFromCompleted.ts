@@ -62,6 +62,7 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       id: true,
       title: true,
       description: true,
+      notionProcessUrl: true,
       delegation: true,
       delegationEmail: true,
       responsible: true,
@@ -142,6 +143,7 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
     data: {
       title: completed.title,
       description: completed.description,
+      notionProcessUrl: completed.notionProcessUrl ?? null,
       delegation: completed.delegation ?? null,
       delegationEmail: completed.delegationEmail ?? null,
       responsible: completed.responsible,

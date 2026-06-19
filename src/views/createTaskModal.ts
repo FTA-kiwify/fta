@@ -17,6 +17,9 @@ export const TASK_PROJECT_ACTION_ID = "project" as const;
 export const TASK_DEPENDS_BLOCK_ID = "depends_block" as const;
 export const TASK_DEPENDS_ACTION_ID = "depends_on" as const;
 
+export const TASK_NOTION_PROCESS_BLOCK_ID = "notion_process_block" as const;
+export const TASK_NOTION_PROCESS_ACTION_ID = "notion_process_action" as const;
+
 export const TASK_REMINDER_MODE_BLOCK_ID = "reminder_mode_block" as const;
 export const TASK_REMINDER_MODE_ACTION_ID = "reminder_mode" as const;
 
@@ -39,6 +42,7 @@ type CreateTaskModalArgs = {
   initialDueDate?: string | null;
   initialDeadlineTime?: string | null;
   initialDependsOnOption?: any;
+  initialNotionProcessUrl?: string | null;
   initialRecurrence?: string | null;
   initialUrgency?: string | null;
   initialReminderMode?: string | null;
@@ -133,6 +137,22 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
           type: "plain_text_input",
           action_id: "description",
           multiline: true,
+        },
+      },
+      {
+        type: "input",
+        optional: true,
+        block_id: TASK_NOTION_PROCESS_BLOCK_ID,
+        label: {
+          type: "plain_text",
+          text: "Link do processo (Notion)",
+        },
+        element: {
+          type: "plain_text_input",
+          action_id: TASK_NOTION_PROCESS_ACTION_ID,
+          ...(args?.initialNotionProcessUrl
+            ? { initial_value: args.initialNotionProcessUrl }
+            : {}),
         },
       },
       {
@@ -235,47 +255,47 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         block_id: "cc_block",
         label: { type: "plain_text", text: "Pessoas em cópia" },
         element: { type: "multi_users_select", action_id: "carbon_copies" },
-      }, 
-        ...((showTurboFields
-          ? [
-            {
-              type: "input",
-              optional: true,
-              block_id: "turbo_previous_day_block",
-              label: { type: "plain_text", text: "Turbo avançado" },
-              element: {
-                type: "checkboxes",
-                action_id: "turbo_previous_day",
-                options: [
-                  {
-                    text: {
-                      type: "plain_text",
-                      text: "Iniciar follow-ups no dia anterior ao prazo",
-                    },
-                    value: "yes",
+      },
+      ...((showTurboFields
+        ? [
+          {
+            type: "input",
+            optional: true,
+            block_id: "turbo_previous_day_block",
+            label: { type: "plain_text", text: "Turbo avançado" },
+            element: {
+              type: "checkboxes",
+              action_id: "turbo_previous_day",
+              options: [
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Iniciar follow-ups no dia anterior ao prazo",
                   },
-                ],
-              },
-            },
-            {
-              type: "input",
-              optional: true,
-              block_id: "turbo_start_time_block",
-              label: {
-                type: "plain_text",
-                text: "Horário de início dos follow-ups",
-              },
-              element: {
-                type: "timepicker",
-                action_id: "turbo_start_time",
-                placeholder: {
-                  type: "plain_text",
-                  text: "Ex: 20:00",
+                  value: "yes",
                 },
+              ],
+            },
+          },
+          {
+            type: "input",
+            optional: true,
+            block_id: "turbo_start_time_block",
+            label: {
+              type: "plain_text",
+              text: "Horário de início dos follow-ups",
+            },
+            element: {
+              type: "timepicker",
+              action_id: "turbo_start_time",
+              placeholder: {
+                type: "plain_text",
+                text: "Ex: 20:00",
               },
             },
-          ]
-          : []) as KnownBlock[]),
+          },
+        ]
+        : []) as KnownBlock[]),
       {
         type: "input",
         optional: true,

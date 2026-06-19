@@ -9,6 +9,9 @@ export const EDIT_TITLE_ACTION_ID = "edit_title" as const;
 export const EDIT_DESC_BLOCK_ID = "edit_desc_block" as const;
 export const EDIT_DESC_ACTION_ID = "edit_desc" as const;
 
+export const EDIT_NOTION_PROCESS_BLOCK_ID = "edit_notion_process_block" as const;
+export const EDIT_NOTION_PROCESS_ACTION_ID = "edit_notion_process_action" as const;
+
 export const EDIT_TERM_BLOCK_ID = "edit_term_block" as const;
 export const EDIT_TERM_ACTION_ID = "edit_term" as const;
 
@@ -80,6 +83,8 @@ export function editTaskModalView(args: {
 
   title: string;
   description?: string | null;
+
+  notionProcessUrl?: string | null;
 
   currentDateIso?: string | null; // YYYY-MM-DD
   currentTime?: string | null; // HH:MM
@@ -179,6 +184,21 @@ export function editTaskModalView(args: {
           initial_value: args.description ?? "",
         },
         label: { type: "plain_text", text: "Descrição" },
+      },
+
+      {
+        type: "input",
+        optional: true,
+        block_id: EDIT_NOTION_PROCESS_BLOCK_ID,
+        element: {
+          type: "plain_text_input",
+          action_id: EDIT_NOTION_PROCESS_ACTION_ID,
+          initial_value: args.notionProcessUrl ?? "",
+        },
+        label: {
+          type: "plain_text",
+          text: "Link do processo (Notion)",
+        },
       },
 
       // Prazo (data)
