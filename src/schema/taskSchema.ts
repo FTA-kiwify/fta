@@ -80,11 +80,19 @@ export const createTaskSchema = z
       .string()
       .optional()
       .transform((s) => (s?.trim() ? s.trim() : undefined)),
-    notionProcessUrl: z
-      .string()
-      .url()
-      .optional()
-      .transform((s) => (s?.trim() ? s.trim() : undefined)),
+    notionProcessUrl: z.preprocess(
+      (v) => {
+        if (v === null || v === undefined) return null;
+
+        if (typeof v === "string") {
+          const s = v.trim();
+          return s ? s : null;
+        }
+
+        return null;
+      },
+      z.string().url().nullable()
+    ),
 
     delegation: slackUserIdSchema,
     responsible: slackUserIdSchema,
