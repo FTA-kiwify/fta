@@ -2332,6 +2332,21 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             ? notionRaw.trim()
             : null;
 
+          // VALIDA URL DO NOTION
+          if (notionProcessUrl) {
+            try {
+              new URL(notionProcessUrl);
+            } catch {
+              return reply.send({
+                response_action: "errors",
+                errors: {
+                  [TASK_NOTION_PROCESS_BLOCK_ID]:
+                    "Informe uma URL válida (https://...)",
+                },
+              });
+            }
+          }
+
           const responsible = getSelectedUser(values, "resp_block", "responsible") ?? "";
 
           const dueDate = getSelectedDate(values, "due_block", "due_date");
