@@ -1745,6 +1745,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               id: true,
               title: true,
               description: true,
+              notionProcessUrl: true,
               term: true,
               deadlineTime: true,
               responsible: true,
