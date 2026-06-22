@@ -30,6 +30,8 @@ export function taskDetailsModalView(args: {
   recurrence: string | null;
   projectNameOrId: string | null;
   description: string | null;
+  notionProcessUrl: string | null;
+
 
   // ✅ NOVO (opcional): lista de cópias
   carbonCopiesSlackIds?: string[] | null;
@@ -52,6 +54,10 @@ export function taskDetailsModalView(args: {
   const projectText = args.projectNameOrId ?? "—";
   const recurrenceText = args.recurrence ?? "—";
 
+  const notionText = args.notionProcessUrl?.trim()
+    ? `<${args.notionProcessUrl}|Abrir processo>`
+    : "—";
+
   const ccIds = Array.from(new Set((args.carbonCopiesSlackIds ?? []).filter(Boolean)));
   const hasCc = ccIds.length > 0;
 
@@ -71,6 +77,7 @@ export function taskDetailsModalView(args: {
         { type: "mrkdwn", text: `*Urgência:*\n${urgencyLabel(args.urgency)}\n\n` },
         { type: "mrkdwn", text: `*Recorrência:*\n${recurrenceText}\n\n` },
         { type: "mrkdwn", text: `*Projeto:*\n${projectText}\n\n` },
+        { type: "mrkdwn", text: `*Processo:*\n${notionText}\n\n` },
       ],
     },
   ];

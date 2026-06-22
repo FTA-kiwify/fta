@@ -1847,6 +1847,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               id: true,
               title: true,
               description: true,
+              notionProcessUrl: true, // <-- ADICIONAR
               term: true,
               originalTerm: true,
               deadlineTime: true,
@@ -1891,6 +1892,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               projectNameOrId,
               description: task.description ?? null,
               carbonCopiesSlackIds: task.carbonCopies.map((c) => c.slackUserId),
+              notionProcessUrl: task.notionProcessUrl ?? null,
             }),
           });
 
