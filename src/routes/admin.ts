@@ -76,6 +76,97 @@ function normalizeProjectStatus(s: unknown): ProjectStatus {
   if (v === "active" || v === "concluded") return v;
   return "active";
 }
+function auditActionLabel(action: string) {
+  switch (action) {
+    case "TASK_CREATED":
+      return "🆕 Tarefa criada";
+    case "TASK_EDITED":
+      return "✏️ Tarefa editada";
+    case "TASK_DONE":
+      return "✅ Tarefa concluída";
+    case "TASK_REOPENED":
+      return "🔄 Tarefa reaberta";
+    case "TASK_RESCHEDULED":
+      return "📅 Prazo alterado";
+    case "TASK_CANCELLED":
+      return "❌ Tarefa cancelada";
+    default:
+      return action;
+  }
+}
+
+function auditValue(value: any) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "Sim" : "Não";
+  }
+
+  if (Array.isArray(value)) {
+    return value.length ? value.join(", ") : "—";
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return fmtDate(value);
+  }
+
+  return String(value);
+}
+
+const AUDIT_FIELDS: Record<string, string> = {
+  title: "📝 Título",
+  description: "📝 Descrição",
+  notionProcessUrl: "🔗 Processo",
+  responsible: "👤 Responsável",
+  delegation: "👤 Delegador",
+  term: "📅 Prazo",
+  deadlineTime: "🕒 Horário",
+  urgency: "⚡ Urgência",
+  recurrence: "🔁 Recorrência",
+  reminderMode: "⏰ Tipo de follow-up",
+  calendarPrivate: "📆 Calendário privado",
+  turboPreviousDay: "🚀 Turbo dia anterior",
+  turboStartTime: "🕒 Início Turbo",
+  projectId: "📁 Projeto",
+  carbonCopies: "👥 Pessoas em cópia",
+};
+
+function renderAuditChanges(before: any, after: any) {
+  if (!before || !after) return "";
+
+  const html: string[] = [];
+
+  for (const [field, label] of Object.entries(AUDIT_FIELDS)) {
+    const beforeValue = auditValue(before[field]);
+    const afterValue = auditValue(after[field]);
+
+    if (beforeValue === afterValue) continue;
+
+    html.push(`
+      <div style="margin-top:10px;padding-left:16px;">
+        <div><b>${label}</b></div>
+
+        <div class="small">
+          <span style="color:#888;">Antes:</span>
+          ${escHtml(beforeValue)}
+        </div>
+
+        <div class="small">
+          <span style="color:#888;">Depois:</span>
+          ${escHtml(afterValue)}
+        </div>
+      </div>
+    `);
+  }
+
+  return html.join("");
+}
 
 function redirectWithFlash(
   reply: FastifyReply,
@@ -749,7 +840,7 @@ export async function adminRoutes(app: FastifyInstance) {
             return `
           <div style="padding:12px 0;border-bottom:1px solid #eee;">
             <div>
-              <b>${escHtml(log.action)}</b>
+              <b>${escHtml(auditActionLabel(log.action))}</b>
             </div>
 
             <div class="small">
@@ -759,6 +850,10 @@ export async function adminRoutes(app: FastifyInstance) {
             <div class="small">
               Usuário: <b>${escHtml(actor)}</b>
             </div>
+            
+            ${log.action === "TASK_EDITED"
+                ? renderAuditChanges(log.beforeJson, log.afterJson)
+                : ""}
           </div>
         `;
           })
