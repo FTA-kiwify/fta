@@ -729,6 +729,42 @@ export async function adminRoutes(app: FastifyInstance) {
       const respName = known.nameById[task.responsible] ?? task.responsible;
       const delName = known.nameById[task.delegation] ?? task.delegation;
 
+      const auditLogs = await prisma.taskAuditLog.findMany({
+        where: {
+          taskId: task.id,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const auditHtml = auditLogs.length
+        ? auditLogs
+          .map((log) => {
+            const actor =
+              known.nameById[log.actorSlackId ?? ""] ??
+              log.actorSlackId ??
+              "-";
+
+            return `
+          <div style="padding:12px 0;border-bottom:1px solid #eee;">
+            <div>
+              <b>${escHtml(log.action)}</b>
+            </div>
+
+            <div class="small">
+              ${escHtml(fmtDateTime(log.createdAt))}
+            </div>
+
+            <div class="small">
+              Usuário: <b>${escHtml(actor)}</b>
+            </div>
+          </div>
+        `;
+          })
+          .join("")
+        : `<div class="muted">Nenhum evento encontrado.</div>`;
+
       const body = `
         <div class="topbar">
           <div>
@@ -896,6 +932,11 @@ export async function adminRoutes(app: FastifyInstance) {
               <button type="submit">Aplicar</button>
             </div>
           </form>
+        </div>
+        <h2 style="margin-top:24px;">📋 Histórico</h2>
+
+        <div class="card">
+          ${auditHtml}
         </div>
       `;
 
