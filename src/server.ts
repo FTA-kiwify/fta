@@ -10,11 +10,13 @@ import { googleOAuthRoutes } from "./routes/googleOAuthRoutes";
 import { googleCalendarTestRoutes } from "./routes/googleCalendarTestRoutes";
 import { startPruneDoneTasksCron } from "./jobs/pruneDoneTasksCron";
 import { adminRoutes } from "./routes/admin";
+import { portalRoutes } from "./routes/portal";
 
 async function main() {
   const app = fastify({ logger: { level: "info" } });
 
   app.register(slackRoutes);
+  app.register(portalRoutes);
   app.register(sendMessage);
   app.register(adminRoutes);
 

@@ -26,9 +26,7 @@ export function portalLayout(args: PortalLayoutArgs) {
 
 <style>
 
-body{
-  font-family:Arial;
-}
+${portalCss()}
 
 </style>
 
