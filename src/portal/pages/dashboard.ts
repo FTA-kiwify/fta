@@ -3,107 +3,120 @@ import { dashboardSection } from "../components/dashboardSection";
 import type { DashboardData } from "../../services/portal/dashboardService";
 import { upcomingTask } from "../components/upcomingTask";
 import { completedTask } from "../components/completedTask";
+import { accordion } from "../components/accordion";
 
-function formatDay(date: Date) {
+export function dashboardPage(data: DashboardData) {
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const taskDay = new Date(date);
-  taskDay.setHours(0, 0, 0, 0);
+  const dayAfter = new Date(tomorrow);
+  dayAfter.setDate(dayAfter.getDate() + 1);
 
-  if (taskDay.getTime() === today.getTime()) {
-    return "Hoje";
-  }
+  const todayTasks = data.upcomingTasks.filter(task => {
+    const d = new Date(task.term);
+    return d >= today && d < tomorrow;
+  });
 
-  if (taskDay.getTime() === tomorrow.getTime()) {
-    return "Amanhã";
-  }
+  const tomorrowTasks = data.upcomingTasks.filter(task => {
+    const d = new Date(task.term);
+    return d >= tomorrow && d < dayAfter;
+  });
 
-  return taskDay.toLocaleDateString("pt-BR");
-}
+  const futureTasks = data.upcomingTasks.filter(task => {
+    const d = new Date(task.term);
+    return d >= dayAfter;
+  });
 
-export function dashboardPage(data: DashboardData) {
   return `
     <div class="card">
 
-      <h1>Bem-vinda 👋</h1>
+      <h1>
 
-      <p>
-        Minha rotina.
-      </p>
+  ${(() => {
+
+      const hour = new Date().getHours();
+
+      if (hour < 12) {
+        return `Bom dia, ${data.userName} ☀️`;
+      }
+
+      if (hour < 18) {
+        return `Boa tarde, ${data.userName} 👋`;
+      }
+
+      return `Boa noite, ${data.userName} 🌙`;
+
+    })()}
+
+</h1>
+
+<p>
+  Acompanhe suas prioridades de hoje.
+</p>
 
     </div>
 
     <div class="dashboard-grid">
 
       ${statCard({
-    title: "Minhas tarefas",
-    value: data.pendingTasks,
-    subtitle: "Pendentes",
-    icon: "📋",
-  })}
+      title: "Minhas tarefas",
+      value: data.pendingTasks,
+      subtitle: "Pendentes",
+      icon: "📋",
+      onclick: "openPortalModal('/portal/dashboard/tasks/pending/modal')",
+
+    })}
 
       ${statCard({
-    title: "Vencem hoje",
-    value: data.todayTasks,
-    subtitle: "Para hoje",
-    icon: "📅",
-    color: "#F59E0B",
-  })}
+      title: "Vencem hoje",
+      value: data.todayTasks,
+      subtitle: "Para hoje",
+      icon: "📅",
+      color: "#F59E0B",
+      onclick: "openPortalModal('/portal/dashboard/tasks/today/modal')"
+    })}
 
       ${statCard({
-    title: "Turbo",
-    value: data.turboTasks,
-    subtitle: "Prioridade máxima",
-    icon: "🔥",
-    color: "#B91C1C",
-  })}
+      title: "Turbo",
+      value: data.turboTasks,
+      subtitle: "Prioridade máxima",
+      icon: "🔥",
+      color: "#B91C1C",
+      onclick: "openPortalModal('/portal/dashboard/tasks/turbo/modal')"
+    })}
 
       ${statCard({
-    title: "Concluídas hoje",
-    value: data.completedTodayTasks,
-    subtitle: "Finalizadas hoje",
-    icon: "✅",
-    color: "#22C55E",
-  })}
+      title: "Concluídas hoje",
+      value: data.completedTodayTasks,
+      subtitle: "Finalizadas hoje",
+      icon: "✅",
+      color: "#22C55E",
+      onclick: "openPortalModal('/portal/dashboard/tasks/completed/modal')"
+    })}
 
     </div>
 
     <div class="dashboard-grid">
 
       ${dashboardSection({
-    title: "📅 Próximos vencimentos",
 
-    body: (() => {
-      if (data.upcomingTasks.length === 0) {
-        return `
-              <p>
-                Nenhuma tarefa pendente.
-              </p>
-            `;
-      }
+      title: "📅 Próximos vencimentos",
 
-      const groups = new Map<
-        string,
-        typeof data.upcomingTasks
-      >();
+      body:
 
-      for (const task of data.upcomingTasks) {
-        const key = formatDay(task.term);
+        data.upcomingTasks.length === 0
 
-        if (!groups.has(key)) {
-          groups.set(key, []);
-        }
+          ? `
+                <p>
+                  Nenhuma tarefa pendente.
+                </p>
+              `
 
-        groups.get(key)!.push(task);
-      }
-
-      return [...groups.entries()]
-        .map(([day, tasks]) => `
-              <div style="margin-bottom:24px;">
+          : `
 
                 <h3
                   style="
@@ -111,11 +124,11 @@ export function dashboardPage(data: DashboardData) {
                     font-size:18px;
                   "
                 >
-                  ${day}
+                  Hoje
                 </h3>
 
-                ${tasks
-            .map(task =>
+                ${todayTasks.length
+            ? todayTasks.map(task =>
               upcomingTask({
                 id: task.id,
                 title: task.title,
@@ -123,36 +136,87 @@ export function dashboardPage(data: DashboardData) {
                 urgency: task.urgency,
                 deadlineTime: task.deadlineTime,
               })
-            )
-            .join("")}
+            ).join("")
+            : `
+                        <p>
+                          Nenhuma tarefa para hoje.
+                        </p>
+                      `
+          }
 
-              </div>
-            `)
-        .join("");
-    })(),
-  })}
+                ${tomorrowTasks.length
+            ? accordion({
+              id: "dashboard-tomorrow",
+              title: "Amanhã",
+              count: tomorrowTasks.length,
+              body: tomorrowTasks
+                .map(task =>
+                  upcomingTask({
+                    id: task.id,
+                    title: task.title,
+                    responsible: task.responsibleName,
+                    urgency: task.urgency,
+                    deadlineTime: task.deadlineTime,
+                  })
+                )
+                .join(""),
+            })
+            : ""
+          }
+
+                ${futureTasks.length
+            ? accordion({
+              id: "dashboard-future",
+              title: "Futuras",
+              count: futureTasks.length,
+              body: futureTasks
+                .map(task =>
+                  upcomingTask({
+                    id: task.id,
+                    title: task.title,
+                    responsible: task.responsibleName,
+                    urgency: task.urgency,
+                    deadlineTime: task.deadlineTime,
+                  })
+                )
+                .join(""),
+            })
+            : ""
+          }
+
+              `,
+
+    })}
 
       ${dashboardSection({
-    title: "✅ Concluídas hoje",
 
-    body: data.completedToday.length
-      ? data.completedToday
-        .map(task =>
-          completedTask({
-            id: task.id,
-            title: task.title,
-            urgency: task.urgency,
-            completedAt: task.completedAt,
-          })
-        )
-        .join("")
-      : `
-              <p>
-                Nenhuma tarefa concluída hoje.
-              </p>
-            `,
-  })}
+      title: "✅ Concluídas hoje",
+
+      body:
+
+        data.completedToday.length
+
+          ? data.completedToday
+            .map(task =>
+              completedTask({
+                id: task.id,
+                title: task.title,
+                urgency: task.urgency,
+                completedAt: task.completedAt,
+              })
+            )
+            .join("")
+
+          : `
+                <p>
+                  Nenhuma tarefa concluída hoje.
+                </p>
+              `,
+
+    })}
 
     </div>
+
   `;
+
 }

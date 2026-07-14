@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma";
+import { getSlackUserName } from "../slackUserLookup";
 
 export type UpcomingTask = {
   id: string;
@@ -24,11 +25,13 @@ export type DashboardData = {
   completedTodayTasks: number;
   upcomingTasks: UpcomingTask[];
   completedToday: CompletedTask[];
+  userName: string;
 };
 
 export async function getDashboardData(): Promise<DashboardData> {
 
   const slackUserId = process.env.PORTAL_TEST_SLACK_USER!;
+  const userName = await getSlackUserName(slackUserId);
 
   if (!slackUserId) {
     throw new Error("PORTAL_TEST_SLACK_USER não configurado.");
@@ -190,6 +193,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     completedTodayTasks,
     upcomingTasks,
     completedToday,
+    userName,
   };
 
 }

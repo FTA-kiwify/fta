@@ -228,5 +228,17 @@ export function portalCss() {
       background:#20AF6F;
     }
 
+    @keyframes fadeIn{
+
+  from{
+    opacity:0;
+  }
+
+  to{
+    opacity:1;
+  }
+
+}
+
   `;
 }

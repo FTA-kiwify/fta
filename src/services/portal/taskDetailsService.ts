@@ -14,6 +14,7 @@ export type TaskDetails = {
   recurrence: string | null;
   project: string | null;
   projectId: string | null;
+  notionProcessUrl: string | null;   // <-- adicionar
   copies: string[];
 };
 
@@ -74,6 +75,7 @@ export async function getTaskDetails(
 
     copies,
     projectId: task.project?.id ?? null,
+    notionProcessUrl: task.notionProcessUrl,
 
   };
 

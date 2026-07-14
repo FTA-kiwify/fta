@@ -1,5 +1,6 @@
 import type { CollaboratorDetails } from "../../services/portal/collaboratorDetailsService";
 import { taskRow } from "../components/taskRow";
+import { accordion } from "../components/accordion";
 
 export function collaboratorPage(
   collaborator: CollaboratorDetails
@@ -102,75 +103,72 @@ export function collaboratorPage(
       </h2>
 
       ${todayTasks.length
-      ? `
-            <h3 style="margin-bottom:12px;">
-              Hoje
-            </h3>
-
-            ${todayTasks
-        .map(task =>
-          taskRow({
-            id: task.id,
-            title: task.title,
-            subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-            deadlineTime: task.deadlineTime,
-            urgency: task.urgency,
-          })
-        )
-        .join("")}
-          `
+      ? accordion({
+        id: "today-tasks",
+        title: "Hoje",
+        count: todayTasks.length,
+        body: todayTasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+              deadlineTime: task.deadlineTime,
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
+      })
       : ""
     }
 
-      ${tomorrowTasks.length
-      ? `
-            <h3 style="margin:24px 0 12px;">
-              Amanhã
-            </h3>
-
-            ${tomorrowTasks
-        .map(task =>
-          taskRow({
-            id: task.id,
-            title: task.title,
-            subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-            deadlineTime: task.deadlineTime,
-            urgency: task.urgency,
-          })
-        )
-        .join("")}
-          `
+${tomorrowTasks.length
+      ? accordion({
+        id: "tomorrow-tasks",
+        title: "Amanhã",
+        count: tomorrowTasks.length,
+        body: tomorrowTasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+              deadlineTime: task.deadlineTime,
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
+      })
       : ""
     }
 
-      ${futureTasks.length
-      ? `
-            <h3 style="margin:24px 0 12px;">
-              Futuras
-            </h3>
-
-            ${futureTasks
-        .map(task =>
-          taskRow({
-            id: task.id,
-            title: task.title,
-            subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-            deadlineTime: task.deadlineTime,
-            rightText: new Date(task.term!).toLocaleDateString("pt-BR"),
-            urgency: task.urgency,
-          })
-        )
-        .join("")}
-          `
+${futureTasks.length
+      ? accordion({
+        id: "future-tasks",
+        title: "Futuras",
+        count: futureTasks.length,
+        body: futureTasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+              deadlineTime: task.deadlineTime,
+              rightText: new Date(task.term!).toLocaleDateString("pt-BR"),
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
+      })
       : ""
     }
 
-      ${collaborator.tasks.length === 0
+${collaborator.tasks.length === 0
       ? `
-            <p>
-              Nenhuma tarefa pendente.
-            </p>
-          `
+      <p>
+        Nenhuma tarefa pendente.
+      </p>
+    `
       : ""
     }
 
@@ -202,11 +200,7 @@ export function collaboratorPage(
       onmouseout="this.style.background='transparent'"
     >
 
-      <div
-        style="
-          font-weight:600;
-        "
-      >
+      <div style="font-weight:600;">
         📁 ${project.name}
       </div>
 
@@ -235,32 +229,27 @@ export function collaboratorPage(
     🔁 Recorrências
   </h2>
 
-  ${collaborator.recurrences.map(group => `
+  ${collaborator.recurrences.map(group =>
 
-      <div style="margin-bottom:24px;">
-
-        <h3
-          style="
-            margin-bottom:12px;
-          "
-        >
-          ${group.name} (${group.tasks.length})
-        </h3>
-
-        ${group.tasks.map(task =>
-      taskRow({
-        id: task.id,
-        title: task.title,
-        subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-        deadlineTime: task.deadlineTime,
-        urgency: task.urgency,
+      accordion({
+        id: `recurrence-${group.name}`,
+        title: group.name,
+        count: group.tasks.length,
+        body: group.tasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+              deadlineTime: task.deadlineTime,
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
       })
+
     ).join("")}
-
-      </div>
-
-    `).join("")
-    }
+    
 
 </div>
 
@@ -273,28 +262,26 @@ export function collaboratorPage(
     🔥 Prioridades
   </h2>
 
-  ${collaborator.urgencies.map(group => `
+  ${collaborator.urgencies.map(group =>
 
-      <div style="margin-bottom:24px;">
-
-        <h3 style="margin-bottom:12px;">
-          ${group.name} (${group.tasks.length})
-        </h3>
-
-        ${group.tasks.map(task =>
-      taskRow({
-        id: task.id,
-        title: task.title,
-        subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-        deadlineTime: task.deadlineTime,
-        urgency: task.urgency,
+      accordion({
+        id: `urgency-${group.name}`,
+        title: group.name,
+        count: group.tasks.length,
+        body: group.tasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+              deadlineTime: task.deadlineTime,
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
       })
+
     ).join("")}
-
-      </div>
-
-    `).join("")
-    }
 
 </div>
 

@@ -4,6 +4,7 @@ type StatCardProps = {
   icon: string;
   color?: string;
   subtitle?: string;
+  onclick?: string;
 };
 
 export function statCard({
@@ -12,9 +13,21 @@ export function statCard({
   icon,
   color = "#22C55E",
   subtitle,
+  onclick,
 }: StatCardProps) {
   return `
-    <div class="stat-card">
+    <div
+      class="stat-card"
+      ${onclick ? `onclick="${onclick}"` : ""}
+      style="${onclick ? "cursor:pointer;" : ""}"
+      ${onclick
+        ? `
+          onmouseover="this.style.transform='translateY(-2px)'"
+          onmouseout="this.style.transform='translateY(0)'"
+        `
+        : ""
+      }
+    >
 
       <div>
 

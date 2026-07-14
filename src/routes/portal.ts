@@ -20,6 +20,8 @@ import { getCollaboratorDetails } from "../services/portal/collaboratorDetailsSe
 import { getProjects } from "../services/portal/projectService";
 import { getProjectDetails } from "../services/portal/projectDetailsService";
 import { getTaskDetails } from "../services/portal/taskDetailsService";
+import { getDashboardTaskList } from "../services/portal/dashboardTaskListService";
+import { dashboardTasksModal } from "../portal/components/dashboardTasksModal";
 
 export async function portalRoutes(app: FastifyInstance) {
 
@@ -152,5 +154,34 @@ export async function portalRoutes(app: FastifyInstance) {
       .send(taskModal(task));
 
   });
+  app.get(
+    "/portal/dashboard/tasks/:filter/modal",
+    async (request, reply) => {
+
+      const { filter } = request.params as {
+        filter: string;
+      };
+
+      const tasks = await getDashboardTaskList(filter);
+
+      const titles: Record<string, string> = {
+        pending: "📋 Minhas tarefas",
+        today: "📅 Vencem hoje",
+        turbo: "🔥 Tarefas Turbo",
+        completed: "✅ Concluídas hoje",
+      };
+
+      return reply
+        .type("text/html")
+        .send(
+          dashboardTasksModal({
+            title: titles[filter] ?? "Tarefas",
+            tasks,
+            completed: filter === "completed",
+          })
+        );
+
+    }
+  );
 
 }

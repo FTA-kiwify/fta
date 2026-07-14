@@ -139,12 +139,13 @@ function infoCard(
       </div>
 
       <div
-        style="
-          font-weight:600;
-        "
-      >
-        ${value}
-      </div>
+  style="
+    font-weight:600;
+    ${onclick ? "color:#2563EB;" : ""}
+  "
+>
+  ${value}
+</div>
 
     </div>
   `;
@@ -233,9 +234,19 @@ export function taskModal(task: TaskDetails) {
 
         ${infoCard(
     "📁 Projeto",
-    `📁 ${task.project ?? "-"}`,
+    `${task.project ?? "-"}`,
     task.projectId
       ? `openPortalModal('/portal/projects/${task.projectId}/modal')`
+      : undefined
+  )}
+
+  ${infoCard(
+    "📘 Processo",
+    task.notionProcessUrl
+      ? "Abrir no Notion"
+      : "-",
+    task.notionProcessUrl
+      ? `window.open('${task.notionProcessUrl}','_blank')`
       : undefined
   )}
 
