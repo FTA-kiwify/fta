@@ -1,4 +1,8 @@
-export function sidebar() {
+export function sidebar(active: string = "dashboard") {
+
+  const item = (key: string) =>
+    key === active ? "sidebar-link active" : "sidebar-link";
+
   return `
     <aside
       style="
@@ -65,35 +69,35 @@ export function sidebar() {
 
         <a
           href="/portal"
-          class="sidebar-link active"
+          class="${item("dashboard")}"
         >
           🏠 Dashboard
         </a>
 
         <a
           href="/portal/collaborators"
-          class="sidebar-link"
+          class="${item("collaborators")}"
         >
           👥 Colaboradores
         </a>
 
         <a
           href="/portal/projects"
-          class="sidebar-link"
+          class="${item("projects")}"
         >
           📁 Projetos
         </a>
 
         <a
           href="/portal/teams"
-          class="sidebar-link"
+          class="${item("teams")}"
         >
           👨‍💼 Times
         </a>
 
         <a
           href="/portal/reports"
-          class="sidebar-link"
+          class="${item("reports")}"
         >
           📊 Relatórios
         </a>

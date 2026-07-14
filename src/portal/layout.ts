@@ -1,4 +1,5 @@
 import { portalCss } from "./css";
+import { modalContainer } from "./components/modal";
 
 type PortalLayoutArgs = {
   title: string;
@@ -51,6 +52,8 @@ ${args.body}
 </div>
 
 </div>
+
+${modalContainer()}
 
 </body>
 
