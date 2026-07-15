@@ -4,11 +4,15 @@ import type { DashboardData } from "../../services/portal/dashboardService";
 import { upcomingTask } from "../components/upcomingTask";
 import { completedTask } from "../components/completedTask";
 import { accordion } from "../components/accordion";
+import {
+  getBrazilToday,
+  getGreeting,
+} from "../../utils/date";
 
 export function dashboardPage(data: DashboardData) {
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getBrazilToday();
+  const greeting = getGreeting();
 
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -36,21 +40,12 @@ export function dashboardPage(data: DashboardData) {
 
       <h1>
 
-  ${(() => {
-
-      const hour = new Date().getHours();
-
-      if (hour < 12) {
-        return `Bom dia, ${data.userName} ☀️`;
-      }
-
-      if (hour < 18) {
-        return `Boa tarde, ${data.userName} 👋`;
-      }
-
-      return `Boa noite, ${data.userName} 🌙`;
-
-    })()}
+  ${greeting}, ${data.userName} ${greeting === "Bom dia"
+      ? "☀️"
+      : greeting === "Boa tarde"
+        ? "👋"
+        : "🌙"
+    }
 
 </h1>
 

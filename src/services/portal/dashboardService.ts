@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { getSlackUserName } from "../slackUserLookup";
+import { getBrazilToday } from "../../utils/date";
 
 export type UpcomingTask = {
   id: string;
@@ -37,8 +38,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     throw new Error("PORTAL_TEST_SLACK_USER não configurado.");
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getBrazilToday();
 
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
