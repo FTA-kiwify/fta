@@ -7,7 +7,18 @@ export function collaboratorCard(
   const initial = collaborator.name.charAt(0).toUpperCase();
 
   return `
-    <div class="collaborator-card">
+    <div
+      class="collaborator-card"
+      data-search="${(
+        collaborator.name +
+        " " +
+        collaborator.slackUserId
+      ).toLowerCase()}"
+      onclick="window.location='/portal/collaborators/${collaborator.slackUserId}'"
+      style="cursor:pointer;"
+      onmouseover="this.style.background='#F9FAFB'"
+      onmouseout="this.style.background='white'"
+    >
 
       <div class="collaborator-avatar">
 
@@ -29,13 +40,7 @@ export function collaboratorCard(
 
       </div>
 
-      <a
-        class="button-primary"
-        href="/portal/collaborators/${collaborator.slackUserId}"
-      >
-        Ver detalhes →
-      </a>
-
     </div>
   `;
+
 }

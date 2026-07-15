@@ -1,10 +1,19 @@
-export function topbar(title: string) {
+type TopbarProps = {
+  title: string;
+  searchPlaceholder?: string;
+};
+
+export function topbar({
+  title,
+  searchPlaceholder,
+}: TopbarProps) {
+
   return `
     <header
       style="
         height:72px;
         background:white;
-        border-bottom:1px solid #e5e7eb;
+        border-bottom:1px solid #E5E7EB;
         display:flex;
         align-items:center;
         justify-content:space-between;
@@ -14,7 +23,14 @@ export function topbar(title: string) {
 
       <div>
 
-        <h2 style="font-size:24px;">${title}</h2>
+        <h2
+          style="
+            font-size:24px;
+            margin:0;
+          "
+        >
+          ${title}
+        </h2>
 
       </div>
 
@@ -26,15 +42,24 @@ export function topbar(title: string) {
         "
       >
 
-        <input
-          placeholder="Pesquisar..."
-          style="
-            padding:10px 14px;
-            border-radius:12px;
-            border:1px solid #ddd;
-            width:240px;
-          "
-        />
+        ${
+          searchPlaceholder
+            ? `
+              <input
+                id="portal-search"
+                placeholder="${searchPlaceholder}"
+                style="
+                  padding:10px 14px;
+                  border-radius:12px;
+                  border:1px solid #D1D5DB;
+                  width:240px;
+                  font-size:14px;
+                  outline:none;
+                "
+              />
+            `
+            : ""
+        }
 
         <div
           style="
@@ -46,7 +71,9 @@ export function topbar(title: string) {
             display:flex;
             justify-content:center;
             align-items:center;
-            font-weight:bold;
+            font-weight:700;
+            font-size:16px;
+            flex-shrink:0;
           "
         >
           L
@@ -56,4 +83,5 @@ export function topbar(title: string) {
 
     </header>
   `;
+
 }

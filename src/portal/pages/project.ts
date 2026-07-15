@@ -1,6 +1,7 @@
 import type { ProjectDetails } from "../../services/portal/projectDetailsService";
 import { taskRow } from "../components/taskRow";
 import { statCard } from "../components/statCard";
+import { accordion } from "../components/accordion";
 
 export function projectPage(
   project: ProjectDetails
@@ -15,169 +16,211 @@ export function projectPage(
   const dayAfter = new Date(tomorrow);
   dayAfter.setDate(dayAfter.getDate() + 1);
 
-  const todayTasks = project.tasks.filter(task =>
+  const pendingTasks = project.tasks.filter(
+    task =>
+      task.status !== "done" &&
+      task.status !== "cancelled"
+  );
+
+  const completedTasks = project.tasks.filter(
+    task => task.status === "done"
+  );
+
+  const todayTasks = pendingTasks.filter(task =>
     task.term &&
     new Date(task.term) >= today &&
     new Date(task.term) < tomorrow
   );
 
-  const tomorrowTasks = project.tasks.filter(task =>
+  const tomorrowTasks = pendingTasks.filter(task =>
     task.term &&
     new Date(task.term) >= tomorrow &&
     new Date(task.term) < dayAfter
   );
 
-  const futureTasks = project.tasks.filter(task =>
+  const futureTasks = pendingTasks.filter(task =>
     task.term &&
     new Date(task.term) >= dayAfter
   );
 
   return `
-    <div class="card">
 
-      <h1>📁 ${project.name}</h1>
+    <div
+      class="card"
+      style="margin-bottom:24px;"
+    >
 
-      <p>
-        Projeto ${project.status === "active" ? "ativo" : project.status}
+      <p
+        style="
+          margin:0;
+          color:#6B7280;
+          line-height:1.7;
+        "
+      >
+        ${project.description ??
+    "Nenhuma descrição cadastrada para este projeto."
+    }
       </p>
 
     </div>
 
     <div class="dashboard-grid">
 
-      ${statCard({
-        title: "Tarefas abertas",
-        value: project.totalTasks,
-        icon: "📋",
-        color: "#27C27A",
-      })}
+  ${statCard({
+      title: "Pendentes",
+      value: project.pendingTasks,
+      subtitle: "Em aberto",
+      icon: "📋",
+      onclick: `openPortalModal('/portal/projects/${project.id}/tasks/pending/modal')`,
+    })}
 
-      ${statCard({
-        title: "Vencem hoje",
-        value: project.todayTasks,
-        icon: "📅",
-        color: "#F59E0B",
-      })}
+  ${statCard({
+      title: "Vencem hoje",
+      value: project.todayTasks,
+      subtitle: "Para hoje",
+      icon: "📅",
+      color: "#F59E0B",
+      onclick: `openPortalModal('/portal/projects/${project.id}/tasks/today/modal')`,
+    })}
 
-      ${statCard({
-        title: "Membros",
-        value: project.members.length,
-        icon: "👥",
-        color: "#3B82F6",
-      })}
+  ${statCard({
+      title: "Concluídas",
+      value: project.completedTasks,
+      subtitle: "Finalizadas",
+      icon: "✅",
+      color: "#22C55E",
+      onclick: `openPortalModal('/portal/projects/${project.id}/tasks/completed/modal')`,
+    })}
 
-    </div>
+  ${statCard({
+      title: "Membros",
+      value: project.members.length,
+      subtitle: "Responsáveis",
+      icon: "👥",
+      color: "#3B82F6",
+      onclick: `openPortalModal('/portal/projects/${project.id}/members/modal')`,
+    })}
 
-    <div
-      class="card"
-      style="margin-top:24px;"
-    >
-
-      <h2>Membros</h2>
-
-      ${
-        project.members.length === 0
-          ? `
-            <p>Nenhum membro neste projeto.</p>
-          `
-          : `
-            <ul style="margin-top:16px;padding-left:20px;">
-              ${project.members
-                .map(member => `<li>${member}</li>`)
-                .join("")}
-            </ul>
-          `
-      }
-
-    </div>
+</div>
 
     <div
       class="card"
       style="margin-top:24px;"
     >
 
-      <h2 style="margin-bottom:24px;">
-        Tarefas
+      <h2 style="margin-bottom:20px;">
+        📅 Pendentes
       </h2>
 
-      ${
-        todayTasks.length
-          ? `
-            <h3 style="margin-bottom:12px;">
-              📅 Hoje
-            </h3>
+      ${todayTasks.length
+      ? accordion({
+        id: "project-today",
+        title: "Hoje",
+        count: todayTasks.length,
+        body: todayTasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `👤 ${task.responsible}`,
+              deadlineTime: task.deadlineTime,
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
+      })
+      : ""
+    }
 
-            ${todayTasks
-              .map(task =>
-                taskRow({
-                  id: task.id,
-                  title: task.title,
-                  subtitle: `👤 ${task.responsible}`,
-                  deadlineTime: task.deadlineTime,
-                  urgency: task.urgency,
-                })
-              )
-              .join("")}
-          `
-          : ""
-      }
+      ${tomorrowTasks.length
+      ? accordion({
+        id: "project-tomorrow",
+        title: "Amanhã",
+        count: tomorrowTasks.length,
+        body: tomorrowTasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `👤 ${task.responsible}`,
+              deadlineTime: task.deadlineTime,
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
+      })
+      : ""
+    }
 
-      ${
-        tomorrowTasks.length
-          ? `
-            <h3 style="margin:24px 0 12px;">
-              📅 Amanhã
-            </h3>
+      ${futureTasks.length
+      ? accordion({
+        id: "project-future",
+        title: "Futuras",
+        count: futureTasks.length,
+        body: futureTasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `👤 ${task.responsible}`,
+              deadlineTime: task.deadlineTime,
+              rightText: task.term
+                ? new Date(task.term).toLocaleDateString("pt-BR")
+                : "",
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
+      })
+      : ""
+    }
 
-            ${tomorrowTasks
-              .map(task =>
-                taskRow({
-                  id: task.id,
-                  title: task.title,
-                  subtitle: `👤 ${task.responsible}`,
-                  deadlineTime: task.deadlineTime,
-                  urgency: task.urgency,
-                })
-              )
-              .join("")}
-          `
-          : ""
-      }
-
-      ${
-        futureTasks.length
-          ? `
-            <h3 style="margin:24px 0 12px;">
-              📅 Futuras
-            </h3>
-
-            ${futureTasks
-              .map(task =>
-                taskRow({
-                  id: task.id,
-                  title: task.title,
-                  subtitle: `👤 ${task.responsible}`,
-                  deadlineTime: task.deadlineTime,
-                  rightText: new Date(task.term!).toLocaleDateString("pt-BR"),
-                  urgency: task.urgency,
-                })
-              )
-              .join("")}
-          `
-          : ""
-      }
-
-      ${
-        project.tasks.length === 0
-          ? `
+      ${pendingTasks.length === 0
+      ? `
             <p>
-              Nenhuma tarefa pendente neste projeto.
+              Nenhuma tarefa pendente.
             </p>
           `
-          : ""
-      }
+      : ""
+    }
+
+    </div>
+
+    <div
+      class="card"
+      style="margin-top:24px;"
+    >
+
+      <h2 style="margin-bottom:20px;">
+        ✅ Concluídas
+      </h2>
+
+      ${completedTasks.length
+      ? accordion({
+        id: "project-completed",
+        title: "Concluídas",
+        count: completedTasks.length,
+        body: completedTasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `👤 ${task.responsible}`,
+              deadlineTime: task.deadlineTime,
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
+      })
+      : `
+            <p>
+              Nenhuma tarefa concluída.
+            </p>
+          `
+    }
 
     </div>
 
   `;
+
 }

@@ -8,6 +8,7 @@ export type ProjectTask = {
     deadlineTime: string | null;
     responsible: string;
     urgency: "light" | "asap" | "turbo";
+    status: string;
 };
 
 export type ProjectDetails = {
@@ -15,9 +16,15 @@ export type ProjectDetails = {
     name: string;
     status: string;
     totalTasks: number;
+    pendingTasks: number;
+    completedTasks: number;
     todayTasks: number;
-    members: string[];
+    members: {
+        slackUserId: string;
+        name: string;
+    }[];
     tasks: ProjectTask[];
+    description: string | null;
 };
 
 export async function getProjectDetails(
@@ -32,24 +39,37 @@ export async function getProjectDetails(
 
         include: {
             tasks: {
-                where: {
-                    status: "pending",
-                },
-                orderBy: {
-                    term: "asc",
-                },
+                orderBy: [
+                    {
+                        status: "asc",
+                    },
+                    {
+                        term: "asc",
+                    },
+                ],
             },
         },
 
     });
 
     const today = new Date();
-
     today.setHours(0, 0, 0, 0);
 
     const tomorrow = new Date(today);
-
     tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const memberIds = [
+        ...new Set(
+            project.tasks.map(task => task.responsible)
+        ),
+    ];
+
+    const members = await Promise.all(
+        memberIds.map(async slackUserId => ({
+            slackUserId,
+            name: await getSlackUserName(slackUserId),
+        }))
+    );
 
     const tasks = await Promise.all(
 
@@ -61,26 +81,46 @@ export async function getProjectDetails(
             deadlineTime: task.deadlineTime,
             responsible: await getSlackUserName(task.responsible),
             urgency: task.urgency,
+            status: task.status,
 
         }))
 
     );
 
+    const pendingTasks = tasks.filter(
+        task =>
+            task.status !== "done" &&
+            task.status !== "cancelled"
+    );
+
+    const completedTasks = tasks.filter(
+        task => task.status === "done"
+    );
+
     return {
 
         id: project.id,
+
         name: project.name,
+
+        description: project.description,
+
         status: project.status,
 
         totalTasks: tasks.length,
 
-        todayTasks: tasks.filter(task =>
+        pendingTasks: pendingTasks.length,
+
+        completedTasks: completedTasks.length,
+
+        todayTasks: pendingTasks.filter(task =>
             task.term &&
             task.term >= today &&
             task.term < tomorrow
         ).length,
 
-        members: [...new Set(tasks.map(task => task.responsible))],
+        members,
+
         tasks,
 
     };

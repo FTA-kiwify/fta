@@ -43,43 +43,41 @@ export function dashboardTasksModal({
 
       </div>
 
-      ${
-        tasks.length
+      ${tasks.length
 
-          ? tasks.map(task =>
+      ? tasks.map(task =>
 
-              completed
+        completed
 
-                ? taskRow({
-                    id: task.task.id,
-                    title: task.task.title,
-                    subtitle: "Concluída hoje",
-                    rightText: new Date(task.createdAt).toLocaleTimeString(
-                      "pt-BR",
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }
-                    ),
-                    urgency: task.task.urgency,
-                  })
+          ? taskRow({
+            id: task.task?.id ?? task.id,
+            title: task.task?.title ?? task.title,
+            subtitle: "Concluída",
+            rightText: new Date(
+              task.createdAt ?? task.updatedAt
+            ).toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            urgency: task.task?.urgency ?? task.urgency,
+          })
 
-                : taskRow({
-                    id: task.id,
-                    title: task.title,
-                    subtitle: `📁 ${task.project?.name ?? "Sem projeto"}`,
-                    deadlineTime: task.deadlineTime,
-                    urgency: task.urgency,
-                  })
+          : taskRow({
+            id: task.id,
+            title: task.title,
+            subtitle: `📁 ${task.project?.name ?? "Sem projeto"}`,
+            deadlineTime: task.deadlineTime,
+            urgency: task.urgency,
+          })
 
-            ).join("")
+      ).join("")
 
-          : `
+      : `
             <p>
               Nenhuma tarefa encontrada.
             </p>
           `
-      }
+    }
 
     </div>
   `;

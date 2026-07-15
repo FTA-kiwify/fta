@@ -22,6 +22,10 @@ import { getProjectDetails } from "../services/portal/projectDetailsService";
 import { getTaskDetails } from "../services/portal/taskDetailsService";
 import { getDashboardTaskList } from "../services/portal/dashboardTaskListService";
 import { dashboardTasksModal } from "../portal/components/dashboardTasksModal";
+import { getCollaboratorTaskList } from "../services/portal/collaboratorTaskListService";
+import { getProjectTaskList } from "../services/portal/projectTaskListService";
+import { projectMembersModal } from "../portal/components/projectMembersModal";
+
 
 export async function portalRoutes(app: FastifyInstance) {
 
@@ -33,7 +37,9 @@ export async function portalRoutes(app: FastifyInstance) {
       portalLayout({
         title: "FTA Manager Portal",
         sidebar: sidebar("dashboard"),
-        topbar: topbar("Dashboard"),
+        topbar: topbar({
+          title: "Dashboard",
+        }),
         body: dashboardPage(dashboard),
       })
     );
@@ -48,7 +54,10 @@ export async function portalRoutes(app: FastifyInstance) {
       portalLayout({
         title: "Colaboradores",
         sidebar: sidebar("collaborators"),
-        topbar: topbar("Colaboradores"),
+        topbar: topbar({
+          title: "Colaboradores",
+          searchPlaceholder: "Pesquisar colaborador...",
+        }),
         body: collaboratorsPage(collaborators),
       })
     );
@@ -67,7 +76,9 @@ export async function portalRoutes(app: FastifyInstance) {
       portalLayout({
         title: collaborator.name,
         sidebar: sidebar("collaborators"),
-        topbar: topbar(collaborator.name),
+        topbar: topbar({
+          title: collaborator.name,
+        }),
         body: collaboratorPage(collaborator),
       })
     );
@@ -82,7 +93,10 @@ export async function portalRoutes(app: FastifyInstance) {
       portalLayout({
         title: "Projetos",
         sidebar: sidebar("projects"),
-        topbar: topbar("Projetos"),
+        topbar: topbar({
+          title: "Projetos",
+          searchPlaceholder: "Pesquisar projeto...",
+        }),
         body: projectsPage(projects),
       })
     );
@@ -101,7 +115,9 @@ export async function portalRoutes(app: FastifyInstance) {
       portalLayout({
         title: project.name,
         sidebar: sidebar("projects"),
-        topbar: topbar(project.name),
+        topbar: topbar({
+          title: project.name,
+        }),
         body: projectPage(project),
       })
     );
@@ -134,7 +150,9 @@ export async function portalRoutes(app: FastifyInstance) {
       portalLayout({
         title: task.title,
         sidebar: sidebar("dashboard"),
-        topbar: topbar(task.title),
+        topbar: topbar({
+          title: task.title,
+        }),
         body: taskPage(task),
       })
     );
@@ -183,5 +201,97 @@ export async function portalRoutes(app: FastifyInstance) {
 
     }
   );
+  app.get(
+    "/portal/collaborators/:slackUserId/tasks/:filter/modal",
+    async (request, reply) => {
+
+      const {
+        slackUserId,
+        filter,
+      } = request.params as {
+        slackUserId: string;
+        filter: string;
+      };
+
+      const tasks = await getCollaboratorTaskList(
+        slackUserId,
+        filter
+      );
+
+      const titles: Record<string, string> = {
+        pending: "📋 Tarefas abertas",
+        today: "📅 Vencem hoje",
+      };
+
+      return reply
+        .type("text/html")
+        .send(
+          dashboardTasksModal({
+            title: titles[filter] ?? "Tarefas",
+            tasks,
+            completed: false,
+          })
+        );
+
+    }
+  );
+
+  app.get(
+    "/portal/projects/:projectId/tasks/:filter/modal",
+    async (request, reply) => {
+
+      const {
+        projectId,
+        filter,
+      } = request.params as {
+        projectId: string;
+        filter: string;
+      };
+
+      const tasks = await getProjectTaskList(
+        projectId,
+        filter
+      );
+
+      const titles: Record<string, string> = {
+        pending: "📋 Tarefas pendentes",
+        today: "📅 Vencem hoje",
+        completed: "✅ Concluídas",
+      };
+
+      return reply
+        .type("text/html")
+        .send(
+          dashboardTasksModal({
+            title: titles[filter] ?? "Tarefas",
+            tasks,
+            completed: filter === "completed",
+          })
+        );
+
+    }
+  );
+
+  app.get(
+  "/portal/projects/:projectId/members/modal",
+  async (request, reply) => {
+
+    const { projectId } = request.params as {
+      projectId: string;
+    };
+
+    const project = await getProjectDetails(projectId);
+
+    return reply
+      .type("text/html")
+      .send(
+        projectMembersModal({
+          projectName: project.name,
+          members: project.members,
+        })
+      );
+
+  }
+);
 
 }

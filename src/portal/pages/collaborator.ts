@@ -1,6 +1,7 @@
 import type { CollaboratorDetails } from "../../services/portal/collaboratorDetailsService";
 import { taskRow } from "../components/taskRow";
 import { accordion } from "../components/accordion";
+import { statCard } from "../components/statCard";
 
 export function collaboratorPage(
   collaborator: CollaboratorDetails
@@ -33,65 +34,28 @@ export function collaboratorPage(
   );
 
   return `
-    <div class="card">
 
-      <h1>👤 ${collaborator.name}</h1>
-
-      <p>
-        Resumo do colaborador
-      </p>
-
-    </div>
 
     <div class="dashboard-grid">
 
-      <div class="stat-card">
+  ${statCard({
+    title: "Tarefas abertas",
+    value: collaborator.totalTasks,
+    subtitle: "Pendentes",
+    icon: "📋",
+    onclick: `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/pending/modal')`,
+  })}
 
-        <div>
+  ${statCard({
+    title: "Vencem hoje",
+    value: collaborator.todayTasks,
+    subtitle: "Para hoje",
+    icon: "📅",
+    color: "#F59E0B",
+    onclick: `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/today/modal')`,
+  })}
 
-          <div class="stat-title">
-            Tarefas abertas
-          </div>
-
-          <div class="stat-value">
-            ${collaborator.totalTasks}
-          </div>
-
-        </div>
-
-        <div
-          class="stat-icon"
-          style="background:#27C27A;"
-        >
-          📋
-        </div>
-
-      </div>
-
-      <div class="stat-card">
-
-        <div>
-
-          <div class="stat-title">
-            Vencem hoje
-          </div>
-
-          <div class="stat-value">
-            ${collaborator.todayTasks}
-          </div>
-
-        </div>
-
-        <div
-          class="stat-icon"
-          style="background:#F59E0B;"
-        >
-          📅
-        </div>
-
-      </div>
-
-    </div>
+</div>
 
     <div
       class="card"

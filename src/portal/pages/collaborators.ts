@@ -4,16 +4,8 @@ import type { Collaborator } from "../../services/portal/collaboratorService";
 export function collaboratorsPage(
   collaborators: Collaborator[]
 ) {
+
   return `
-    <div class="card">
-
-      <h1>👥 Colaboradores</h1>
-
-      <p>
-        Visualize colaboradores, projetos e atividades.
-      </p>
-
-    </div>
 
     <div class="collaborator-list">
 
@@ -22,5 +14,39 @@ export function collaboratorsPage(
         .join("")}
 
     </div>
+
+    <script>
+
+      const input = document.getElementById("portal-search");
+
+      if (input) {
+
+        input.addEventListener("input", function () {
+
+          const value = this.value
+            .toLowerCase()
+            .trim();
+
+          document
+            .querySelectorAll(".collaborator-card")
+            .forEach(card => {
+
+              const search =
+                card.dataset.search ?? "";
+
+              card.style.display =
+                search.includes(value)
+                  ? ""
+                  : "none";
+
+            });
+
+        });
+
+      }
+
+    </script>
+
   `;
+
 }
