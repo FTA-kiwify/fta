@@ -25,13 +25,74 @@ import { dashboardTasksModal } from "../portal/components/dashboardTasksModal";
 import { getCollaboratorTaskList } from "../services/portal/collaboratorTaskListService";
 import { getProjectTaskList } from "../services/portal/projectTaskListService";
 import { projectMembersModal } from "../portal/components/projectMembersModal";
+import { portalLoginPage } from "../portal/pages/login";
 
+import {
+  clearPortalCookie,
+  getPortalUser,
+  requirePortalUser,
+} from "../portal/auth";
+
+function getTopbarUser(request: any) {
+
+  const portalUser = getPortalUser(request);
+
+  if (!portalUser) {
+    return undefined;
+  }
+
+  return {
+    name: portalUser.name,
+    email: portalUser.email,
+    image: portalUser.picture,
+  };
+
+}
 
 export async function portalRoutes(app: FastifyInstance) {
 
-  app.get("/portal", async (_request, reply) => {
+  app.addHook(
+    "preHandler",
+    (request, reply, next) => {
 
-    const dashboard = await getDashboardData();
+      if (
+        request.url === "/portal/login" ||
+        request.url.startsWith(
+          "/portal/login?"
+        )
+      ) {
+        next();
+        return;
+      }
+
+      requirePortalUser(
+        request,
+        reply,
+        next
+      );
+
+    }
+  );
+
+  app.get("/portal/login", async (_request, reply) => {
+
+    return reply
+      .type("text/html")
+      .send(portalLoginPage());
+
+  });
+
+  app.get("/portal", async (request, reply) => {
+
+    const portalUser = getPortalUser(request);
+
+    if (!portalUser) {
+      return reply.redirect("/portal/login");
+    }
+
+    const dashboard = await getDashboardData(
+      portalUser.slackUserId
+    );
 
     return reply.type("text/html").send(
       portalLayout({
@@ -39,6 +100,7 @@ export async function portalRoutes(app: FastifyInstance) {
         sidebar: sidebar("dashboard"),
         topbar: topbar({
           title: "Dashboard",
+          user: getTopbarUser(request),
         }),
         body: dashboardPage(dashboard),
       })
@@ -46,7 +108,15 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
-  app.get("/portal/collaborators", async (_request, reply) => {
+  app.get("/portal/logout", async (_request, reply) => {
+
+    clearPortalCookie(reply);
+
+    return reply.redirect("/portal/login");
+
+  });
+
+  app.get("/portal/collaborators", async (request, reply) => {
 
     const collaborators = await getCollaborators();
 
@@ -57,6 +127,7 @@ export async function portalRoutes(app: FastifyInstance) {
         topbar: topbar({
           title: "Colaboradores",
           searchPlaceholder: "Pesquisar colaborador...",
+          user: getTopbarUser(request),
         }),
         body: collaboratorsPage(collaborators),
       })
@@ -78,6 +149,7 @@ export async function portalRoutes(app: FastifyInstance) {
         sidebar: sidebar("collaborators"),
         topbar: topbar({
           title: collaborator.name,
+          user: getTopbarUser(request),
         }),
         body: collaboratorPage(collaborator),
       })
@@ -85,7 +157,7 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
-  app.get("/portal/projects", async (_request, reply) => {
+  app.get("/portal/projects", async (request, reply) => {
 
     const projects = await getProjects();
 
@@ -96,7 +168,9 @@ export async function portalRoutes(app: FastifyInstance) {
         topbar: topbar({
           title: "Projetos",
           searchPlaceholder: "Pesquisar projeto...",
+          user: getTopbarUser(request),
         }),
+
         body: projectsPage(projects),
       })
     );
@@ -117,6 +191,7 @@ export async function portalRoutes(app: FastifyInstance) {
         sidebar: sidebar("projects"),
         topbar: topbar({
           title: project.name,
+          user: getTopbarUser(request),
         }),
         body: projectPage(project),
       })
@@ -152,6 +227,7 @@ export async function portalRoutes(app: FastifyInstance) {
         sidebar: sidebar("dashboard"),
         topbar: topbar({
           title: task.title,
+          user: getTopbarUser(request),
         }),
         body: taskPage(task),
       })
@@ -180,7 +256,18 @@ export async function portalRoutes(app: FastifyInstance) {
         filter: string;
       };
 
-      const tasks = await getDashboardTaskList(filter);
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const tasks = await getDashboardTaskList(
+        portalUser.slackUserId,
+        filter
+      );
 
       const titles: Record<string, string> = {
         pending: "📋 Minhas tarefas",
@@ -273,25 +360,27 @@ export async function portalRoutes(app: FastifyInstance) {
   );
 
   app.get(
-  "/portal/projects/:projectId/members/modal",
-  async (request, reply) => {
+    "/portal/projects/:projectId/members/modal",
+    async (request, reply) => {
 
-    const { projectId } = request.params as {
-      projectId: string;
-    };
+      const { projectId } = request.params as {
+        projectId: string;
+      };
 
-    const project = await getProjectDetails(projectId);
+      const project = await getProjectDetails(projectId);
 
-    return reply
-      .type("text/html")
-      .send(
-        projectMembersModal({
-          projectName: project.name,
-          members: project.members,
-        })
-      );
+      return reply
+        .type("text/html")
+        .send(
+          projectMembersModal({
+            projectName: project.name,
+            members: project.members,
+          })
+        );
 
-  }
-);
+    }
+  );
+
+
 
 }

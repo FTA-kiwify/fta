@@ -1,8 +1,10 @@
 import { prisma } from "../../lib/prisma";
 
-const slackUserId = process.env.PORTAL_TEST_SLACK_USER!;
 
-export async function getDashboardTaskList(filter: string) {
+export async function getDashboardTaskList(
+  slackUserId: string,
+  filter: string
+) {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

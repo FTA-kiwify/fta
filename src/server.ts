@@ -1,6 +1,5 @@
 // src/server.ts
 import { fastify } from "fastify";
-import "dotenv/config";
 import { slackRoutes } from "./routes/slackRoutes";
 import { sendMessage } from "./routes/sendMessage";
 import { startCrons } from "./jobs/startCrons";
@@ -11,11 +10,13 @@ import { googleCalendarTestRoutes } from "./routes/googleCalendarTestRoutes";
 import { startPruneDoneTasksCron } from "./jobs/pruneDoneTasksCron";
 import { adminRoutes } from "./routes/admin";
 import { portalRoutes } from "./routes/portal";
+import { slackOAuthRoutes } from "./routes/slackOAuthRoutes";
 
 async function main() {
   const app = fastify({ logger: { level: "info" } });
 
   app.register(slackRoutes);
+  app.register(slackOAuthRoutes);
   app.register(portalRoutes);
   app.register(sendMessage);
   app.register(adminRoutes);

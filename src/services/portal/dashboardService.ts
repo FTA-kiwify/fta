@@ -29,14 +29,18 @@ export type DashboardData = {
   userName: string;
 };
 
-export async function getDashboardData(): Promise<DashboardData> {
-
-  const slackUserId = process.env.PORTAL_TEST_SLACK_USER!;
-  const userName = await getSlackUserName(slackUserId);
+export async function getDashboardData(
+  slackUserId: string
+): Promise<DashboardData> {
 
   if (!slackUserId) {
-    throw new Error("PORTAL_TEST_SLACK_USER não configurado.");
+    throw new Error(
+      "Slack User ID não informado."
+    );
   }
+
+  const userName =
+    await getSlackUserName(slackUserId);
 
   const today = getBrazilToday();
 
