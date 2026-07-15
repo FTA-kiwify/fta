@@ -213,3 +213,39 @@ model TaskAuditLog {
   @@index([createdAt])
   @@map("task-audit-log")
 }
+
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String?
+  group       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members TeamMember[]
+
+  @@index([group])
+  @@map("teams")
+}
+
+model TeamMember {
+  id String @id @default(uuid())
+
+  teamId String
+
+  slackUserId String
+  email       String?
+
+  createdAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, slackUserId])
+
+  @@index([teamId])
+  @@index([slackUserId])
+
+  @@map("team-members")
+}

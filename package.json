@@ -8,13 +8,17 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch --env-file .env src/server.ts",
+    "dev:test": "tsx watch --env-file .envtest src/server.ts",
     "build": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "turbo:reminder": "node -r ts-node/register src/jobs/turboUrgencyReminderCron.ts",
     "turbo:reminder:prod": "node dist/jobs/turboUrgencyReminderCron.js",
     "prune:done": "tsx src/jobs/pruneDoneTasksCron.ts",
     "prune:done:prod": "node dist/jobs/pruneDoneTasksCron.js",
-    "admin:create": "tsx --env-file .env src/scripts/createAdminUser.ts"
+    "admin:create": "tsx --env-file .env src/scripts/createAdminUser.ts",
+    "admin:create:test": "tsx --env-file .envtest src/scripts/createAdminUser.ts",
+    "sync:teams": "tsx --env-file .env src/scripts/syncTeams.ts",
+    "sync:teams:test": "tsx --env-file .envtest src/scripts/syncTeams.ts"
   },
   "dependencies": {
     "@fastify/formbody": "^8.0.2",

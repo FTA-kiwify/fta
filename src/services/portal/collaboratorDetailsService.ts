@@ -27,6 +27,7 @@ export type CollaboratorUrgency = {
 };
 
 export type CollaboratorDetails = {
+  isTeam?: boolean;
   slackUserId: string;
   name: string;
   totalTasks: number;
@@ -35,6 +36,11 @@ export type CollaboratorDetails = {
   projects: CollaboratorProject[];
   recurrences: CollaboratorRecurrence[];
   urgencies: CollaboratorUrgency[];
+
+  members?: {
+    slackUserId: string;
+    name: string;
+  }[];
 };
 
 export async function getCollaboratorDetails(
@@ -262,6 +268,7 @@ export async function getCollaboratorDetails(
   ].filter(group => group.tasks.length > 0);
 
   return {
+    isTeam: false,
     slackUserId,
     name: await getSlackUserName(slackUserId),
     totalTasks: tasks.length,

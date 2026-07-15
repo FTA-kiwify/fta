@@ -38,12 +38,25 @@ export function collaboratorPage(
 
     <div class="dashboard-grid">
 
+  ${collaborator.isTeam
+  ? statCard({
+      title: "Membros",
+      value: collaborator.members?.length ?? 0,
+      subtitle: "No time",
+      icon: "👥",
+      onclick: `openPortalModal('/portal/teams/${collaborator.slackUserId}/members/modal')`,
+    })
+  : ""
+}
+
   ${statCard({
     title: "Tarefas abertas",
     value: collaborator.totalTasks,
     subtitle: "Pendentes",
     icon: "📋",
-    onclick: `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/pending/modal')`,
+    onclick: collaborator.isTeam
+  ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/pending/modal')`
+  : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/pending/modal')`,
   })}
 
   ${statCard({
@@ -52,7 +65,9 @@ export function collaboratorPage(
     subtitle: "Para hoje",
     icon: "📅",
     color: "#F59E0B",
-    onclick: `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/today/modal')`,
+    onclick: collaborator.isTeam
+  ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/today/modal')`
+  : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/today/modal')`,
   })}
 
 </div>

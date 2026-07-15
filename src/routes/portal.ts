@@ -17,6 +17,7 @@ import { projectModal } from "../portal/components/projectModal";
 import { getDashboardData } from "../services/portal/dashboardService";
 import { getCollaborators } from "../services/portal/collaboratorService";
 import { getCollaboratorDetails } from "../services/portal/collaboratorDetailsService";
+import { getTeamDetails } from "../services/portal/teamDetailsService";
 import { getProjects } from "../services/portal/projectService";
 import { getProjectDetails } from "../services/portal/projectDetailsService";
 import { getTaskDetails } from "../services/portal/taskDetailsService";
@@ -26,12 +27,20 @@ import { getCollaboratorTaskList } from "../services/portal/collaboratorTaskList
 import { getProjectTaskList } from "../services/portal/projectTaskListService";
 import { projectMembersModal } from "../portal/components/projectMembersModal";
 import { portalLoginPage } from "../portal/pages/login";
+import { getTeamTaskList } from "../services/portal/teamTaskListService";
+import { teamMembersModal } from "../portal/components/teamMembersModal";
+import { subTeamsPage } from "../portal/pages/subTeams";
+import { prisma } from "../lib/prisma";
+import { getSubTeams } from "../services/portal/subTeamsService";
 
 import {
   clearPortalCookie,
   getPortalUser,
   requirePortalUser,
 } from "../portal/auth";
+
+import { teamsPage } from "../portal/pages/teams";
+import { getTeams } from "../services/portal/teamService";
 
 function getTopbarUser(request: any) {
 
@@ -157,6 +166,25 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
+  app.get("/portal/teams", async (request, reply) => {
+
+    const teams = await getTeams();
+
+    return reply.type("text/html").send(
+      portalLayout({
+        title: "Times",
+        sidebar: sidebar("teams"),
+        topbar: topbar({
+          title: "Times",
+          searchPlaceholder: "Pesquisar time...",
+          user: getTopbarUser(request),
+        }),
+        body: teamsPage(teams),
+      })
+    );
+
+  });
+
   app.get("/portal/projects", async (request, reply) => {
 
     const projects = await getProjects();
@@ -198,6 +226,56 @@ export async function portalRoutes(app: FastifyInstance) {
     );
 
   });
+
+app.get("/portal/teams/:id", async (request, reply) => {
+
+  const { id } = request.params as {
+    id: string;
+  };
+
+  const team = await prisma.team.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!team) {
+    return reply.status(404).send("Time não encontrado.");
+  }
+
+  if (team.group === null) {
+
+    const subTeams = await getSubTeams(id);
+
+    return reply.type("text/html").send(
+      portalLayout({
+        title: team.name,
+        sidebar: sidebar("teams"),
+        topbar: topbar({
+          title: team.name,
+          user: getTopbarUser(request),
+        }),
+        body: subTeamsPage(subTeams),
+      })
+    );
+
+  }
+
+  const details = await getTeamDetails(id);
+
+  return reply.type("text/html").send(
+    portalLayout({
+      title: details.name,
+      sidebar: sidebar("teams"),
+      topbar: topbar({
+        title: details.name,
+        user: getTopbarUser(request),
+      }),
+      body: collaboratorPage(details),
+    })
+  );
+
+});
 
   app.get("/portal/projects/:id/modal", async (request, reply) => {
 
@@ -324,6 +402,63 @@ export async function portalRoutes(app: FastifyInstance) {
   );
 
   app.get(
+    "/portal/teams/:teamId/tasks/:filter/modal",
+    async (request, reply) => {
+
+      const {
+        teamId,
+        filter,
+      } = request.params as {
+        teamId: string;
+        filter: string;
+      };
+
+      const tasks = await getTeamTaskList(
+        teamId,
+        filter
+      );
+
+      const titles: Record<string, string> = {
+        pending: "📋 Tarefas abertas",
+        today: "📅 Vencem hoje",
+      };
+
+      return reply
+        .type("text/html")
+        .send(
+          dashboardTasksModal({
+            title: titles[filter] ?? "Tarefas",
+            tasks,
+            completed: false,
+          })
+        );
+
+    }
+  );
+
+  app.get(
+    "/portal/teams/:id/members/modal",
+    async (request, reply) => {
+
+      const { id } = request.params as {
+        id: string;
+      };
+
+      const team = await getTeamDetails(id);
+
+      return reply
+        .type("text/html")
+        .send(
+          teamMembersModal({
+            teamName: team.name,
+            members: team.members ?? [],
+          })
+        );
+
+    }
+  );
+
+  app.get(
     "/portal/projects/:projectId/tasks/:filter/modal",
     async (request, reply) => {
 
@@ -380,6 +515,7 @@ export async function portalRoutes(app: FastifyInstance) {
 
     }
   );
+
 
 
 
