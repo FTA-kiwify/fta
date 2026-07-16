@@ -32,7 +32,8 @@ import { teamMembersModal } from "../portal/components/teamMembersModal";
 import { subTeamsPage } from "../portal/pages/subTeams";
 import { prisma } from "../lib/prisma";
 import { getSubTeams } from "../services/portal/subTeamsService";
-
+import { createTeam } from "../services/portal/createTeamService";
+import { teamCreateModal } from "../portal/components/teamCreateModal";
 import {
   clearPortalCookie,
   getPortalUser,
@@ -41,6 +42,8 @@ import {
 
 import { teamsPage } from "../portal/pages/teams";
 import { getTeams } from "../services/portal/teamService";
+import { addTeamMemberModal } from "../portal/components/addTeamMemberModal";
+import { getAvailableCollaborators } from "../services/portal/availableCollaboratorsService";
 
 function getTopbarUser(request: any) {
 
@@ -166,6 +169,32 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
+  app.get(
+    "/portal/teams/create/modal",
+    async (_request, reply) => {
+
+      const departments = await prisma.team.findMany({
+        where: {
+          group: null,
+        },
+        orderBy: {
+          name: "asc",
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+      return reply
+        .type("text/html")
+        .send(
+          teamCreateModal(departments)
+        );
+
+    }
+  );
+
   app.get("/portal/teams", async (request, reply) => {
 
     const teams = await getTeams();
@@ -227,55 +256,58 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
-app.get("/portal/teams/:id", async (request, reply) => {
+  app.get("/portal/teams/:id", async (request, reply) => {
 
-  const { id } = request.params as {
-    id: string;
-  };
+    const { id } = request.params as {
+      id: string;
+    };
 
-  const team = await prisma.team.findUnique({
-    where: {
-      id,
-    },
-  });
+    const team = await prisma.team.findUnique({
+      where: {
+        id,
+      },
+    });
 
-  if (!team) {
-    return reply.status(404).send("Time não encontrado.");
-  }
+    if (!team) {
+      return reply.status(404).send("Time não encontrado.");
+    }
 
-  if (team.group === null) {
+    if (team.group === null) {
 
-    const subTeams = await getSubTeams(id);
+      const subTeams = await getSubTeams(id);
+
+      return reply.type("text/html").send(
+        portalLayout({
+          title: team.name,
+          sidebar: sidebar("teams"),
+          topbar: topbar({
+            title: team.name,
+            user: getTopbarUser(request),
+          }),
+          body: subTeamsPage(
+            team.id,
+            subTeams
+          ),
+        })
+      );
+
+    }
+
+    const details = await getTeamDetails(id);
 
     return reply.type("text/html").send(
       portalLayout({
-        title: team.name,
+        title: details.name,
         sidebar: sidebar("teams"),
         topbar: topbar({
-          title: team.name,
+          title: details.name,
           user: getTopbarUser(request),
         }),
-        body: subTeamsPage(subTeams),
+        body: collaboratorPage(details),
       })
     );
 
-  }
-
-  const details = await getTeamDetails(id);
-
-  return reply.type("text/html").send(
-    portalLayout({
-      title: details.name,
-      sidebar: sidebar("teams"),
-      topbar: topbar({
-        title: details.name,
-        user: getTopbarUser(request),
-      }),
-      body: collaboratorPage(details),
-    })
-  );
-
-});
+  });
 
   app.get("/portal/projects/:id/modal", async (request, reply) => {
 
@@ -452,8 +484,61 @@ app.get("/portal/teams/:id", async (request, reply) => {
           teamMembersModal({
             teamName: team.name,
             members: team.members ?? [],
+            teamId: team.slackUserId,
           })
         );
+
+    }
+  );
+
+  app.delete(
+    "/portal/teams/:id",
+    async (request, reply) => {
+
+      const { id } = request.params as {
+        id: string;
+      };
+
+      const team = await prisma.team.findUnique({
+        where: {
+          id,
+        },
+        include: {
+          members: true,
+        },
+      });
+
+      if (!team) {
+        return reply.status(404).send();
+      }
+
+      const subteams = await prisma.team.count({
+        where: {
+          group: team.name,
+        },
+      });
+
+      if (subteams > 0) {
+        return reply.status(400).send({
+          error: `Não é possível excluir este departamento porque ele possui ${subteams} subtime${subteams > 1 ? "s" : ""}. Remova os subtimes primeiro.`,
+        });
+      }
+
+      if (team.members.length > 0) {
+        return reply.status(400).send({
+          error: `Não é possível excluir este time porque ele possui ${team.members.length} membro${team.members.length > 1 ? "s" : ""}. Remova os membros primeiro.`,
+        });
+      }
+
+      await prisma.team.delete({
+        where: {
+          id,
+        },
+      });
+
+      return reply.send({
+        success: true,
+      });
 
     }
   );
@@ -516,7 +601,97 @@ app.get("/portal/teams/:id", async (request, reply) => {
     }
   );
 
+  app.post("/portal/teams", async (request, reply) => {
 
+    const body = request.body as {
+      name: string;
+      description?: string;
+      color?: string;
+      group?: string;
+    };
 
+    await createTeam(body);
+
+    return reply.send({
+      success: true,
+    });
+
+  });
+  app.get(
+    "/portal/teams/:id/members/add/modal",
+    async (request, reply) => {
+
+      const { id } = request.params as {
+        id: string;
+      };
+
+      const collaborators =
+        await getAvailableCollaborators(id);
+
+      return reply
+        .type("text/html")
+        .send(
+          addTeamMemberModal({
+            teamId: id,
+            collaborators,
+          })
+        );
+
+    }
+  );
+
+  app.post(
+    "/portal/teams/:id/members",
+    async (request, reply) => {
+
+      const { id } = request.params as {
+        id: string;
+      };
+
+      const body = request.body as {
+        slackUserId: string;
+      };
+
+      await prisma.teamMember.create({
+        data: {
+          teamId: id,
+          slackUserId: body.slackUserId,
+        },
+      });
+
+      return reply.send({
+        success: true,
+      });
+
+    }
+  );
+
+  app.delete(
+    "/portal/teams/:teamId/members/:slackUserId",
+    async (request, reply) => {
+
+      const {
+        teamId,
+        slackUserId,
+      } = request.params as {
+        teamId: string;
+        slackUserId: string;
+      };
+
+      await prisma.teamMember.delete({
+        where: {
+          teamId_slackUserId: {
+            teamId,
+            slackUserId,
+          },
+        },
+      });
+
+      return reply.send({
+        success: true,
+      });
+
+    }
+  );
 
 }

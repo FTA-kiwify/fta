@@ -264,6 +264,43 @@ ${collaborator.tasks.length === 0
 
 </div>
 
+${collaborator.isTeam ? `
+
+<div
+  class="card"
+  style="
+    margin-top:28px;
+    border:1px solid #FECACA;
+  "
+>
+
+  <h2 style="color:#DC2626;">
+    🗑 Zona de perigo
+  </h2>
+
+  <p style="margin-bottom:20px;">
+    Exclua este time caso ele não seja mais utilizado.
+  </p>
+
+  <button
+    onclick="deleteTeam('${collaborator.slackUserId}')"
+    style="
+      background:#DC2626;
+      color:white;
+      border:none;
+      padding:12px 18px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+    "
+  >
+    Excluir time
+  </button>
+
+</div>
+
+` : ""}
+
   `;
 
 }

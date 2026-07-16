@@ -7,6 +7,23 @@ export function teamsPage(
 
   return `
 
+    <div
+      style="
+        display:flex;
+        justify-content:flex-end;
+        margin-bottom:24px;
+      "
+    >
+
+      <button
+        onclick="openPortalModal('/portal/teams/create/modal')"
+        class="btn-primary"
+      >
+        + Novo Time
+      </button>
+
+    </div>
+
     ${teams
       .map(team => departmentCard(team))
       .join("")}

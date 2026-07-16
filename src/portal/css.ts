@@ -239,6 +239,129 @@ export function portalCss() {
   }
 
 }
+/* ---------- FORMULÁRIOS ---------- */
 
+.portal-label{
+  display:block;
+  margin-bottom:8px;
+  font-size:14px;
+  font-weight:600;
+  color:#374151;
+}
+
+.portal-input,
+.portal-select,
+.portal-textarea{
+  width:100%;
+  padding:12px 14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  font-size:15px;
+  background:white;
+  transition:.15s;
+}
+
+.portal-input:focus,
+.portal-select:focus,
+.portal-textarea:focus{
+  outline:none;
+  border-color:var(--primary);
+  box-shadow:0 0 0 4px rgba(39,194,122,.15);
+}
+
+.portal-textarea{
+  resize:vertical;
+  min-height:90px;
+}
+
+.portal-form-group{
+  margin-bottom:22px;
+}
+
+/* ---------- BOTÕES ---------- */
+
+.btn-primary{
+  background:var(--primary);
+  color:white;
+  border:none;
+  border-radius:12px;
+  padding:12px 18px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.btn-primary:hover{
+  transform:translateY(-1px);
+  background:#20AF6F;
+}
+
+.btn-secondary{
+  background:white;
+  border:1px solid var(--border);
+  color:#374151;
+  border-radius:12px;
+  padding:12px 18px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.btn-secondary:hover{
+  background:#F9FAFB;
+}
+
+/* ---------- MODAL ---------- */
+
+.portal-modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:28px;
+}
+
+.portal-modal-footer{
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  margin-top:30px;
+}
+
+/* ---------- OPÇÕES ---------- */
+
+.portal-options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.portal-option{
+  border:2px solid var(--border);
+  border-radius:14px;
+  padding:18px;
+  cursor:pointer;
+  transition:.15s;
+}
+
+.portal-option:hover{
+  border-color:var(--primary);
+}
+
+.portal-option.active{
+  border-color:var(--primary);
+  background:#ECFDF5;
+}
+
+.portal-option-title{
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.portal-option-subtitle{
+  color:#6B7280;
+  font-size:14px;
+}
   `;
 }

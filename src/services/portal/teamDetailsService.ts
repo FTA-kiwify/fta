@@ -38,6 +38,7 @@ export type CollaboratorDetails = {
     members?: {
         slackUserId: string;
         name: string;
+        openTasks: number;
     }[];
     isTeam?: boolean;
 };
@@ -357,13 +358,24 @@ export async function getTeamDetails(
         urgencies,
         members: await Promise.all(
 
-            members.map(async member => ({
+            slackUserIds.map(async slackUserId => ({
 
-                slackUserId: member.slackUserId,
+                slackUserId,
 
-                name: await getSlackUserName(
-                    member.slackUserId
-                ),
+                name: await getSlackUserName(slackUserId),
+
+                openTasks: await prisma.task.count({
+                    where: {
+                        responsible: slackUserId,
+                        status: {
+                            in: [
+                                "pending",
+                                "blocked",
+                                "overdue",
+                            ],
+                        },
+                    },
+                }),
 
             }))
 
