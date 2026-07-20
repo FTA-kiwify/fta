@@ -1182,6 +1182,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 createdAt: true,
                 updatedAt: true,
                 carbonCopies: { select: { slackUserId: true } },
+                calendarPrivate: true,
               },
             });
 
@@ -1236,6 +1237,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               dependsOnId: oldTask.dependsOnId ?? null,
               urgency: (oldTask.urgency as any) ?? "light",
               carbonCopies: oldTask.carbonCopies.map((c) => c.slackUserId),
+              calendarPrivate: oldTask.calendarPrivate,
+
             });
             await prisma.taskAuditLog.create({
               data: {
@@ -1756,6 +1759,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               turboStartTime: true,
               carbonCopies: { select: { slackUserId: true } },
               projectId: true,
+              calendarPrivate: true,
 
 
 
