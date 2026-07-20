@@ -300,13 +300,13 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         type: "input",
         optional: true,
         block_id: TASK_CAL_PRIVATE_BLOCK_ID,
-        label: { type: "plain_text", text: "Google Calendar" },
+        label: { type: "plain_text", text: "Privacidade" },
         element: {
           type: "checkboxes",
           action_id: TASK_CAL_PRIVATE_ACTION_ID,
           options: [
             {
-              text: { type: "plain_text", text: "🔒 Deixar evento privado" },
+              text: { type: "plain_text", text: "🔒 Atividade privada" },
               value: "private",
             },
           ],

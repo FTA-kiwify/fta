@@ -129,10 +129,14 @@ export async function slackOAuthRoutes(
 ) {
 
   app.get("/auth/slack", async (_request, reply) => {
-    
+
 
     const clientId = mustEnv("SLACK_CLIENT_ID");
     const redirectUri = mustEnv("SLACK_REDIRECT_URI");
+
+
+    console.log("CLIENT_ID:", clientId);
+    console.log("REDIRECT_URI:", redirectUri);
 
     const state = crypto
       .randomBytes(32)

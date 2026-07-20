@@ -398,20 +398,20 @@ export function editTaskModalView(args: {
           action_id: EDIT_CAL_PRIVATE_ACTION_ID,
           options: [
             {
-              text: { type: "plain_text", text: "🔒 Deixar evento privado" },
+              text: { type: "plain_text", text: "🔒 Atividade privada" },
               value: "private",
             },
           ],
           initial_options: args.calendarPrivate
             ? [
               {
-                text: { type: "plain_text", text: "🔒 Deixar evento privado" },
+                text: { type: "plain_text", text: "🔒 Atividade privada" },
                 value: "private",
               },
             ]
             : undefined,
         },
-        label: { type: "plain_text", text: "Google Calendar" },
+        label: { type: "plain_text", text: "Privacidade" },
       },
     ],
   };

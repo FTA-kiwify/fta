@@ -16,6 +16,16 @@ export type TaskDetails = {
   projectId: string | null;
   notionProcessUrl: string | null;   // <-- adicionar
   copies: string[];
+  auditLogs: {
+  id: string;
+  action: string;
+  actorName: string | null;
+  actorSlackId: string | null;
+  beforeJson: unknown;
+  afterJson: unknown;
+  createdAt: Date;
+}[];
+
 };
 
 export async function getTaskDetails(
@@ -31,6 +41,13 @@ export async function getTaskDetails(
     include: {
       project: true,
       carbonCopies: true,
+
+      auditLogs: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
+      },
     },
 
   });
@@ -47,6 +64,23 @@ export async function getTaskDetails(
     task.carbonCopies.map(cc =>
       getSlackUserName(cc.slackUserId)
     )
+  );
+  const auditLogs = await Promise.all(
+
+    task.auditLogs.map(async log => ({
+
+      ...log,
+
+      actorName:
+        log.actorName ??
+        (
+          log.actorSlackId
+            ? await getSlackUserName(log.actorSlackId)
+            : "Sistema"
+        )
+
+    }))
+
   );
 
   return {
@@ -76,6 +110,7 @@ export async function getTaskDetails(
     copies,
     projectId: task.project?.id ?? null,
     notionProcessUrl: task.notionProcessUrl,
+    auditLogs,
 
   };
 

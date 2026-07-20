@@ -104,6 +104,40 @@ function recurrenceLabel(
   }
 
 }
+function auditAction(action: string) {
+
+  switch (action) {
+
+    case "TASK_CREATED":
+      return "🆕 Tarefa criada";
+
+    case "TASK_DONE":
+      return "✅ Tarefa concluída";
+
+    case "TASK_RESCHEDULED":
+      return "📅 Prazo alterado";
+
+    case "TASK_REOPENED":
+      return "🔄 Tarefa reaberta";
+
+    default:
+      return action;
+
+  }
+
+}
+
+function auditDate(date: Date) {
+
+  return new Date(date).toLocaleString(
+    "pt-BR",
+    {
+      dateStyle: "short",
+      timeStyle: "short",
+    }
+  );
+
+}
 
 function infoCard(
   title: string,
@@ -346,6 +380,80 @@ export function taskModal(task: TaskDetails) {
         </div>
 
       </div>
+
+      <hr
+  style="
+    border:none;
+    border-top:1px solid #E5E7EB;
+    margin:30px 0;
+  "
+>
+
+<div>
+
+  <h3
+    style="
+      margin:0 0 18px;
+    "
+  >
+    📜 Histórico
+  </h3>
+
+  ${task.auditLogs?.length
+
+      ? task.auditLogs.map(log => `
+
+        <div
+          style="
+            border-left:3px solid #E5E7EB;
+            padding-left:14px;
+            margin-bottom:18px;
+          "
+        >
+
+          <div
+            style="
+              font-weight:600;
+              margin-bottom:6px;
+            "
+          >
+            ${auditAction(log.action)}
+          </div>
+
+          <div
+            style="
+              color:#6B7280;
+              font-size:13px;
+            "
+          >
+            ${auditDate(log.createdAt)}
+          </div>
+
+          <div
+            style="
+              color:#374151;
+              margin-top:4px;
+            "
+          >
+            ${log.actorName ?? "Sistema"}
+          </div>
+
+        </div>
+
+      `).join("")
+
+      : `
+          <span
+            style="
+              color:#6B7280;
+            "
+          >
+            Nenhum histórico encontrado.
+          </span>
+        `
+    }
+
+</div>
 
     </div>
 
