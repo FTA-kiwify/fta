@@ -51,6 +51,8 @@ export async function getCollaboratorDetails(
     where: {
       responsible: slackUserId,
       status: "pending",
+      calendarPrivate: false,
+
     },
     include: {
       project: true,

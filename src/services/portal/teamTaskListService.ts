@@ -67,6 +67,7 @@ export async function getTeamTaskList(
       return prisma.task.findMany({
         where: {
           status: "pending",
+          calendarPrivate: false,
           responsible: {
             in: slackUserIds,
           },
@@ -81,6 +82,7 @@ export async function getTeamTaskList(
       return prisma.task.findMany({
         where: {
           status: "pending",
+          calendarPrivate: false,
           responsible: {
             in: slackUserIds,
           },
@@ -99,6 +101,7 @@ export async function getTeamTaskList(
       return prisma.task.findMany({
         where: {
           status: "pending",
+          calendarPrivate: false,
           responsible: {
             in: slackUserIds,
           },

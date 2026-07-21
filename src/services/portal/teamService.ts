@@ -63,6 +63,7 @@ export async function getTeams() {
               "overdue",
             ],
           },
+          calendarPrivate: false,
           responsible: {
             in: slackUserIds,
           },
@@ -78,6 +79,7 @@ export async function getTeams() {
               "overdue",
             ],
           },
+          calendarPrivate: false,
           responsible: {
             in: slackUserIds,
           },

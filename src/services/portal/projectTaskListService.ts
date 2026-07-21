@@ -18,6 +18,7 @@ export async function getProjectTaskList(
       return prisma.task.findMany({
         where: {
           projectId,
+          calendarPrivate: false,
           status: {
             notIn: ["done", "cancelled"],
           },
@@ -44,6 +45,7 @@ export async function getProjectTaskList(
       return prisma.task.findMany({
         where: {
           projectId,
+          calendarPrivate: false,
           status: "done",
         },
         include: {
@@ -59,6 +61,7 @@ export async function getProjectTaskList(
       return prisma.task.findMany({
         where: {
           projectId,
+          calendarPrivate: false,
           status: {
             notIn: ["done", "cancelled"],
           },

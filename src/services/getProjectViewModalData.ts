@@ -52,7 +52,10 @@ export async function getProjectViewModalData(args: {
   const todayStart = startOfTodayUtc();
 
   // ✅ TaskWhereInput do SEU client gerado
-  const baseWhere: TaskWhereInput = { projectId: project.id };
+  const baseWhere: TaskWhereInput = {
+    projectId: project.id,
+    calendarPrivate: false,
+  };
 
   // 2) stats
   const [openCount, doneCount, overdueCount] = await Promise.all([

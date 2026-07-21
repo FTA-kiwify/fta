@@ -17,6 +17,7 @@ export async function getCollaboratorTaskList(
       where: {
         responsible: slackUserId,
         status: "pending",
+        calendarPrivate: false,
         term: {
           gte: today,
           lt: tomorrow,
@@ -41,6 +42,7 @@ export async function getCollaboratorTaskList(
     where: {
       responsible: slackUserId,
       status: "pending",
+      calendarPrivate: false,
     },
     include: {
       project: true,

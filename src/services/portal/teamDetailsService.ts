@@ -103,6 +103,7 @@ export async function getTeamDetails(
                 in: slackUserIds,
             },
             status: "pending",
+            calendarPrivate: false,
         },
         include: {
             project: true,
@@ -367,6 +368,7 @@ export async function getTeamDetails(
                 openTasks: await prisma.task.count({
                     where: {
                         responsible: slackUserId,
+                        calendarPrivate: false,
                         status: {
                             in: [
                                 "pending",

@@ -47,6 +47,7 @@ export async function getSubTeams(
           responsible: {
             in: slackIds,
           },
+          calendarPrivate: false,
           status: {
             in: [
               "pending",
@@ -68,6 +69,7 @@ export async function getSubTeams(
           responsible:{
             in: slackIds,
           },
+          calendarPrivate: false,
           status:{
             in:[
               "pending",
