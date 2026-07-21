@@ -139,6 +139,12 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
     };
   }
 
+  console.log("ORIGINAL", completed.calendarPrivate);
+
+  console.log("VAI GRAVAR", {
+    calendarPrivate: completed.calendarPrivate,
+  });
+
   const nextTask = await prisma.task.create({
     data: {
       title: completed.title,
@@ -189,6 +195,15 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       carbonCopies: { select: { slackUserId: true } },
     },
   });
+
+  const check = await prisma.task.findUnique({
+    where: { id: nextTask.id },
+    select: {
+      calendarPrivate: true,
+    },
+  });
+
+  console.log("SALVO NO BANCO", check);
 
   // calendário do novo
   void syncCalendarEventForTask(nextTask.id).catch((e) => {
