@@ -633,7 +633,60 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
         // ✅ Debug rápido (se quiser manter)
         req.log.info({ actionId, blockId: action?.block_id, value: action?.value }, "[INTERACTIVE] action");
+        // =========================================================
+        // ✅ CREATE TASK - TASK TYPE DYNAMIC
+        // =========================================================
+        if (
+          payload.view?.callback_id === CREATE_TASK_MODAL_CALLBACK_ID &&
+          actionId === TASK_TYPE_ACTION_ID
+        ) {
+          reply.status(200).send();
 
+          void (async () => {
+            const selectedTaskType =
+              String((action as any)?.selected_option?.value ?? "") || "normal";
+
+            const view = payload.view;
+            if (!view?.id) return;
+
+            const projects = await prisma.project.findMany({
+              where: {
+                status: "active",
+                OR: [
+                  { createdBySlackId: userSlackId },
+                  { members: { some: { slackUserId: userSlackId } } },
+                  {
+                    tasks: {
+                      some: {
+                        OR: [
+                          { delegation: userSlackId },
+                          { responsible: userSlackId },
+                          { carbonCopies: { some: { slackUserId: userSlackId } } },
+                        ],
+                      },
+                    },
+                  },
+                ],
+              },
+              orderBy: { name: "asc" },
+              take: 100,
+              select: { id: true, name: true },
+            });
+
+            await slack.views.update({
+              view_id: view.id,
+              hash: view.hash,
+              view: createTaskModalView({
+                projects,
+                initialTaskType: selectedTaskType,
+              }),
+            });
+          })().catch((e) => {
+            req.log.error({ e }, "[CREATE_TASK_MODAL] task type failed");
+          });
+
+          return;
+        }
         // =========================================================
         // ✅ CREATE TASK - URGENCY DYNAMIC
         // =========================================================

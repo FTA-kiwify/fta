@@ -64,6 +64,8 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
   const recurrenceValue = args?.initialRecurrence ?? "none";
   const urgencyValue = args?.initialUrgency ?? "light";
   const taskTypeValue = args?.initialTaskType ?? "normal";
+  const isOnDemand = taskTypeValue === "on_demand";
+
   const reminderModeValue = args?.initialReminderMode ?? "until";
 
   const recurrenceOptions = [
@@ -204,17 +206,26 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         label: { type: "plain_text", text: "Prazo (data)" },
         element: { type: "datepicker", action_id: "due_date" },
       },
-      {
-        type: "input",
-        optional: true,
-        block_id: TASK_TIME_BLOCK_ID,
-        label: { type: "plain_text", text: "Horário do prazo" },
-        element: {
-          type: "timepicker",
-          action_id: TASK_TIME_ACTION_ID,
-          placeholder: { type: "plain_text", text: "Ex: 18:30" },
-        },
-      },
+      ...(
+        !isOnDemand
+          ? ([
+            {
+              type: "input",
+              optional: true,
+              block_id: TASK_TIME_BLOCK_ID,
+              label: { type: "plain_text", text: "Horário do prazo" },
+              element: {
+                type: "timepicker",
+                action_id: TASK_TIME_ACTION_ID,
+                placeholder: {
+                  type: "plain_text",
+                  text: "Ex: 18:30",
+                },
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
 
       // ✅ DEPENDE DE
       {
