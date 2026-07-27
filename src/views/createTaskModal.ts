@@ -68,13 +68,13 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
 
   const reminderModeValue = args?.initialReminderMode ?? "until";
   console.log(
-  "[MODAL]",
-  {
-    showTurboFields,
-    taskTypeValue,
-    isOnDemand,
-  }
-);
+    "[MODAL]",
+    {
+      showTurboFields,
+      taskTypeValue,
+      isOnDemand,
+    }
+  );
 
   const recurrenceOptions = [
     { text: { type: "plain_text" as const, text: "Sem recorrência" }, value: "none" },
@@ -209,15 +209,18 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
           options: taskTypeOptions,
         },
       },
-      {
-        type: "input",
-        block_id: "due_block",
-        label: { type: "plain_text", text: "Prazo (data)" },
-        element: { type: "datepicker", action_id: "due_date" },
-      },
       ...(
         !isOnDemand
           ? ([
+            {
+              type: "input",
+              block_id: "due_block",
+              label: { type: "plain_text", text: "Prazo (data)" },
+              element: {
+                type: "datepicker",
+                action_id: "due_date",
+              },
+            },
             {
               type: "input",
               optional: true,
@@ -275,20 +278,29 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
 
       projectBlock,
 
-      {
-        type: "input",
-        block_id: TASK_URGENCY_BLOCK_ID,
-        dispatch_action: true,
-        label: { type: "plain_text", text: "Nível de urgência" },
-        element: {
-          type: "static_select",
-          action_id: TASK_URGENCY_ACTION_ID,
-          initial_option:
-            urgencyOptions.find((o) => o.value === urgencyValue) ??
-            urgencyOptions[0],
-          options: urgencyOptions,
-        },
-      },
+      ...(
+        !isOnDemand
+          ? ([
+            {
+              type: "input",
+              block_id: TASK_URGENCY_BLOCK_ID,
+              dispatch_action: true,
+              label: {
+                type: "plain_text",
+                text: "Nível de urgência",
+              },
+              element: {
+                type: "static_select",
+                action_id: TASK_URGENCY_ACTION_ID,
+                initial_option:
+                  urgencyOptions.find((o) => o.value === urgencyValue) ??
+                  urgencyOptions[0],
+                options: urgencyOptions,
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
       {
         type: "input",
         block_id: TASK_REMINDER_MODE_BLOCK_ID,
