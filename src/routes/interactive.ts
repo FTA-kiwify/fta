@@ -632,7 +632,15 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         const triggerId = payload.trigger_id as string | undefined;
 
         // ✅ Debug rápido (se quiser manter)
-        req.log.info({ actionId, blockId: action?.block_id, value: action?.value }, "[INTERACTIVE] action");
+        req.log.info(
+          {
+            type: payload.type,
+            actionId,
+            blockId: action?.block_id,
+            selected: (action as any)?.selected_option?.value,
+          },
+          "[INTERACTIVE] action"
+        );
         // =========================================================
         // ✅ CREATE TASK - TASK TYPE DYNAMIC
         // =========================================================
