@@ -187,6 +187,7 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
       {
         type: "input",
         block_id: TASK_TYPE_BLOCK_ID,
+        dispatch_action: true,
         label: {
           type: "plain_text",
           text: "Tipo da tarefa",
