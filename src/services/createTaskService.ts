@@ -130,6 +130,8 @@ export async function createTaskService(raw: unknown) {
 
       status: "pending",
       calendarPrivate: data.calendarPrivate ?? false,
+      taskType: data.taskType,
+      
 
       ...(carbonCopiesData.length
         ? {
@@ -161,6 +163,7 @@ export async function createTaskService(raw: unknown) {
 
       urgency: task.urgency,
       recurrence: task.recurrence,
+      taskType: task.taskType,
     },
   });
 
