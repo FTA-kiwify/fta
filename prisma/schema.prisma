@@ -52,9 +52,9 @@ model Task {
   deadlineTime       String?
   status             TaskStatus   @default(pending)
   recurrence         Recurrence?
-  urgency            Urgency
+  urgency            Urgency?
   taskType TaskType @default(normal)
-  reminderMode       ReminderMode @default(until)
+  reminderMode       ReminderMode?
   turboPreviousDay   Boolean      @default(false)
   turboStartTime     String?
   createdAt          DateTime     @default(now())

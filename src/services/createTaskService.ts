@@ -73,6 +73,23 @@ export async function createTaskService(raw: unknown) {
   const recurrence = normalizeRecurrence(data.recurrence);
   const reminderMode: ReminderMode = data.reminderMode === "from" ? "from" : "until";
 
+  const isOnDemand = data.taskType === "on_demand";
+
+  const taskTerm = isOnDemand ? null : term;
+  const taskRecurrence = isOnDemand ? null : recurrence;
+  const taskDeadlineTime = isOnDemand ? null : data.deadlineTime ?? null;
+
+  const taskUrgency = isOnDemand ? "light" : data.urgency;
+  const taskReminderMode: ReminderMode = isOnDemand ? "until" : reminderMode;
+
+  const taskTurboPreviousDay = isOnDemand
+    ? false
+    : (data.turboPreviousDay ?? false);
+
+  const taskTurboStartTime = isOnDemand
+    ? null
+    : data.turboStartTime ?? null;
+
   // ✅ busca emails no Slack antes de salvar (pra o Calendar pegar depois)
   const [delegationEmail, responsibleEmail] = await Promise.all([
     getSlackUserEmail(data.delegation).catch(() => null),
@@ -98,21 +115,18 @@ export async function createTaskService(raw: unknown) {
       responsible: data.responsible,
       responsibleEmail,
 
-      term,
-      originalTerm: term,
-      deadlineTime: data.deadlineTime ?? null,
-      recurrence,
-      projectId: data.projectId ?? null,
+      term: taskTerm,
+      originalTerm: taskTerm,
+      deadlineTime: taskDeadlineTime,
 
-      dependsOnId: data.dependsOnId ?? null,
-      recurrenceAnchor: recurrence ? term : null,
+      recurrence: taskRecurrence,
+      recurrenceAnchor: taskRecurrence ? taskTerm : null,
 
-      urgency: data.urgency,
-      taskType: data.taskType,
-      reminderMode,
+      urgency: taskUrgency,
+      reminderMode: taskReminderMode,
 
-      turboPreviousDay: data.turboPreviousDay ?? false,
-      turboStartTime: data.turboStartTime ?? null,
+      turboPreviousDay: taskTurboPreviousDay,
+      turboStartTime: taskTurboStartTime,
 
       status: "pending",
       calendarPrivate: data.calendarPrivate ?? false,
