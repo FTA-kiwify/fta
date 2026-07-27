@@ -1826,6 +1826,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               carbonCopies: { select: { slackUserId: true } },
               projectId: true,
               calendarPrivate: true,
+              taskType: true,
 
 
 
@@ -1879,6 +1880,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               turboStartTime: (task as any).turboStartTime ?? null,
               projects,
               currentProjectId: task.projectId ?? null,
+              taskType: task.taskType,
             } as any),
           });
 
@@ -1926,6 +1928,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               responsible: true,
               delegation: true,
               calendarPrivate: true,
+              taskType: true,
 
               carbonCopies: { select: { slackUserId: true } },
             },
@@ -1965,6 +1968,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               carbonCopiesSlackIds: task.carbonCopies.map((c) => c.slackUserId),
               notionProcessUrl: task.notionProcessUrl ?? null,
               calendarPrivate: task.calendarPrivate,
+              taskType: task.taskType,
             }),
           });
 

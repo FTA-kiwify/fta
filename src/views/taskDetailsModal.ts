@@ -27,6 +27,7 @@ export function taskDetailsModalView(args: {
   originalDueDateIso: string | null; // YYYY-MM-DD
   deadlineTime: string | null; // HH:MM
   urgency: Urgency;
+  taskType: "normal" | "on_demand";
   recurrence: string | null;
   projectNameOrId: string | null;
   description: string | null;
@@ -54,15 +55,20 @@ export function taskDetailsModalView(args: {
   const delegatedText = args.delegationSlackId ? `<@${args.delegationSlackId}>` : "—";
   const projectText = args.projectNameOrId ?? "—";
   const recurrenceText = args.recurrence ?? "—";
+  const isOnDemand = args.taskType === "on_demand";
+
+  const taskTypeText = isOnDemand
+    ? "⚡ Sob demanda"
+    : "📅 Normal";
 
   const notionText = args.notionProcessUrl?.trim()
     ? `<${args.notionProcessUrl}|Abrir processo>`
     : "—";
 
   const privacy =
-  args.calendarPrivate
-    ? "🔒 Privada"
-    : "🌎 Pública";
+    args.calendarPrivate
+      ? "🔒 Privada"
+      : "🌎 Pública";
 
   const ccIds = Array.from(new Set((args.carbonCopiesSlackIds ?? []).filter(Boolean)));
   const hasCc = ccIds.length > 0;
@@ -78,13 +84,27 @@ export function taskDetailsModalView(args: {
       fields: [
         { type: "mrkdwn", text: `*Responsável:*\n<@${args.responsibleSlackId}>\n\n` },
         { type: "mrkdwn", text: `*Delegado por:*\n${delegatedText}\n\n` },
-        { type: "mrkdwn", text: `*Prazo atual:*\n${dueText}` },
-        { type: "mrkdwn", text: `*Prazo original:*\n${originalDueText}` },
-        { type: "mrkdwn", text: `*Urgência:*\n${urgencyLabel(args.urgency)}\n\n` },
-        { type: "mrkdwn", text: `*Recorrência:*\n${recurrenceText}\n\n` },
+
+        { type: "mrkdwn", text: `*Tipo da tarefa:*\n${taskTypeText}\n\n` },
+
+        ...(isOnDemand
+          ? []
+          : [
+            { type: "mrkdwn" as const, text: `*Prazo atual:*\n${dueText}` },
+            { type: "mrkdwn" as const, text: `*Prazo original:*\n${originalDueText}` },
+            {
+              type: "mrkdwn" as const,
+              text: `*Urgência:*\n${urgencyLabel(args.urgency)}\n\n`,
+            },
+            {
+              type: "mrkdwn" as const,
+              text: `*Recorrência:*\n${recurrenceText}\n\n`,
+            },
+          ]),
+
         { type: "mrkdwn", text: `*Projeto:*\n${projectText}\n\n` },
         { type: "mrkdwn", text: `*Processo:*\n${notionText}\n\n` },
-        { type: "mrkdwn", text: `*Privacidade:*\n${privacy}`,}
+        { type: "mrkdwn", text: `*Privacidade:*\n${privacy}` },
       ],
     },
   ];

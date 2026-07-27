@@ -1,6 +1,5 @@
 // src/views/editTaskModal.ts
-import type { View } from "@slack/web-api";
-
+import type { KnownBlock, View } from "@slack/web-api";
 export const EDIT_TASK_MODAL_CALLBACK_ID = "edit_task_modal" as const;
 
 export const EDIT_TITLE_BLOCK_ID = "edit_title_block" as const;
@@ -99,6 +98,7 @@ export function editTaskModalView(args: {
 
   urgency?: "light" | "asap" | "turbo" | string | null;
   reminderMode?: "until" | "from" | string | null;
+  taskType?: "normal" | "on_demand";
   calendarPrivate?: boolean;
   turboPreviousDay?: boolean;
   turboStartTime?: string | null;
@@ -128,6 +128,9 @@ export function editTaskModalView(args: {
     if (u === "asap") return "🟡 ASAP";
     return "🟢 Light";
   };
+
+  const isOnDemand = args.taskType === "on_demand";
+  const showTurbo = urgencyValue === "turbo" && !isOnDemand;
 
   // ✅ NOVO: bloco de projeto (com opção "Sem projeto" para permitir desvincular)
   const incomingProjects = Array.isArray(args.projects) ? args.projects : [];
@@ -202,32 +205,56 @@ export function editTaskModalView(args: {
       },
 
       // Prazo (data)
-      {
-        type: "input",
-        optional: true,
-        block_id: EDIT_TERM_BLOCK_ID,
-        element: {
-          type: "datepicker",
-          action_id: EDIT_TERM_ACTION_ID,
-          initial_date: args.currentDateIso ?? undefined,
-          placeholder: { type: "plain_text", text: "Sem prazo" },
-        },
-        label: { type: "plain_text", text: "Prazo (data)" },
-      },
+      ...(
+        !isOnDemand
+          ? ([
+            {
+              type: "input",
+              optional: true,
+              block_id: EDIT_TERM_BLOCK_ID,
+              element: {
+                type: "datepicker",
+                action_id: EDIT_TERM_ACTION_ID,
+                initial_date: args.currentDateIso ?? undefined,
+                placeholder: {
+                  type: "plain_text",
+                  text: "Sem prazo",
+                },
+              },
+              label: {
+                type: "plain_text",
+                text: "Prazo (data)",
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
 
       // Horário
-      {
-        type: "input",
-        optional: true,
-        block_id: EDIT_TIME_BLOCK_ID,
-        element: {
-          type: "timepicker",
-          action_id: EDIT_TIME_ACTION_ID,
-          initial_time: args.currentTime ?? undefined,
-          placeholder: { type: "plain_text", text: "Sem horário" },
-        },
-        label: { type: "plain_text", text: "Horário (opcional)" },
-      },
+      ...(
+        !isOnDemand
+          ? ([
+            {
+              type: "input",
+              optional: true,
+              block_id: EDIT_TIME_BLOCK_ID,
+              element: {
+                type: "timepicker",
+                action_id: EDIT_TIME_ACTION_ID,
+                initial_time: args.currentTime ?? undefined,
+                placeholder: {
+                  type: "plain_text",
+                  text: "Sem horário",
+                },
+              },
+              label: {
+                type: "plain_text",
+                text: "Horário (opcional)",
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
 
       // Responsável
       {
@@ -272,86 +299,163 @@ export function editTaskModalView(args: {
       },
 
       // Urgência
-      {
-        type: "input",
-        block_id: EDIT_URGENCY_BLOCK_ID,
-        element: {
-          type: "static_select",
-          action_id: EDIT_URGENCY_ACTION_ID,
-          placeholder: { type: "plain_text", text: "Selecione" },
-          initial_option: {
-            text: { type: "plain_text", text: urgencyLabel(String(urgencyValue)) },
-            value: String(urgencyValue),
-          },
-          options: [
-            { text: { type: "plain_text", text: "🟢 Light" }, value: "light" },
-            { text: { type: "plain_text", text: "🟡 ASAP" }, value: "asap" },
-            { text: { type: "plain_text", text: "🔴 Turbo" }, value: "turbo" },
-          ],
-        },
-        label: { type: "plain_text", text: "Nível de urgência" },
-      },
-      {
-        type: "input",
-        block_id: EDIT_REMINDER_MODE_BLOCK_ID,
-        label: { type: "plain_text", text: "Tipo de follow-up" },
-        element: {
-          type: "static_select",
-          action_id: EDIT_REMINDER_MODE_ACTION_ID,
-          initial_option:
-            args.reminderMode === "from"
-              ? {
-                text: { type: "plain_text", text: "▶️ Entregar a partir do prazo" },
-                value: "from",
-              }
-              : {
-                text: { type: "plain_text", text: "⏰ Entregar até o prazo" },
-                value: "until",
-              },
-          options: [
+      ...(
+        !isOnDemand
+          ? ([
             {
-              text: { type: "plain_text", text: "⏰ Entregar até o prazo" },
-              value: "until",
-            },
-            {
-              text: { type: "plain_text", text: "▶️ Entregar a partir do prazo" },
-              value: "from",
-            },
-          ],
-        },
-      },
-      {
-        type: "input",
-        optional: true,
-        block_id: "turbo_previous_day_block",
-        element: {
-          type: "checkboxes",
-          action_id: "turbo_previous_day",
-          ...(args.turboPreviousDay
-            ? {
-              initial_options: [
-                {
+              type: "input",
+              block_id: EDIT_URGENCY_BLOCK_ID,
+              element: {
+                type: "static_select",
+                action_id: EDIT_URGENCY_ACTION_ID,
+                placeholder: {
+                  type: "plain_text",
+                  text: "Selecione",
+                },
+                initial_option: {
                   text: {
                     type: "plain_text",
-                    text: "Iniciar follow-ups no dia anterior ao prazo",
+                    text: urgencyLabel(String(urgencyValue)),
                   },
-                  value: "yes",
+                  value: String(urgencyValue),
                 },
-              ],
-            }
-            : {}),
-          options: [
-            {
-              text: {
-                type: "plain_text",
-                text: "Iniciar follow-ups no dia anterior ao prazo",
+                options: [
+                  {
+                    text: {
+                      type: "plain_text",
+                      text: "🟢 Light",
+                    },
+                    value: "light",
+                  },
+                  {
+                    text: {
+                      type: "plain_text",
+                      text: "🟡 ASAP",
+                    },
+                    value: "asap",
+                  },
+                  {
+                    text: {
+                      type: "plain_text",
+                      text: "🔴 Turbo",
+                    },
+                    value: "turbo",
+                  },
+                ],
               },
-              value: "yes",
+              label: {
+                type: "plain_text",
+                text: "Nível de urgência",
+              },
             },
-          ],
-        },
-        label: { type: "plain_text", text: "Turbo avançado" },
-      },
+          ] as KnownBlock[])
+          : []
+      ),
+      ...(
+        !isOnDemand
+          ? ([
+            {
+              type: "input",
+              block_id: EDIT_REMINDER_MODE_BLOCK_ID,
+              label: {
+                type: "plain_text",
+                text: "Tipo de follow-up",
+              },
+              element: {
+                type: "static_select",
+                action_id: EDIT_REMINDER_MODE_ACTION_ID,
+                initial_option:
+                  args.reminderMode === "from"
+                    ? {
+                      text: {
+                        type: "plain_text",
+                        text: "▶️ Entregar a partir do prazo",
+                      },
+                      value: "from",
+                    }
+                    : {
+                      text: {
+                        type: "plain_text",
+                        text: "⏰ Entregar até o prazo",
+                      },
+                      value: "until",
+                    },
+                options: [
+                  {
+                    text: {
+                      type: "plain_text",
+                      text: "⏰ Entregar até o prazo",
+                    },
+                    value: "until",
+                  },
+                  {
+                    text: {
+                      type: "plain_text",
+                      text: "▶️ Entregar a partir do prazo",
+                    },
+                    value: "from",
+                  },
+                ],
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
+      ...(
+        showTurbo
+          ? ([
+            {
+              type: "input",
+              optional: true,
+              block_id: "turbo_previous_day_block",
+              element: {
+                type: "checkboxes",
+                action_id: "turbo_previous_day",
+                ...(args.turboPreviousDay
+                  ? {
+                    initial_options: [
+                      {
+                        text: {
+                          type: "plain_text",
+                          text: "Iniciar follow-ups no dia anterior ao prazo",
+                        },
+                        value: "yes",
+                      },
+                    ],
+                  }
+                  : {}),
+                options: [
+                  {
+                    text: {
+                      type: "plain_text",
+                      text: "Iniciar follow-ups no dia anterior ao prazo",
+                    },
+                    value: "yes",
+                  },
+                ],
+              },
+              label: {
+                type: "plain_text",
+                text: "Turbo avançado",
+              },
+            },
+            {
+              type: "input",
+              optional: true,
+              block_id: "turbo_start_time_block",
+              element: {
+                type: "timepicker",
+                action_id: "turbo_start_time",
+                initial_time: args.turboStartTime ?? undefined,
+              },
+              label: {
+                type: "plain_text",
+                text: "Horário de início dos follow-ups",
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
       {
         type: "input",
         optional: true,
@@ -368,25 +472,43 @@ export function editTaskModalView(args: {
       },
 
       // Recorrência
-      {
-        type: "input",
-        optional: true,
-        block_id: EDIT_RECURRENCE_BLOCK_ID,
-        element: {
-          type: "static_select",
-          action_id: EDIT_RECURRENCE_ACTION_ID,
-          placeholder: { type: "plain_text", text: "Sem recorrência" },
-          initial_option: {
-            text: { type: "plain_text", text: recurrenceLabel(recurrenceInitial) },
-            value: recurrenceInitial,
-          },
-          options: recurrenceOptions.map((v) => ({
-            text: { type: "plain_text", text: recurrenceLabel(v) },
-            value: v,
-          })),
-        },
-        label: { type: "plain_text", text: "Recorrência" },
-      },
+      ...(
+        !isOnDemand
+          ? ([
+            {
+              type: "input",
+              optional: true,
+              block_id: EDIT_RECURRENCE_BLOCK_ID,
+              element: {
+                type: "static_select",
+                action_id: EDIT_RECURRENCE_ACTION_ID,
+                placeholder: {
+                  type: "plain_text",
+                  text: "Sem recorrência",
+                },
+                initial_option: {
+                  text: {
+                    type: "plain_text",
+                    text: recurrenceLabel(recurrenceInitial),
+                  },
+                  value: recurrenceInitial,
+                },
+                options: recurrenceOptions.map((v) => ({
+                  text: {
+                    type: "plain_text" as const,
+                    text: recurrenceLabel(v),
+                  },
+                  value: v,
+                })),
+              },
+              label: {
+                type: "plain_text",
+                text: "Recorrência",
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
 
       // Google Calendar: privado
       {

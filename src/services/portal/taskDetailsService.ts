@@ -10,22 +10,25 @@ export type TaskDetails = {
   deadline: Date | null;
   originalDeadline: Date | null;
   deadlineTime: string | null;
+
   urgency: "light" | "asap" | "turbo";
+  taskType: "normal" | "on_demand";
+
   recurrence: string | null;
   project: string | null;
   projectId: string | null;
-  notionProcessUrl: string | null;   // <-- adicionar
+  notionProcessUrl: string | null;
   copies: string[];
-  auditLogs: {
-  id: string;
-  action: string;
-  actorName: string | null;
-  actorSlackId: string | null;
-  beforeJson: unknown;
-  afterJson: unknown;
-  createdAt: Date;
-}[];
 
+  auditLogs: {
+    id: string;
+    action: string;
+    actorName: string | null;
+    actorSlackId: string | null;
+    beforeJson: unknown;
+    afterJson: unknown;
+    createdAt: Date;
+  }[];
 };
 
 export async function getTaskDetails(
@@ -111,6 +114,7 @@ export async function getTaskDetails(
     projectId: task.project?.id ?? null,
     notionProcessUrl: task.notionProcessUrl,
     auditLogs,
+    taskType: task.taskType,
 
   };
 

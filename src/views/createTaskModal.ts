@@ -301,23 +301,25 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
           ] as KnownBlock[])
           : []
       ),
-      {
-        type: "input",
-        block_id: TASK_REMINDER_MODE_BLOCK_ID,
-        label: { type: "plain_text", text: "Tipo de follow-up" },
-        element: {
-          type: "static_select",
-          action_id: TASK_REMINDER_MODE_ACTION_ID,
-          initial_option: {
-            text: { type: "plain_text", text: "⏰ Entregar até o prazo" },
-            value: "until",
-          },
-          options: [
-            { text: { type: "plain_text", text: "⏰ Entregar até o prazo" }, value: "until" },
-            { text: { type: "plain_text", text: "▶️ Entregar a partir do prazo" }, value: "from" },
-          ],
-        },
-      },
+      ...(
+        !isOnDemand
+          ? ([
+            {
+              type: "input",
+              block_id: TASK_REMINDER_MODE_BLOCK_ID,
+              label: { type: "plain_text", text: "Tipo de follow-up" },
+              element: {
+                type: "static_select",
+                action_id: TASK_REMINDER_MODE_ACTION_ID,
+                initial_option:
+                  reminderModeOptions.find((o) => o.value === reminderModeValue) ??
+                  reminderModeOptions[0],
+                options: reminderModeOptions,
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
       {
         type: "input",
         optional: true,
@@ -325,7 +327,7 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         label: { type: "plain_text", text: "Pessoas em cópia" },
         element: { type: "multi_users_select", action_id: "carbon_copies" },
       },
-      ...((showTurboFields
+      ...((showTurboFields && !isOnDemand
         ? [
           {
             type: "input",

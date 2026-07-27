@@ -48,6 +48,7 @@ const TASK_SELECT = {
   turboPreviousDay: true,
   turboStartTime: true,
   carbonCopies: { select: { slackUserId: true } },
+  taskType: true,
 } as const;
 
 type TaskSelected = {
@@ -69,6 +70,7 @@ type TaskSelected = {
   projectId: string | null; // ✅ NOVO
   createdAt: Date;
   carbonCopies: { slackUserId: string }[];
+  taskType: "normal" | "on_demand";
 };
 
 type TaskSnapshot = {
@@ -86,6 +88,7 @@ type TaskSnapshot = {
   calendarPrivate: boolean;
   turboPreviousDay: boolean;
   turboStartTime: string | null;
+  taskType: "normal" | "on_demand";
   projectId: string | null; // ✅ NOVO
   createdAt: Date;
   carbonCopies: string[];
@@ -109,6 +112,7 @@ function toSnapshot(t: TaskSelected): TaskSnapshot {
     turboStartTime: t.turboStartTime ?? null,
     projectId: t.projectId ?? null, // ✅ NOVO
     createdAt: t.createdAt,
+    taskType: t.taskType,
     carbonCopies: (t.carbonCopies ?? []).map((c) => c.slackUserId),
   };
 }
@@ -187,10 +191,29 @@ export async function updateTaskService(args: {
   const before = beforeRaw as unknown as TaskSelected | null;
 
   if (!before) throw new Error(`Task not found: ${taskId}`);
+  const isOnDemand = before.taskType === "on_demand";
   if ((before.delegation ?? null) !== delegationSlackId) {
     throw new Error("Not allowed to edit this task");
   }
+  const finalTerm = isOnDemand ? null : newTerm;
+  const finalTime = isOnDemand ? null : newTime;
 
+  const finalRecurrence = isOnDemand ? null : recurrenceValue;
+
+  const finalUrgency = isOnDemand ? "light" : urgencyValue;
+
+  const finalReminderMode =
+    isOnDemand
+      ? "until"
+      : reminderMode === "from"
+        ? "from"
+        : "until";
+
+  const finalTurboPreviousDay =
+    isOnDemand ? false : Boolean(turboPreviousDay);
+
+  const finalTurboStartTime =
+    isOnDemand ? null : turboStartTime;
   // -------------------------
   // Valida projeto (se informado)
   // -------------------------
@@ -218,23 +241,23 @@ export async function updateTaskService(args: {
       description: description?.trim() ? description.trim() : null,
       notionProcessUrl: normalizedNotionProcessUrl,
 
-      term: newTerm,
-      deadlineTime: newTime,
+      term: finalTerm,
+      deadlineTime: finalTime,
 
       responsible: trimmedResponsible,
-      recurrence: recurrenceValue as any,
+      recurrence: finalRecurrence as any,
 
-      urgency: urgencyValue as any,
-      reminderMode: reminderMode === "from" ? "from" : "until",
+      urgency: finalUrgency as any,
+      reminderMode: finalReminderMode,
       calendarPrivate: Boolean(calendarPrivate),
-      turboPreviousDay: Boolean(turboPreviousDay),
-      turboStartTime: turboStartTime,
+      turboPreviousDay: finalTurboPreviousDay,
+      turboStartTime: finalTurboStartTime,
 
       // ✅ NOVO: vínculo de projeto
       projectId: normalizedProjectId,
 
       // ✅ regra de recorrência: ancora no prazo se houver recorrência
-      recurrenceAnchor: recurrenceValue ? newTerm : null,
+      recurrenceAnchor: finalRecurrence ? finalTerm : null,
 
       // 🔁 substitui CCs
       carbonCopies: {
