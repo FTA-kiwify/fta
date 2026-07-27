@@ -59,7 +59,7 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
   const projects = args?.projects ?? [];
   const initialProjectId = args?.initialProjectId ?? null;
   const showTurboFields = Boolean(args?.showTurboFields);
-  console.log("[MODAL] showTurboFields =", showTurboFields);
+
 
   const recurrenceValue = args?.initialRecurrence ?? "none";
   const urgencyValue = args?.initialUrgency ?? "light";
@@ -67,6 +67,14 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
   const isOnDemand = taskTypeValue === "on_demand";
 
   const reminderModeValue = args?.initialReminderMode ?? "until";
+  console.log(
+  "[MODAL]",
+  {
+    showTurboFields,
+    taskTypeValue,
+    isOnDemand,
+  }
+);
 
   const recurrenceOptions = [
     { text: { type: "plain_text" as const, text: "Sem recorrência" }, value: "none" },
