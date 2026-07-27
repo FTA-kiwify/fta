@@ -108,6 +108,7 @@ export async function createTaskService(raw: unknown) {
       recurrenceAnchor: recurrence ? term : null,
 
       urgency: data.urgency,
+      taskType: data.taskType,
       reminderMode,
 
       turboPreviousDay: data.turboPreviousDay ?? false,

@@ -6,6 +6,7 @@ const slackUserIdSchema = z.string().regex(/^[UW][A-Z0-9]{8,}$/);
 
 // Enums
 export const urgencySchema = z.enum(["light", "asap", "turbo"]);
+export const taskTypeSchema = z.enum(["normal", "on_demand"]);
 export const reminderModeSchema = z.enum(["until", "from"]);
 
 export const recurrenceValueSchema = z.enum([
@@ -106,6 +107,7 @@ export const createTaskSchema = z
     dependsOnId: z.string().uuid().nullable().optional(),
 
     urgency: urgencySchema,
+    taskType: taskTypeSchema.optional().default("normal"),
 
     reminderMode: reminderModeSchema.optional().default("until"),
 

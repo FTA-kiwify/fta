@@ -28,6 +28,8 @@ import {
   TASK_REMINDER_MODE_ACTION_ID,
   TASK_NOTION_PROCESS_BLOCK_ID,
   TASK_NOTION_PROCESS_ACTION_ID,
+  TASK_TYPE_BLOCK_ID,
+  TASK_TYPE_ACTION_ID,
 } from "../views/createTaskModal";
 
 import { sendBatchModalView, SEND_BATCH_MODAL_CALLBACK_ID } from "../views/sendBatchModal";
@@ -2385,6 +2387,9 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const projectId = getSelectedOptionValue(values, TASK_PROJECT_BLOCK_ID, TASK_PROJECT_ACTION_ID);
 
           const urgency = getSelectedOptionValue(values, "urgency_block", "urgency") ?? "light";
+          const taskType =
+            getSelectedOptionValue(values, TASK_TYPE_BLOCK_ID, TASK_TYPE_ACTION_ID) ??
+            "normal";
           const reminderMode =
             getSelectedOptionValue(values, "reminder_mode_block", "reminder_mode") ?? "until";
 
@@ -2416,6 +2421,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             projectId: projectId ?? null,
             dependsOnId,
             urgency,
+            taskType,
             reminderMode,
             turboPreviousDay,
             turboStartTime,

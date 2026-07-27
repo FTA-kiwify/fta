@@ -29,7 +29,8 @@ model ProjectMember {
   slackUserId String
   email       String?
   createdAt   DateTime @default(now())
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, slackUserId])
   @@index([slackUserId])
@@ -38,7 +39,7 @@ model ProjectMember {
 }
 
 model Task {
-  id                 String            @id @default(uuid())
+  id                 String       @id @default(uuid())
   title              String
   description        String?
   notionProcessUrl   String?
@@ -49,14 +50,15 @@ model Task {
   term               DateTime?
   originalTerm       DateTime?
   deadlineTime       String?
-  status             TaskStatus        @default(pending)
+  status             TaskStatus   @default(pending)
   recurrence         Recurrence?
   urgency            Urgency
-  reminderMode       ReminderMode      @default(until)
-  turboPreviousDay   Boolean           @default(false)
+  taskType TaskType @default(normal)
+  reminderMode       ReminderMode @default(until)
+  turboPreviousDay   Boolean      @default(false)
   turboStartTime     String?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @default(now()) @updatedAt
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @default(now()) @updatedAt
   projectId          String?
   recurrenceAnchor   DateTime?
   dependsOnId        String?
@@ -64,14 +66,22 @@ model Task {
   slackOpenMessageTs String?
   googleEventId      String?
   googleEventLink    String?
-  calendarPrivate    Boolean           @default(false)
-  carbonCopies       TaskCarbonCopy[]
-  reminders          TaskReminderLog[]
-  auditLogs          TaskAuditLog[]
-  dependsOn          Task?             @relation("TaskDependsOn", fields: [dependsOnId], references: [id])
-  dependents         Task[]            @relation("TaskDependsOn")
-  project            Project?          @relation(fields: [projectId], references: [id])
+  calendarPrivate    Boolean      @default(false)
 
+  processId String?
+
+  carbonCopies TaskCarbonCopy[]
+  reminders    TaskReminderLog[]
+  auditLogs    TaskAuditLog[]
+
+  dependsOn  Task?  @relation("TaskDependsOn", fields: [dependsOnId], references: [id])
+  dependents Task[] @relation("TaskDependsOn")
+
+  project Project? @relation(fields: [projectId], references: [id])
+
+  process Process? @relation(fields: [processId], references: [id])
+
+  @@index([processId])
   @@map("tasks")
 }
 
@@ -81,7 +91,8 @@ model TaskCarbonCopy {
   slackUserId String
   email       String?
   createdAt   DateTime @default(now())
-  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, slackUserId])
   @@index([slackUserId])
@@ -95,7 +106,8 @@ model TaskReminderLog {
   dateIso   String
   slot      String
   createdAt DateTime @default(now())
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, dateIso, slot])
   @@index([dateIso, slot])
@@ -145,6 +157,101 @@ model Feedback {
   @@map("feedbacks")
 }
 
+model TaskAuditLog {
+  id String @id @default(uuid())
+
+  taskId String
+
+  actorSlackId String?
+  actorName    String?
+
+  action String
+
+  beforeJson Json?
+  afterJson  Json?
+
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([createdAt])
+  @@map("task-audit-log")
+}
+
+model Team {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  color       String?
+  group       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   TeamMember[]
+  processes Process[]
+
+  @@index([name])
+  @@index([group])
+  @@map("teams")
+}
+
+model TeamMember {
+  id String @id @default(uuid())
+
+  teamId String
+
+  slackUserId String
+  email       String?
+
+  createdAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, slackUserId])
+  @@index([teamId])
+  @@index([slackUserId])
+  @@map("team-members")
+}
+
+model Process {
+  id String @id @default(cuid())
+
+  /// ID da página no Notion (imutável)
+  notionPageId String @unique
+
+  /// URL da página do processo
+  notionPageUrl String
+
+  /// Nome do processo
+  title String
+
+  /// Valores exatamente como vêm do Notion
+  notionTeam     String
+  notionVertical String
+  theme          String?
+
+  /// Processo ativo para seleção no FTA
+  active Boolean @default(true)
+
+  /// Associação opcional ao Team interno do FTA
+  teamId String?
+
+  team Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks Task[]
+
+  @@index([title])
+  @@index([teamId])
+  @@index([notionVertical])
+  @@index([notionVertical, active])
+  @@map("processes")
+}
+
 enum Urgency {
   light
   asap
@@ -154,6 +261,11 @@ enum Urgency {
 enum ReminderMode {
   until
   from
+}
+
+enum TaskType {
+  normal
+  on_demand
 }
 
 enum TaskStatus {
@@ -190,62 +302,4 @@ enum FeedbackStatus {
   wip
   done
   rejected
-}
-
-model TaskAuditLog {
-  id String @id @default(uuid())
-
-  taskId String
-
-  actorSlackId String?
-  actorName    String?
-
-  action String
-
-  beforeJson Json?
-  afterJson  Json?
-
-  createdAt DateTime @default(now())
-
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
-  @@index([taskId])
-  @@index([createdAt])
-  @@map("task-audit-log")
-}
-
-model Team {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  color       String?
-  group       String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  members TeamMember[]
-
-  @@index([group])
-  @@map("teams")
-}
-
-model TeamMember {
-  id String @id @default(uuid())
-
-  teamId String
-
-  slackUserId String
-  email       String?
-
-  createdAt DateTime @default(now())
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@unique([teamId, slackUserId])
-
-  @@index([teamId])
-  @@index([slackUserId])
-
-  @@map("team-members")
 }

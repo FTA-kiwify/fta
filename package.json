@@ -18,11 +18,13 @@
     "admin:create": "tsx --env-file .env src/scripts/createAdminUser.ts",
     "admin:create:test": "tsx --env-file .envtest src/scripts/createAdminUser.ts",
     "sync:teams": "tsx --env-file .env src/scripts/syncTeams.ts",
-    "sync:teams:test": "tsx --env-file .envtest src/scripts/syncTeams.ts"
+    "sync:teams:test": "tsx --env-file .envtest src/scripts/syncTeams.ts",
+    "notion:sync": "dotenv -e .envtest -- tsx src/services/notion/sync.ts"
   },
   "dependencies": {
     "@fastify/formbody": "^8.0.2",
     "@fastify/static": "^9.0.0",
+    "@notionhq/client": "^5.23.2",
     "@prisma/adapter-better-sqlite3": "^7.2.0",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",

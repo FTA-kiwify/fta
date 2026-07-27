@@ -29,6 +29,8 @@ export const TASK_CAL_PRIVATE_ACTION_ID = "task_cal_private_action" as const;
 export type ProjectOption = { id: string; name: string };
 export const TASK_URGENCY_BLOCK_ID = "urgency_block" as const;
 export const TASK_URGENCY_ACTION_ID = "urgency" as const;
+export const TASK_TYPE_BLOCK_ID = "task_type_block" as const;
+export const TASK_TYPE_ACTION_ID = "task_type" as const;
 
 type CreateTaskModalArgs = {
   projects?: ProjectOption[];
@@ -45,6 +47,7 @@ type CreateTaskModalArgs = {
   initialNotionProcessUrl?: string | null;
   initialRecurrence?: string | null;
   initialUrgency?: string | null;
+  initialTaskType?: string | null;
   initialReminderMode?: string | null;
   initialCarbonCopies?: string[];
   initialCalendarPrivate?: boolean;
@@ -60,6 +63,7 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
 
   const recurrenceValue = args?.initialRecurrence ?? "none";
   const urgencyValue = args?.initialUrgency ?? "light";
+  const taskTypeValue = args?.initialTaskType ?? "normal";
   const reminderModeValue = args?.initialReminderMode ?? "until";
 
   const recurrenceOptions = [
@@ -77,6 +81,23 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
     { text: { type: "plain_text" as const, text: "🟢 Light" }, value: "light" },
     { text: { type: "plain_text" as const, text: "🟡 ASAP" }, value: "asap" },
     { text: { type: "plain_text" as const, text: "🔴 Turbo" }, value: "turbo" },
+  ];
+
+  const taskTypeOptions = [
+    {
+      text: {
+        type: "plain_text" as const,
+        text: "📅 Normal",
+      },
+      value: "normal",
+    },
+    {
+      text: {
+        type: "plain_text" as const,
+        text: "⚡ Sob demanda",
+      },
+      value: "on_demand",
+    },
   ];
 
   const reminderModeOptions = [
@@ -160,6 +181,22 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         block_id: "resp_block",
         label: { type: "plain_text", text: "Responsável" },
         element: { type: "users_select", action_id: "responsible" },
+      },
+      {
+        type: "input",
+        block_id: TASK_TYPE_BLOCK_ID,
+        label: {
+          type: "plain_text",
+          text: "Tipo da tarefa",
+        },
+        element: {
+          type: "static_select",
+          action_id: TASK_TYPE_ACTION_ID,
+          initial_option:
+            taskTypeOptions.find((o) => o.value === taskTypeValue) ??
+            taskTypeOptions[0],
+          options: taskTypeOptions,
+        },
       },
       {
         type: "input",
