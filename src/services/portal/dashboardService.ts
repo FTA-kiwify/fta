@@ -133,7 +133,6 @@ export async function getDashboardData(
         deadlineTime: true,
         urgency: true,
       },
-      take: 10,
       orderBy: {
         term: "asc",
       },
