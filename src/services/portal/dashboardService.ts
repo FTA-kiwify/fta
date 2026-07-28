@@ -7,9 +7,11 @@ export type UpcomingTask = {
   title: string;
   responsibleSlackId: string;
   responsibleName: string;
-  term: Date;
+  term: Date | null;
   deadlineTime: string | null;
   urgency: "light" | "asap" | "turbo";
+  taskType: "normal" | "on_demand";
+
 };
 
 export type CompletedTask = {
@@ -120,10 +122,17 @@ export async function getDashboardData(
       where: {
         status: "pending",
         responsible: slackUserId,
-        term: {
-          not: null,
-          gte: today,
-        },
+        OR: [
+          {
+            term: {
+              not: null,
+              gte: today,
+            },
+          },
+          {
+            taskType: "on_demand",
+          },
+        ],
       },
       select: {
         id: true,
@@ -132,6 +141,7 @@ export async function getDashboardData(
         term: true,
         deadlineTime: true,
         urgency: true,
+        taskType: true,
       },
       orderBy: {
         term: "asc",
@@ -147,10 +157,6 @@ export async function getDashboardData(
   };
 
   const upcomingTasks: UpcomingTask[] = upcomingTaskRows
-    .filter(
-      (task): task is typeof task & { term: Date } =>
-        task.term !== null
-    )
     .map(task => ({
       id: task.id,
       title: task.title,
@@ -159,10 +165,21 @@ export async function getDashboardData(
       term: task.term,
       deadlineTime: task.deadlineTime,
       urgency: task.urgency,
+      taskType: task.taskType,
     }))
     .sort((a, b) => {
 
-      const date = a.term.getTime() - b.term.getTime();
+      if (a.taskType === "on_demand" && b.taskType !== "on_demand") {
+        return 1;
+      }
+
+      if (a.taskType !== "on_demand" && b.taskType === "on_demand") {
+        return -1;
+      }
+
+      const date =
+        (a.term?.getTime() ?? Number.MAX_SAFE_INTEGER) -
+        (b.term?.getTime() ?? Number.MAX_SAFE_INTEGER);
 
       if (date !== 0) {
         return date;

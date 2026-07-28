@@ -21,19 +21,28 @@ export function dashboardPage(data: DashboardData) {
   dayAfter.setDate(dayAfter.getDate() + 1);
 
   const todayTasks = data.upcomingTasks.filter(task => {
-    const d = new Date(task.term);
+    if (task.taskType === "on_demand") return false;
+
+    const d = new Date(task.term!);
     return d >= today && d < tomorrow;
   });
 
   const tomorrowTasks = data.upcomingTasks.filter(task => {
-    const d = new Date(task.term);
+    if (task.taskType === "on_demand") return false;
+
+    const d = new Date(task.term!);
     return d >= tomorrow && d < dayAfter;
   });
 
   const futureTasks = data.upcomingTasks.filter(task => {
-    const d = new Date(task.term);
+    if (task.taskType === "on_demand") return false;
+
+    const d = new Date(task.term!);
     return d >= dayAfter;
   });
+  const onDemandTasks = data.upcomingTasks.filter(
+    task => task.taskType === "on_demand"
+  );
 
   return `
     <div class="card">
@@ -179,9 +188,31 @@ export function dashboardPage(data: DashboardData) {
             : ""
           }
 
+${onDemandTasks.length
+            ? accordion({
+              id: "dashboard-on-demand",
+              title: "⚡ Sob demanda",
+              count: onDemandTasks.length,
+              body: onDemandTasks
+                .map(task =>
+                  upcomingTask({
+                    id: task.id,
+                    title: task.title,
+                    responsible: task.responsibleName,
+                    urgency: task.urgency,
+                    deadlineTime: task.deadlineTime,
+                  })
+                )
+                .join(""),
+            })
+            : ""
+          }
+
               `,
 
     })}
+
+    
 
       ${dashboardSection({
 
