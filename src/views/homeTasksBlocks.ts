@@ -529,16 +529,7 @@ export function homeTasksBlocks(args: {
     })
   );
 
-  blocks.push({
-    type: "actions",
-    block_id: "my_tasks_actions",
-    elements: [
-      { type: "button", text: { type: "plain_text", text: ":thread: Abrir thread" }, action_id: TASKS_SEND_QUESTION_ACTION_ID, value: "send_question" },
-      { type: "button", text: { type: "plain_text", text: "📅 Reprogramar Prazo" }, action_id: TASKS_RESCHEDULE_ACTION_ID, value: "reschedule" },
-      { type: "button", text: { type: "plain_text", text: "🔎 Ver detalhes" }, action_id: TASKS_VIEW_DETAILS_ACTION_ID, value: "details" },
-      { type: "button", text: { type: "plain_text", text: "✅ Concluir selecionadas" }, action_id: TASKS_CONCLUDE_SELECTED_ACTION_ID, value: "conclude_selected" },
-    ],
-  } as KnownBlock);
+
   pushDivider();
 
   // =========================
@@ -591,17 +582,7 @@ export function homeTasksBlocks(args: {
   );
   blocks.push(...renderPager(args.delegatedFuturePager));
 
-  blocks.push({
-    type: "actions",
-    block_id: "delegated_actions",
-    elements: [
-      { type: "button", text: { type: "plain_text", text: ":thread: Abrir thread" }, action_id: TASKS_SEND_QUESTION_ACTION_ID, value: "send_question" },
-      { type: "button", text: { type: "plain_text", text: "✏️ Editar" }, action_id: DELEGATED_EDIT_ACTION_ID, value: "edit" },
-      { type: "button", text: { type: "plain_text", text: "🔎 Ver detalhes" }, action_id: TASKS_VIEW_DETAILS_ACTION_ID, value: "details" },
-      { type: "button", text: { type: "plain_text", text: "✅ Concluir selecionadas" }, action_id: TASKS_CONCLUDE_SELECTED_ACTION_ID, value: "conclude_selected" },
-      { type: "button", text: { type: "plain_text", text: "❌ Cancelar" }, action_id: DELEGATED_CANCEL_ACTION_ID, value: "cancel" },
-    ],
-  } as KnownBlock);
+
   pushDivider();
 
   // =========================
@@ -643,14 +624,60 @@ export function homeTasksBlocks(args: {
   );
   blocks.push(...renderPager(args.ccFuturePager));
 
+  pushHeader("⚙️ Ações da(s) tarefa(s) selecionada(s)");
+
+  blocks.push({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text:
+        "_Selecione uma ou mais tarefas acima. Algumas ações dependem da sua relação com a tarefa._",
+    },
+  } as KnownBlock);
+
   blocks.push({
     type: "actions",
-    block_id: "cc_actions",
+    block_id: "global_task_actions",
     elements: [
-      { type: "button", text: { type: "plain_text", text: ":thread: Abrir thread" }, action_id: CC_SEND_QUESTION_ACTION_ID, value: "send_question" },
-      { type: "button", text: { type: "plain_text", text: "🔎 Ver detalhes" }, action_id: TASKS_VIEW_DETAILS_ACTION_ID, value: "details" },
+      {
+        type: "button",
+        text: { type: "plain_text", text: "🔎 Ver detalhes" },
+        action_id: TASKS_VIEW_DETAILS_ACTION_ID,
+        value: "details",
+      },
+      {
+        type: "button",
+        text: { type: "plain_text", text: "🧵 Abrir thread" },
+        action_id: TASKS_SEND_QUESTION_ACTION_ID,
+        value: "send_question",
+      },
+      {
+        type: "button",
+        text: { type: "plain_text", text: "📅 Reprogramar" },
+        action_id: TASKS_RESCHEDULE_ACTION_ID,
+        value: "reschedule",
+      },
+      {
+        type: "button",
+        text: { type: "plain_text", text: "✏️ Editar" },
+        action_id: DELEGATED_EDIT_ACTION_ID,
+        value: "edit",
+      },
+      {
+        type: "button",
+        text: { type: "plain_text", text: "❌ Cancelar" },
+        action_id: DELEGATED_CANCEL_ACTION_ID,
+        value: "cancel",
+      },
+      {
+        type: "button",
+        text: { type: "plain_text", text: "✅ Concluir" },
+        action_id: TASKS_CONCLUDE_SELECTED_ACTION_ID,
+        value: "conclude_selected",
+      },
     ],
   } as KnownBlock);
+
   pushDivider();
 
   // =========================

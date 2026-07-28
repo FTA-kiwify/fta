@@ -1421,6 +1421,12 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           });
 
           if (!tasksToConclude.length) {
+            await sendBotDm(
+              slack,
+              userSlackId,
+              "⚠️ Apenas o responsável ou quem delegou a tarefa pode concluí-la."
+            );
+
             await publishHome(slack, userSlackId);
             return reply.status(200).send();
           }
@@ -1671,7 +1677,11 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
           const canReschedule = task.responsible === userSlackId || task.delegation === userSlackId;
           if (!canReschedule) {
-            await sendBotDm(slack, userSlackId, "Você não tem permissão para reprogramar esta tarefa.");
+            await sendBotDm(
+              slack,
+              userSlackId,
+              "⚠️ Apenas o responsável ou quem delegou a tarefa pode reprogramá-la."
+            );
             await publishHome(slack, userSlackId);
             return reply.status(200).send();
           }
@@ -1722,6 +1732,12 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             });
 
             if (!tasksToDelete.length) {
+              await sendBotDm(
+                slack,
+                userSlackId,
+                "⚠️ Apenas quem delegou a tarefa pode cancelá-la."
+              );
+
               await publishHome(slack, userSlackId);
               return;
             }
@@ -1833,7 +1849,15 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             },
           });
 
-          if (!task) return reply.status(200).send();
+          if (!task) {
+            await sendBotDm(
+              slack,
+              userSlackId,
+              "⚠️ Apenas quem delegou a tarefa pode editá-la."
+            );
+
+            return reply.status(200).send();
+          }
 
           const projects = await prisma.project.findMany({
             where: {
