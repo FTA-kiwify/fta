@@ -1665,12 +1665,23 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               status: true,
               responsible: true,
               delegation: true,
+              taskType: true,
               carbonCopies: { select: { slackUserId: true } },
             },
           });
 
           if (!task || task.status === "done") {
             await sendBotDm(slack, userSlackId, "Não encontrei essa tarefa (ou ela já foi concluída).");
+            await publishHome(slack, userSlackId);
+            return reply.status(200).send();
+          }
+          if (task.taskType === "on_demand") {
+            await sendBotDm(
+              slack,
+              userSlackId,
+              "⚠️ Tarefas sob demanda não podem ser reprogramadas."
+            );
+
             await publishHome(slack, userSlackId);
             return reply.status(200).send();
           }
