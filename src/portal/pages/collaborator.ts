@@ -157,25 +157,6 @@ ${futureTasks.length
       : ""
     }
 
-    ${onDemandTasks.length
-      ? accordion({
-        id: "on-demand-tasks",
-        title: "⚡ Sob demanda",
-        count: onDemandTasks.length,
-        body: onDemandTasks
-          .map(task =>
-            taskRow({
-              id: task.id,
-              title: task.title,
-              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-              deadlineTime: task.deadlineTime,
-              urgency: task.urgency,
-            })
-          )
-          .join(""),
-      })
-      : ""
-    }
 
 ${collaborator.tasks.length === 0
       ? `
@@ -187,6 +168,36 @@ ${collaborator.tasks.length === 0
     }
 
     </div>
+
+    <div
+  class="card"
+  style="margin-top:28px;"
+>
+
+  <h2 style="margin-bottom:20px;">
+    📌 Sob demanda
+  </h2>
+
+  ${onDemandTasks.length
+      ? onDemandTasks
+        .map(task =>
+          taskRow({
+            id: task.id,
+            title: task.title,
+            subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+            deadlineTime: task.deadlineTime,
+            urgency: task.urgency,
+          })
+        )
+        .join("")
+      : `
+        <p>
+          Nenhuma tarefa sob demanda.
+        </p>
+      `
+    }
+
+</div>
 
     <div
       class="card"
@@ -238,6 +249,8 @@ ${collaborator.tasks.length === 0
   class="card"
   style="margin-top:28px;"
 >
+
+
 
   <h2 style="margin-bottom:20px;">
     🔁 Recorrências
