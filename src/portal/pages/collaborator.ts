@@ -186,7 +186,6 @@ ${collaborator.tasks.length === 0
             title: task.title,
             subtitle: `📁 ${task.project ?? "Sem projeto"}`,
             deadlineTime: task.deadlineTime,
-            urgency: task.urgency,
           })
         )
         .join("")

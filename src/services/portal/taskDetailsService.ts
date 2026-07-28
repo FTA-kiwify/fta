@@ -13,6 +13,7 @@ export type TaskDetails = {
 
   urgency: "light" | "asap" | "turbo";
   taskType: "normal" | "on_demand";
+  calendarPrivate: boolean;
 
   recurrence: string | null;
   project: string | null;
@@ -115,6 +116,7 @@ export async function getTaskDetails(
     notionProcessUrl: task.notionProcessUrl,
     auditLogs,
     taskType: task.taskType,
+    calendarPrivate: task.calendarPrivate,
 
   };
 

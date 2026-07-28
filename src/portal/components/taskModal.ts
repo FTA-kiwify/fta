@@ -288,6 +288,10 @@ export function taskModal(task: TaskDetails) {
     "🔁 Recorrência",
     recurrenceLabel(task.recurrence)
   )}
+  ${infoCard(
+    "🔒 Privacidade",
+    task.calendarPrivate ? "Privada" : "Pública"
+  )}
 
         ${infoCard(
     "📅 Prazo",

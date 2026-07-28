@@ -82,7 +82,10 @@ export function upcomingTask(task: UpcomingTaskProps) {
 
       <div style="margin-bottom:10px;">
 
-        ${urgencyBadge(task.urgency!)}
+        ${task.urgency
+      ? urgencyBadge(task.urgency)
+      : ""
+    }
 
       </div>
 

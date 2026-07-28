@@ -199,7 +199,6 @@ ${onDemandTasks.length
                     id: task.id,
                     title: task.title,
                     responsible: task.responsibleName,
-                    urgency: task.urgency,
                     deadlineTime: task.deadlineTime,
                   })
                 )

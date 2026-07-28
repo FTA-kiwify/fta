@@ -2,7 +2,7 @@ export type TaskRow = {
   id: string;
   title: string;
   subtitle: string;
-  urgency: "light" | "asap" | "turbo";
+  urgency?: "light" | "asap" | "turbo";
   deadlineTime?: string | null;
   rightText?: string;
 };
@@ -102,21 +102,22 @@ export function taskRow(task: TaskRow) {
             ${task.subtitle}
           </span>
 
-          ${
-            task.deadlineTime
-              ? `<span>🕒 ${task.deadlineTime}</span>`
-              : ""
-          }
+          ${task.deadlineTime
+      ? `<span>🕒 ${task.deadlineTime}</span>`
+      : ""
+    }
 
-          ${urgencyBadge(task.urgency)}
+          ${task.urgency
+      ? urgencyBadge(task.urgency)
+      : ""
+    }
 
         </div>
 
       </div>
 
-      ${
-        task.rightText
-          ? `
+      ${task.rightText
+      ? `
             <div
               style="
                 color:#6B7280;
@@ -126,8 +127,8 @@ export function taskRow(task: TaskRow) {
               ${task.rightText}
             </div>
           `
-          : ""
-      }
+      : ""
+    }
 
     </div>
   `;
