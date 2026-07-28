@@ -198,6 +198,7 @@ type RawTask = {
   recurrence: string | null;
   status: string;
   createdAt: Date;
+  taskType: "normal" | "on_demand";
 
   carbonCopies?: Array<{
     slackUserId: string;
@@ -227,9 +228,7 @@ export async function publishHome(
     OR: [{ dependsOnId: null }, { dependsOn: { status: "done" } }],
   };
 
-  const excludeSelfDelegatedFromResponsible: Prisma.TaskWhereInput = {
-    delegation: { not: userSlackId },
-  };
+
 
   // =========================================================
   // 2) Minhas tarefas (responsible)
@@ -238,7 +237,7 @@ export async function publishHome(
     where: {
       responsible: userSlackId,
       status: { notIn: ["done", "cancelled"] },
-      AND: [visibleWhere, excludeSelfDelegatedFromResponsible],
+      AND: [visibleWhere]
     },
     select: {
       id: true,
@@ -251,6 +250,7 @@ export async function publishHome(
       recurrence: true,
       status: true,
       createdAt: true,
+      taskType: true,
       carbonCopies: {
         select: {
           slackUserId: true,
@@ -321,9 +321,25 @@ export async function publishHome(
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const myTodayAll = myTasks.filter((t) => bucketByIso(t.term, todayIso) === "today");
-  const myTomorrowAll = myTasks.filter((t) => bucketByIso(t.term, todayIso) === "tomorrow");
-  const myFutureAll = myTasks.filter((t) => bucketByIso(t.term, todayIso) === "future");
+  const myOnDemandAll = sortTasks(
+    myTasks.filter((t) => t.taskType === "on_demand")
+  );
+
+  const myScheduledTasks = myTasks.filter(
+    (t) => t.taskType !== "on_demand"
+  );
+
+  const myTodayAll = myScheduledTasks.filter(
+    (t) => bucketByIso(t.term, todayIso) === "today"
+  );
+
+  const myTomorrowAll = myScheduledTasks.filter(
+    (t) => bucketByIso(t.term, todayIso) === "tomorrow"
+  );
+
+  const myFutureAll = myScheduledTasks.filter(
+    (t) => bucketByIso(t.term, todayIso) === "future"
+  );
 
   const myTodayPag = paginate(
     myTodayAll,
@@ -377,6 +393,9 @@ export async function publishHome(
   const delegatedRaw = (await prisma.task.findMany({
     where: {
       delegation: userSlackId,
+      responsible: {
+        not: userSlackId,
+      },
       status: { notIn: ["done", "cancelled"] },
       AND: [visibleWhere],
     },
@@ -588,7 +607,7 @@ export async function publishHome(
       responsible: userSlackId,
       status: { notIn: ["done", "cancelled"] },
       recurrence: { not: null },
-      AND: [visibleWhere, excludeSelfDelegatedFromResponsible],
+      AND: [visibleWhere]
     },
     orderBy: [{ createdAt: "desc" }],
     select: { id: true, title: true, recurrence: true },
@@ -686,6 +705,15 @@ export async function publishHome(
         urgency: t.urgency,
         responsible: t.responsible,
         responsibleName: delegatedResponsibleNameMap.get(t.responsible) ?? null,
+      })),
+      onDemandTasks: myOnDemandAll.map((t) => ({
+        id: t.id,
+        title: t.title,
+        description: t.description,
+        delegation: t.delegation,
+        delegationName: myDelegationNameMap.get(t.delegation) ?? null,
+        term: t.term,
+        urgency: t.urgency,
       })),
       delegatedResponsibleFilter: state.delegatedResponsibleFilter,
       delegatedResponsibleOptions,

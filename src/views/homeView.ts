@@ -16,7 +16,8 @@ export function homeView(args: {
       ...homeTasksBlocks({
         ...args,
 
-        // ✅ campos exigidos por homeTasksBlocks (por enquanto vazios)
+        onDemandTasks: [],
+
         delegatedToday: [],
         delegatedTomorrow: [],
         delegatedFuture: [],

@@ -395,6 +395,7 @@ export function homeTasksBlocks(args: {
   tasksToday: HomeTaskItem[];
   tasksTomorrow: HomeTaskItem[];
   tasksFuture: HomeTaskItem[];
+  onDemandTasks: HomeTaskItem[];
   myDelegatorFilter?: string | null;
 
   myDelegatorOptions?: Array<{
@@ -509,9 +510,24 @@ export function homeTasksBlocks(args: {
   pushDivider();
 
   blocks.push(
-    ...groupWithCheckboxes({ title: "Futuras", blockIdPrefix: "my_future", options: renderMyOptions(args.tasksFuture) })
+    ...groupWithCheckboxes({
+      title: "Futuras",
+      blockIdPrefix: "my_future",
+      options: renderMyOptions(args.tasksFuture),
+    })
   );
+
   blocks.push(...renderPager(args.myFuturePager));
+
+  pushDivider();
+
+  blocks.push(
+    ...groupWithCheckboxes({
+      title: "⚡ Sob demanda",
+      blockIdPrefix: "my_on_demand",
+      options: renderMyOptions(args.onDemandTasks),
+    })
+  );
 
   blocks.push({
     type: "actions",
