@@ -2,13 +2,13 @@ import type { CollaboratorDetails } from "../../services/portal/collaboratorDeta
 import { taskRow } from "../components/taskRow";
 import { accordion } from "../components/accordion";
 import { statCard } from "../components/statCard";
+import { getBrazilToday } from "../../utils/date";
 
 export function collaboratorPage(
   collaborator: CollaboratorDetails
 ) {
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getBrazilToday();
 
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -16,21 +16,36 @@ export function collaboratorPage(
   const dayAfter = new Date(tomorrow);
   dayAfter.setDate(dayAfter.getDate() + 1);
 
-  const todayTasks = collaborator.tasks.filter(task =>
-    task.term &&
-    new Date(task.term) >= today &&
-    new Date(task.term) < tomorrow
-  );
+  const todayTasks = collaborator.tasks.filter(task => {
+    if (task.taskType === "on_demand") return false;
 
-  const tomorrowTasks = collaborator.tasks.filter(task =>
-    task.term &&
-    new Date(task.term) >= tomorrow &&
-    new Date(task.term) < dayAfter
-  );
+    return (
+      task.term &&
+      new Date(task.term) >= today &&
+      new Date(task.term) < tomorrow
+    );
+  });
 
-  const futureTasks = collaborator.tasks.filter(task =>
-    task.term &&
-    new Date(task.term) >= dayAfter
+  const tomorrowTasks = collaborator.tasks.filter(task => {
+    if (task.taskType === "on_demand") return false;
+
+    return (
+      task.term &&
+      new Date(task.term) >= tomorrow &&
+      new Date(task.term) < dayAfter
+    );
+  });
+
+  const futureTasks = collaborator.tasks.filter(task => {
+    if (task.taskType === "on_demand") return false;
+
+    return (
+      task.term &&
+      new Date(task.term) >= dayAfter
+    );
+  });
+  const onDemandTasks = collaborator.tasks.filter(
+    task => task.taskType === "on_demand"
   );
 
   return `
@@ -39,36 +54,36 @@ export function collaboratorPage(
     <div class="dashboard-grid">
 
   ${collaborator.isTeam
-  ? statCard({
-      title: "Membros",
-      value: collaborator.members?.length ?? 0,
-      subtitle: "No time",
-      icon: "👥",
-      onclick: `openPortalModal('/portal/teams/${collaborator.slackUserId}/members/modal')`,
-    })
-  : ""
-}
+      ? statCard({
+        title: "Membros",
+        value: collaborator.members?.length ?? 0,
+        subtitle: "No time",
+        icon: "👥",
+        onclick: `openPortalModal('/portal/teams/${collaborator.slackUserId}/members/modal')`,
+      })
+      : ""
+    }
 
   ${statCard({
-    title: "Tarefas abertas",
-    value: collaborator.totalTasks,
-    subtitle: "Pendentes",
-    icon: "📋",
-    onclick: collaborator.isTeam
-  ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/pending/modal')`
-  : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/pending/modal')`,
-  })}
+      title: "Tarefas abertas",
+      value: collaborator.totalTasks,
+      subtitle: "Pendentes",
+      icon: "📋",
+      onclick: collaborator.isTeam
+        ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/pending/modal')`
+        : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/pending/modal')`,
+    })}
 
   ${statCard({
-    title: "Vencem hoje",
-    value: collaborator.todayTasks,
-    subtitle: "Para hoje",
-    icon: "📅",
-    color: "#F59E0B",
-    onclick: collaborator.isTeam
-  ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/today/modal')`
-  : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/today/modal')`,
-  })}
+      title: "Vencem hoje",
+      value: collaborator.todayTasks,
+      subtitle: "Para hoje",
+      icon: "📅",
+      color: "#F59E0B",
+      onclick: collaborator.isTeam
+        ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/today/modal')`
+        : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/today/modal')`,
+    })}
 
 </div>
 
@@ -134,6 +149,26 @@ ${futureTasks.length
               subtitle: `📁 ${task.project ?? "Sem projeto"}`,
               deadlineTime: task.deadlineTime,
               rightText: new Date(task.term!).toLocaleDateString("pt-BR"),
+              urgency: task.urgency,
+            })
+          )
+          .join(""),
+      })
+      : ""
+    }
+
+    ${onDemandTasks.length
+      ? accordion({
+        id: "on-demand-tasks",
+        title: "⚡ Sob demanda",
+        count: onDemandTasks.length,
+        body: onDemandTasks
+          .map(task =>
+            taskRow({
+              id: task.id,
+              title: task.title,
+              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+              deadlineTime: task.deadlineTime,
               urgency: task.urgency,
             })
           )

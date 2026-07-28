@@ -191,7 +191,7 @@ export function dashboardPage(data: DashboardData) {
 ${onDemandTasks.length
             ? accordion({
               id: "dashboard-on-demand",
-              title: "⚡ Sob demanda",
+              title: "Sob demanda",
               count: onDemandTasks.length,
               body: onDemandTasks
                 .map(task =>

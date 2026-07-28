@@ -8,6 +8,8 @@ export type CollaboratorTask = {
   deadlineTime: string | null;
   project: string | null;
   urgency: "light" | "asap" | "turbo";
+  taskType: "normal" | "on_demand";
+
 };
 
 export type CollaboratorProject = {
@@ -126,6 +128,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -139,6 +142,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -152,6 +156,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -165,6 +170,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -178,6 +184,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -191,6 +198,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,  
         })),
     },
 
@@ -204,6 +212,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -217,6 +226,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -236,6 +246,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -250,6 +261,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -264,6 +276,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
+          taskType: task.taskType,
         })),
     },
 
@@ -285,6 +298,7 @@ export async function getCollaboratorDetails(
       deadlineTime: task.deadlineTime,
       project: task.project?.name ?? null,
       urgency: task.urgency,
+      taskType: task.taskType,
     })),
   };
 
