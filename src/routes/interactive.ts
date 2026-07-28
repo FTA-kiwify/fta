@@ -1974,6 +1974,74 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
           return reply.status(200).send();
         }
+        if (actionId === "create_task_from_template") {
+          if (!userSlackId) return reply.status(200).send();
+          if (!triggerId) return reply.status(200).send();
+
+          const taskId = String(action?.value ?? "").trim();
+
+          const task = await prisma.task.findFirst({
+            where: {
+              id: taskId,
+              taskType: "on_demand",
+            },
+            select: {
+              title: true,
+              description: true,
+              notionProcessUrl: true,
+              responsible: true,
+              projectId: true,
+              calendarPrivate: true,
+            },
+          });
+
+          if (!task) {
+            return reply.status(200).send();
+          }
+
+          const projects = await prisma.project.findMany({
+            where: {
+              status: "active",
+              OR: [
+                { createdBySlackId: userSlackId },
+                { members: { some: { slackUserId: userSlackId } } },
+                {
+                  tasks: {
+                    some: {
+                      OR: [
+                        { delegation: userSlackId },
+                        { responsible: userSlackId },
+                        { carbonCopies: { some: { slackUserId: userSlackId } } },
+                      ],
+                    },
+                  },
+                },
+              ],
+            },
+            orderBy: { name: "asc" },
+            take: 100,
+            select: {
+              id: true,
+              name: true,
+            },
+          });
+
+          await slack.views.push({
+            trigger_id: triggerId,
+            view: createTaskModalView({
+              projects,
+              initialTitle: task.title,
+              initialDescription: task.description ?? undefined,
+              initialResponsible: task.responsible,
+              initialProjectId: task.projectId ?? undefined,
+              initialNotionProcessUrl: task.notionProcessUrl ?? undefined,
+              initialCalendarPrivate: task.calendarPrivate,
+              initialTaskType: "normal",
+            }),
+          });
+
+          return reply.status(200).send();
+        }
 
         // =========================================================
         // ✅ PROJECT VIEW MODAL: abrir / filtrar / paginar

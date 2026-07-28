@@ -134,10 +134,35 @@ export function taskDetailsModalView(args: {
     });
   }
 
+  if (isOnDemand) {
+    blocks.push({ type: "divider" });
+
+    blocks.push({
+      type: "actions",
+      elements: [
+        {
+          type: "button",
+          action_id: "create_task_from_template",
+          text: {
+            type: "plain_text",
+            text: "▶ Criar atividade",
+          },
+          value: args.taskId,
+        },
+      ],
+    });
+  }
+
   return {
     type: "modal",
-    title: { type: "plain_text", text: TASK_DETAILS_MODAL_TITLE },
-    close: { type: "plain_text", text: "Fechar" },
+    title: {
+      type: "plain_text",
+      text: TASK_DETAILS_MODAL_TITLE,
+    },
+    close: {
+      type: "plain_text",
+      text: "Fechar",
+    },
     blocks,
   };
 }

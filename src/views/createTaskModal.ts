@@ -157,7 +157,13 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         type: "input",
         block_id: "title_block",
         label: { type: "plain_text", text: "Título" },
-        element: { type: "plain_text_input", action_id: "title" },
+        element: {
+          type: "plain_text_input",
+          action_id: "title",
+          ...(args?.initialTitle
+            ? { initial_value: args.initialTitle }
+            : {}),
+        },
       },
       {
         type: "input",
@@ -168,6 +174,9 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
           type: "plain_text_input",
           action_id: "description",
           multiline: true,
+          ...(args?.initialDescription
+            ? { initial_value: args.initialDescription }
+            : {}),
         },
       },
       {
@@ -190,7 +199,13 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         type: "input",
         block_id: "resp_block",
         label: { type: "plain_text", text: "Responsável" },
-        element: { type: "users_select", action_id: "responsible" },
+        element: {
+          type: "users_select",
+          action_id: "responsible",
+          ...(args?.initialResponsible
+            ? { initial_user: args.initialResponsible }
+            : {}),
+        },
       },
       {
         type: "input",
@@ -219,6 +234,9 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
               element: {
                 type: "datepicker",
                 action_id: "due_date",
+                ...(args?.initialDueDate
+                  ? { initial_date: args.initialDueDate }
+                  : {}),
               },
             },
             {
@@ -229,6 +247,9 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
               element: {
                 type: "timepicker",
                 action_id: TASK_TIME_ACTION_ID,
+                ...(args?.initialDeadlineTime
+                  ? { initial_time: args.initialDeadlineTime }
+                  : {}),
                 placeholder: {
                   type: "plain_text",
                   text: "Ex: 18:30",
@@ -240,41 +261,71 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
       ),
 
       // ✅ DEPENDE DE
-      {
-        type: "input",
-        optional: true,
-        block_id: TASK_DEPENDS_BLOCK_ID,
-        label: { type: "plain_text", text: "Depende de" },
-        element: {
-          type: "external_select",
-          action_id: TASK_DEPENDS_ACTION_ID,
-          min_query_length: 0,
-          placeholder: { type: "plain_text", text: "Selecione a tarefa principal" },
-        },
-      },
+      ...(
+        !isOnDemand
+          ? ([
+            {
+              type: "input",
+              optional: true,
+              block_id: TASK_DEPENDS_BLOCK_ID,
+              label: {
+                type: "plain_text",
+                text: "Depende de",
+              },
+              element: {
+                type: "external_select",
+                action_id: TASK_DEPENDS_ACTION_ID,
+                min_query_length: 0,
+                placeholder: {
+                  type: "plain_text",
+                  text: "Selecione a tarefa principal",
+                },
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
 
-      {
-        type: "input",
-        optional: true,
-        block_id: TASK_RECURRENCE_BLOCK_ID,
-        label: { type: "plain_text", text: "Recorrência" },
-        element: {
-          type: "static_select",
-          action_id: TASK_RECURRENCE_ACTION_ID,
-          placeholder: { type: "plain_text", text: "Sem recorrência" },
-          options: [
-            { text: { type: "plain_text", text: "Sem recorrência" }, value: "none" },
-            { text: { type: "plain_text", text: "Diária" }, value: "daily" },
-            { text: { type: "plain_text", text: "Semanal" }, value: "weekly" },
-            { text: { type: "plain_text", text: "Quinzenal" }, value: "biweekly" },
-            { text: { type: "plain_text", text: "Mensal" }, value: "monthly" },
-            { text: { type: "plain_text", text: "Trimestral" }, value: "quarterly" },
-            { text: { type: "plain_text", text: "Semestral" }, value: "semiannual" },
-            { text: { type: "plain_text", text: "Anual" }, value: "annual" },
-          ],
-          initial_option: { text: { type: "plain_text", text: "Sem recorrência" }, value: "none" },
-        },
-      },
+      ...(
+        !isOnDemand
+          ? ([
+            {
+              type: "input",
+              optional: true,
+              block_id: TASK_RECURRENCE_BLOCK_ID,
+              label: {
+                type: "plain_text",
+                text: "Recorrência",
+              },
+              element: {
+                type: "static_select",
+                action_id: TASK_RECURRENCE_ACTION_ID,
+                placeholder: {
+                  type: "plain_text",
+                  text: "Sem recorrência",
+                },
+                options: [
+                  { text: { type: "plain_text", text: "Sem recorrência" }, value: "none" },
+                  { text: { type: "plain_text", text: "Diária" }, value: "daily" },
+                  { text: { type: "plain_text", text: "Semanal" }, value: "weekly" },
+                  { text: { type: "plain_text", text: "Quinzenal" }, value: "biweekly" },
+                  { text: { type: "plain_text", text: "Mensal" }, value: "monthly" },
+                  { text: { type: "plain_text", text: "Trimestral" }, value: "quarterly" },
+                  { text: { type: "plain_text", text: "Semestral" }, value: "semiannual" },
+                  { text: { type: "plain_text", text: "Anual" }, value: "annual" },
+                ],
+                initial_option: {
+                  text: {
+                    type: "plain_text",
+                    text: "Sem recorrência",
+                  },
+                  value: "none",
+                },
+              },
+            },
+          ] as KnownBlock[])
+          : []
+      ),
 
       projectBlock,
 
@@ -325,7 +376,13 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         optional: true,
         block_id: "cc_block",
         label: { type: "plain_text", text: "Pessoas em cópia" },
-        element: { type: "multi_users_select", action_id: "carbon_copies" },
+        element: {
+          type: "multi_users_select",
+          action_id: "carbon_copies",
+          ...(args?.initialCarbonCopies?.length
+            ? { initial_users: args.initialCarbonCopies }
+            : {}),
+        },
       },
       ...((showTurboFields && !isOnDemand
         ? [
@@ -377,10 +434,26 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
           action_id: TASK_CAL_PRIVATE_ACTION_ID,
           options: [
             {
-              text: { type: "plain_text", text: "🔒 Atividade privada" },
+              text: {
+                type: "plain_text",
+                text: "🔒 Atividade privada",
+              },
               value: "private",
             },
           ],
+          ...(args?.initialCalendarPrivate
+            ? {
+              initial_options: [
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "🔒 Atividade privada",
+                  },
+                  value: "private",
+                },
+              ],
+            }
+            : {}),
         },
       },
     ],
