@@ -538,6 +538,11 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
     const userSlackId = payload.user?.id as string | undefined;
     const actionId = String(payload.action_id ?? "");
     const query = String(payload.value ?? "").trim();
+    req.log.info({
+      actionId,
+      query,
+    }, "OPTIONS REQUEST");
+    req.log.info(payload, "OPTIONS PAYLOAD");
 
     req.log.info({ actionId, query, userSlackId }, "[OPTIONS] payload");
 
@@ -572,8 +577,9 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
     if (
       actionId === TASK_NOTION_PROCESS_ACTION_ID ||
       actionId === EDIT_NOTION_PROCESS_ACTION_ID
-    ) {
 
+    ) {
+      req.log.info("Entrou no autocomplete de processos");
       const processes = await prisma.process.findMany({
         where: {
           active: true,
@@ -608,7 +614,9 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               ],
             }
             : {}),
+
         },
+
 
         orderBy: {
           title: "asc",
@@ -621,6 +629,13 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           title: true,
         },
       });
+      req.log.info(
+        {
+          total: processes.length,
+          primeiro: processes[0],
+        },
+        "PROCESS SEARCH RESULT"
+      );
 
       return reply.status(200).send({
         options: processes.map((p) => ({
