@@ -193,14 +193,18 @@ export function editTaskModalView(args: {
         type: "input",
         optional: true,
         block_id: EDIT_NOTION_PROCESS_BLOCK_ID,
-        element: {
-          type: "plain_text_input",
-          action_id: EDIT_NOTION_PROCESS_ACTION_ID,
-          initial_value: args.notionProcessUrl ?? "",
-        },
         label: {
           type: "plain_text",
-          text: "Link do processo (Notion)",
+          text: "Processo",
+        },
+        element: {
+          type: "external_select",
+          action_id: EDIT_NOTION_PROCESS_ACTION_ID,
+          min_query_length: 0,
+          placeholder: {
+            type: "plain_text",
+            text: "Pesquisar processo...",
+          },
         },
       },
 

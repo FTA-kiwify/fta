@@ -542,33 +542,101 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
     req.log.info({ actionId, query, userSlackId }, "[OPTIONS] payload");
 
     if (!userSlackId) return reply.status(200).send({ options: [] });
-    if (actionId !== TASK_DEPENDS_ACTION_ID) return reply.status(200).send({ options: [] });
+    if (actionId === TASK_DEPENDS_ACTION_ID) {
 
-    const where: any = {
-      status: { notIn: ["done", "cancelled"] },
-      OR: [
-        { responsible: userSlackId },
-        { delegation: userSlackId },
-        { carbonCopies: { some: { slackUserId: userSlackId } } },
-      ],
-    };
+      const where: any = {
+        status: { notIn: ["done", "cancelled"] },
+        OR: [
+          { responsible: userSlackId },
+          { delegation: userSlackId },
+          { carbonCopies: { some: { slackUserId: userSlackId } } },
+        ],
+      };
 
-    if (query) where.title = { contains: query, mode: "insensitive" };
+      if (query) where.title = { contains: query, mode: "insensitive" };
 
-    const tasks = await prisma.task.findMany({
-      where,
-      orderBy: [{ createdAt: "desc" }],
-      take: 50,
-      select: { id: true, title: true },
-    });
+      const tasks = await prisma.task.findMany({
+        where,
+        orderBy: [{ createdAt: "desc" }],
+        take: 50,
+        select: { id: true, title: true },
+      });
 
+      return reply.status(200).send({
+        options: tasks.map((t) => ({
+          text: { type: "plain_text", text: t.title.slice(0, 75) },
+          value: t.id,
+        })),
+      });
+    }
+    if (
+      actionId === TASK_NOTION_PROCESS_ACTION_ID ||
+      actionId === EDIT_NOTION_PROCESS_ACTION_ID
+    ) {
+
+      const processes = await prisma.process.findMany({
+        where: {
+          active: true,
+
+          ...(query
+            ? {
+              OR: [
+                {
+                  title: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  notionTeam: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  notionVertical: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  theme: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
+            : {}),
+        },
+
+        orderBy: {
+          title: "asc",
+        },
+
+        take: 100,
+
+        select: {
+          id: true,
+          title: true,
+        },
+      });
+
+      return reply.status(200).send({
+        options: processes.map((p) => ({
+          text: {
+            type: "plain_text",
+            text: p.title.slice(0, 75),
+          },
+          value: p.id,
+        })),
+      });
+    }
     return reply.status(200).send({
-      options: tasks.map((t) => ({
-        text: { type: "plain_text", text: t.title.slice(0, 75) },
-        value: t.id,
-      })),
+      options: [],
     });
   });
+
 
   /**
    * ✅ /slack/interactive
@@ -2503,29 +2571,25 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const descriptionRaw = getInputValue(values, "desc_block", "description");
           const description = descriptionRaw?.trim() ? descriptionRaw.trim() : undefined;
 
-          const notionRaw = getInputValue(
+          const processId = getSelectedOptionValue(
             values,
             TASK_NOTION_PROCESS_BLOCK_ID,
             TASK_NOTION_PROCESS_ACTION_ID
           );
 
-          const notionProcessUrl = notionRaw?.trim()
-            ? notionRaw.trim()
-            : null;
+          let notionProcessUrl: string | null = null;
 
-          // VALIDA URL DO NOTION
-          if (notionProcessUrl) {
-            try {
-              new URL(notionProcessUrl);
-            } catch {
-              return reply.send({
-                response_action: "errors",
-                errors: {
-                  [TASK_NOTION_PROCESS_BLOCK_ID]:
-                    "Informe uma URL válida (https://...)",
-                },
-              });
-            }
+          if (processId) {
+            const process = await prisma.process.findUnique({
+              where: {
+                id: processId,
+              },
+              select: {
+                notionPageUrl: true,
+              },
+            });
+
+            notionProcessUrl = process?.notionPageUrl ?? null;
           }
 
           const responsible = getSelectedUser(values, "resp_block", "responsible") ?? "";
@@ -2675,13 +2739,26 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const descRaw = getInputValue(values, EDIT_DESC_BLOCK_ID, EDIT_DESC_ACTION_ID);
           const description = descRaw?.trim() ? descRaw.trim() : null;
 
-          const notionRaw = getInputValue(
+          const processId = getSelectedOptionValue(
             values,
             EDIT_NOTION_PROCESS_BLOCK_ID,
             EDIT_NOTION_PROCESS_ACTION_ID
           );
 
-          const notionProcessUrl = notionRaw?.trim() ? notionRaw.trim() : null;
+          let notionProcessUrl: string | null = null;
+
+          if (processId) {
+            const process = await prisma.process.findUnique({
+              where: {
+                id: processId,
+              },
+              select: {
+                notionPageUrl: true,
+              },
+            });
+
+            notionProcessUrl = process?.notionPageUrl ?? null;
+          }
 
           const termIso = getSelectedDate(values, EDIT_TERM_BLOCK_ID, EDIT_TERM_ACTION_ID) ?? null;
 

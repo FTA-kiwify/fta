@@ -185,14 +185,16 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
         block_id: TASK_NOTION_PROCESS_BLOCK_ID,
         label: {
           type: "plain_text",
-          text: "Link do processo (Notion)",
+          text: "Processo",
         },
         element: {
-          type: "plain_text_input",
+          type: "external_select",
           action_id: TASK_NOTION_PROCESS_ACTION_ID,
-          ...(args?.initialNotionProcessUrl
-            ? { initial_value: args.initialNotionProcessUrl }
-            : {}),
+          min_query_length: 0,
+          placeholder: {
+            type: "plain_text",
+            text: "Pesquisar processo...",
+          },
         },
       },
       {
