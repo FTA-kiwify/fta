@@ -13,8 +13,12 @@ type Process = {
 const DATA_SOURCE_ID = "3a529291-8369-803d-85e7-000b07ba2376";
 
 function getPlainText(items: any[] = []) {
-  return items.map((i) => i.plain_text).join("").trim();
+  return items
+    .map((item) => item.plain_text)
+    .join("")
+    .trim();
 }
+
 async function syncProcesses(processes: Process[]) {
   let created = 0;
   let updated = 0;
@@ -66,14 +70,14 @@ async function syncProcesses(processes: Process[]) {
     }
   }
 
-  console.log(`Criados: ${created}`);
-  console.log(`Atualizados: ${updated}`);
+  console.log(`[Notion] Criados: ${created}`);
+  console.log(`[Notion] Atualizados: ${updated}`);
 }
 
-async function main() {
+export async function syncNotionProcesses() {
   const processes: Process[] = [];
 
-  let cursor: string | undefined = undefined;
+  let cursor: string | undefined;
 
   do {
     const response = await notion.dataSources.query({
@@ -92,7 +96,7 @@ async function main() {
 
         vertical:
           page.properties.Vertical?.multi_select
-            ?.map((v: any) => v.name.trim())
+            ?.map((value: any) => value.name.trim())
             .join(", ") ?? "",
 
         tema: getPlainText(page.properties.Tema?.rich_text),
@@ -101,30 +105,53 @@ async function main() {
       });
     }
 
-    cursor = response.has_more ? response.next_cursor ?? undefined : undefined;
+    cursor =
+      response.has_more && response.next_cursor
+        ? response.next_cursor
+        : undefined;
   } while (cursor);
 
   const uniqueProcesses = Array.from(
     new Map(
       processes
         .filter(
-          (p) =>
-            p.nome.length > 0 &&
-            p.processo.length > 0
+          (process) =>
+            process.nome.length > 0 &&
+            process.processo.length > 0,
         )
-        .map((p) => [p.notionPageId, p])
-    ).values()
+        .map((process) => [process.notionPageId, process]),
+    ).values(),
   );
 
-  console.log(`Total lidos: ${processes.length}`);
-  console.log(`Total válidos: ${uniqueProcesses.length}`);
+  console.log(`[Notion] Total lidos: ${processes.length}`);
+  console.log(`[Notion] Total válidos: ${uniqueProcesses.length}`);
 
   await syncProcesses(uniqueProcesses);
+  await prisma.process.updateMany({
+    where: {
+      notionPageId: {
+        notIn: uniqueProcesses.map((process) => process.notionPageId),
+      },
+    },
+    data: {
+      active: false,
+    },
+  });
 
-  console.log("Sincronização concluída.");
+  console.log("[Notion] Sincronização concluída.");
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+/*
+ * Mantém o comando manual funcionando:
+ * npm run notion:sync
+ */
+if (require.main === module) {
+  syncNotionProcesses()
+    .catch((error) => {
+      console.error("[Notion] Erro na sincronização:", error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

@@ -4,6 +4,7 @@ import { runTurboUrgencyReminderCron } from "./turboUrgencyReminderCron";
 import { runLightUrgencyReminderCron } from "./lightUrgencyReminderCron";
 import { runAsapUrgencyReminderCron } from "./asapUrgencyReminderCron";
 import { runCutoffRolloverCron } from "./cutoffRolloverCron";
+import { runNotionSyncCron } from "./notionSyncCron";
 
 const TZ = "America/Sao_Paulo";
 
@@ -55,6 +56,12 @@ export function startCrons() {
     () => safeRun("cutoffRolloverCron", runCutoffRolloverCron),
     { timezone: TZ }
   );
+  // 📘 Notion - sincroniza processos a cada 10 minutos
+  cron.schedule(
+    "*/10 * * * *",
+    () => safeRun("notionSyncCron", runNotionSyncCron),
+    { timezone: TZ }
+  );
 
   // ✅ Debug opcional
   if (process.env.FORCE_TURBO_REMINDER === "1") safeRun("turboUrgencyReminderCron (forced)", runTurboUrgencyReminderCron);
@@ -66,4 +73,6 @@ export function startCrons() {
     tz: TZ,
     cutoff: cutoffFinalExpr,
   });
+
+
 }
