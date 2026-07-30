@@ -234,6 +234,9 @@ function isCheckboxChecked(values: any, blockId: string, actionId: string, value
   const selected = values?.[blockId]?.[actionId]?.selected_options ?? [];
   return selected.some((o: any) => String(o?.value ?? "") === value);
 }
+function truncate(text: string, max = 45) {
+  return text.length > max ? text.slice(0, max - 1) + "…" : text;
+}
 
 function parseProjectModalState(view: any): { projectId: string; page: number; filter: ProjectModalFilter } | null {
   try {
@@ -618,17 +621,19 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         },
 
 
-        orderBy: {
-          title: "asc",
-        },
+        orderBy: [
+          { notionTeam: "asc" },
+          { theme: "asc" },
+          { title: "asc" },
+        ],
 
         take: 100,
 
         select: {
           id: true,
           title: true,
-          notionVertical: true,
-
+          notionTeam: true,
+          theme: true,
         },
       });
       req.log.info(
@@ -643,7 +648,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         options: processes.map((p) => ({
           text: {
             type: "plain_text",
-            text: `${p.notionVertical} › ${p.title}`.slice(0, 75),
+            text: `${p.notionTeam} › ${p.theme} › ${truncate(p.title)}`,
           },
           value: p.id,
         })),
@@ -1933,7 +1938,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 select: {
                   id: true,
                   title: true,
-                  notionVertical: true,
+                  notionTeam: true,
+                  theme: true,
                 },
               },
               term: true,
@@ -1999,7 +2005,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               notionProcessUrl: (task as any).notionProcessUrl ?? null,
               currentProcessId: task.process?.id ?? null,
               currentProcessLabel: task.process
-                ? `${task.process.notionVertical} › ${task.process.title}`
+                ? `${task.process.notionTeam} › ${task.process.theme} › ${task.process.title}`
                 : null,
               currentDateIso,
               currentTime: task.deadlineTime ?? null,
