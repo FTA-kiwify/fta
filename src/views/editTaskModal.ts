@@ -85,6 +85,9 @@ export function editTaskModalView(args: {
 
   notionProcessUrl?: string | null;
 
+  currentProcessId?: string | null;
+  currentProcessLabel?: string | null;
+
   currentDateIso?: string | null; // YYYY-MM-DD
   currentTime?: string | null; // HH:MM
 
@@ -155,6 +158,17 @@ export function editTaskModalView(args: {
       ? projectOptions.find((o) => o.value === args.currentProjectId)
       : projectOptions[0];
 
+  const selectedProcessOption =
+    args.currentProcessId && args.currentProcessLabel
+      ? {
+        text: {
+          type: "plain_text" as const,
+          text: args.currentProcessLabel.slice(0, 75),
+        },
+        value: args.currentProcessId,
+      }
+      : undefined;
+
   return {
     type: "modal",
     callback_id: EDIT_TASK_MODAL_CALLBACK_ID,
@@ -201,6 +215,13 @@ export function editTaskModalView(args: {
           type: "external_select",
           action_id: EDIT_NOTION_PROCESS_ACTION_ID,
           min_query_length: 0,
+
+          ...(selectedProcessOption
+            ? {
+              initial_option: selectedProcessOption,
+            }
+            : {}),
+
           placeholder: {
             type: "plain_text",
             text: "Pesquisar processo...",

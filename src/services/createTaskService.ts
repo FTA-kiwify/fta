@@ -107,6 +107,8 @@ export async function createTaskService(raw: unknown) {
     data: {
       title: data.title.trim(),
       description: data.description?.trim() ? data.description.trim() : null,
+      processId: data.processId ?? null,
+
       notionProcessUrl: data.notionProcessUrl ?? null,
 
       delegation: data.delegation,
@@ -155,6 +157,7 @@ export async function createTaskService(raw: unknown) {
       title: task.title,
       responsible: task.responsible,
       delegation: task.delegation,
+      processId: task.processId,
       notionProcessUrl: task.notionProcessUrl,
 
 

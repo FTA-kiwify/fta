@@ -94,6 +94,19 @@ export const createTaskSchema = z
       },
       z.string().url().nullable()
     ),
+    processId: z.preprocess(
+      (v) => {
+        if (v === null || v === undefined) return null;
+
+        if (typeof v === "string") {
+          const s = v.trim();
+          return s ? s : null;
+        }
+
+        return null;
+      },
+      z.string().nullable()
+    ),
 
     delegation: slackUserIdSchema,
     responsible: slackUserIdSchema,

@@ -34,6 +34,7 @@ const TASK_SELECT = {
   title: true,
   description: true,
   notionProcessUrl: true,
+  processId: true,
   delegation: true,
   responsible: true,
   term: true,
@@ -55,6 +56,7 @@ type TaskSelected = {
   id: string;
   title: string;
   description: string | null;
+  processId: string | null;
   notionProcessUrl: string | null;
   delegation: string | null;
   responsible: string;
@@ -77,6 +79,7 @@ type TaskSnapshot = {
   id: string;
   title: string;
   description: string | null;
+  processId: string | null;
   notionProcessUrl: string | null;
   delegation: string | null;
   responsible: string;
@@ -99,6 +102,7 @@ function toSnapshot(t: TaskSelected): TaskSnapshot {
     id: t.id,
     title: t.title,
     description: t.description,
+    processId: t.processId ?? null,
     notionProcessUrl: t.notionProcessUrl ?? null,
     delegation: t.delegation ?? null,
     responsible: t.responsible,
@@ -123,6 +127,7 @@ export async function updateTaskService(args: {
 
   title: string;
   description: string | null;
+  processId: string | null;
   notionProcessUrl: string | null;
 
   termIso: string | null; // YYYY-MM-DD
@@ -146,6 +151,7 @@ export async function updateTaskService(args: {
     delegationSlackId,
     title,
     description,
+    processId,
     notionProcessUrl,
     termIso,
     deadlineTime,
@@ -172,6 +178,7 @@ export async function updateTaskService(args: {
   const recurrenceValue = normalizeRecurrence(recurrence);
   const urgencyValue = normalizeUrgency(urgency);
   const normalizedProjectId = normalizeProjectId(projectId);
+  const normalizedProcessId = processId?.trim() ? processId.trim() : null;
   const normalizedNotionProcessUrl = notionProcessUrl?.trim() ? notionProcessUrl.trim() : null;
 
   const newTerm = termIso ? toSaoPauloMidnightDate(termIso) : null;
@@ -239,6 +246,8 @@ export async function updateTaskService(args: {
     data: {
       title: trimmedTitle,
       description: description?.trim() ? description.trim() : null,
+
+      processId: normalizedProcessId,
       notionProcessUrl: normalizedNotionProcessUrl,
 
       term: finalTerm,

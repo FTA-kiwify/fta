@@ -627,6 +627,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         select: {
           id: true,
           title: true,
+          notionVertical: true,
+
         },
       });
       req.log.info(
@@ -641,7 +643,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         options: processes.map((p) => ({
           text: {
             type: "plain_text",
-            text: p.title.slice(0, 75),
+            text: `${p.notionVertical} › ${p.title}`.slice(0, 75),
           },
           value: p.id,
         })),
@@ -1332,6 +1334,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 updatedAt: true,
                 carbonCopies: { select: { slackUserId: true } },
                 calendarPrivate: true,
+                processId: true,
               },
             });
 
@@ -1387,6 +1390,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               urgency: (oldTask.urgency as any) ?? "light",
               carbonCopies: oldTask.carbonCopies.map((c) => c.slackUserId),
               calendarPrivate: oldTask.calendarPrivate,
+              processId: oldTask.processId ?? null,
 
             });
             await prisma.taskAuditLog.create({
@@ -1925,6 +1929,13 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               title: true,
               description: true,
               notionProcessUrl: true,
+              process: {
+                select: {
+                  id: true,
+                  title: true,
+                  notionVertical: true,
+                },
+              },
               term: true,
               deadlineTime: true,
               responsible: true,
@@ -1986,6 +1997,10 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               title: task.title,
               description: task.description ?? null,
               notionProcessUrl: (task as any).notionProcessUrl ?? null,
+              currentProcessId: task.process?.id ?? null,
+              currentProcessLabel: task.process
+                ? `${task.process.notionVertical} › ${task.process.title}`
+                : null,
               currentDateIso,
               currentTime: task.deadlineTime ?? null,
               responsibleSlackId: task.responsible,
@@ -2675,6 +2690,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             reminderMode,
             turboPreviousDay,
             turboStartTime,
+            processId,
             carbonCopies,
             calendarPrivate,
           });
@@ -2849,6 +2865,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             turboPreviousDay,
             turboStartTime,
             calendarPrivate,
+            processId: processId ?? null,
             projectId,
           });
 
@@ -3111,6 +3128,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             recurrence: string | null;
             urgency: string;
             carbonCopies: string[];
+            processId: string | null;
           }> = [];
 
           function bid(i: number) {
@@ -3164,6 +3182,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               recurrence,
               urgency,
               carbonCopies,
+              processId: null,
             });
           }
 
@@ -3188,6 +3207,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               urgency: t.urgency,
               reminderMode: "until",
               carbonCopies: t.carbonCopies,
+              processId: t.processId ?? null,
             });
 
             createdTasks.push(task);
