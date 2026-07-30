@@ -652,8 +652,17 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         "OPTIONS RETURN"
       );
 
+      req.log.info(
+        processes.map(p => ({
+          id: p.id,
+          title: p.title,
+          titleType: typeof p.title,
+        })),
+        "PROCESSOS"
+      );
+
       return reply.status(200).send({
-        options: processes.map((p) => ({
+        options: processes.slice(0, 1).map((p) => ({
           text: {
             type: "plain_text",
             text: p.title,
