@@ -653,14 +653,15 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
       );
 
       return reply.status(200).send({
-        options: processes.map((p) => ({
-          text: {
-            type: "plain_text",
-            text: `${p.notionTeam} | ${p.theme} | ${truncate(p.title)}`,
-            emoji: true,
+        options: [
+          {
+            text: {
+              type: "plain_text",
+              text: "TESTE",
+            },
+            value: "123",
           },
-          value: p.id,
-        })),
+        ],
       });
     }
     return reply.status(200).send({
