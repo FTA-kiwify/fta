@@ -661,6 +661,21 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         "PROCESSOS"
       );
 
+      const options = processes.map((p) => ({
+        text: {
+          type: "plain_text",
+          text: p.title
+            .replace(/\r?\n/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 75),
+          emoji: false,
+        },
+        value: p.id,
+      }));
+
+      return reply.status(200).send({ options });
+
       return reply.status(200).send({
         options: processes.slice(0, 100).map((p) => ({
           text: {
