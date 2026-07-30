@@ -674,17 +674,19 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         value: p.id,
       }));
 
-      return reply.status(200).send({ options });
+      const response = { options };
 
-      return reply.status(200).send({
-        options: processes.slice(0, 100).map((p) => ({
-          text: {
-            type: "plain_text",
-            text: p.title,
-          },
-          value: p.id,
-        })),
-      });
+      req.log.info(
+        {
+          total: options.length,
+          responseSize: JSON.stringify(response).length,
+        },
+        "OPTIONS RESPONSE"
+      );
+
+      return reply.status(200).send(response);
+
+
     }
     return reply.status(200).send({
       options: [],
