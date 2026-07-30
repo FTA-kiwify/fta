@@ -662,7 +662,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
       );
 
       return reply.status(200).send({
-        options: processes.slice(0, 1).map((p) => ({
+        options: processes.slice(0, 10).map((p) => ({
           text: {
             type: "plain_text",
             text: p.title,
