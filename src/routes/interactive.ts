@@ -653,15 +653,13 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
       );
 
       return reply.status(200).send({
-        options: [
-          {
-            text: {
-              type: "plain_text",
-              text: "TESTE",
-            },
-            value: "123",
+        options: processes.map((p) => ({
+          text: {
+            type: "plain_text",
+            text: p.title,
           },
-        ],
+          value: p.id,
+        })),
       });
     }
     return reply.status(200).send({
