@@ -668,7 +668,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             .replace(/\r?\n/g, " ")
             .replace(/\s+/g, " ")
             .trim()
-            .slice(0, 200),
+            .slice(0, 100),
           emoji: false,
         },
         value: p.id,
