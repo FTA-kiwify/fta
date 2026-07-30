@@ -644,11 +644,19 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         "PROCESS SEARCH RESULT"
       );
 
+      req.log.info(
+        processes.slice(0, 3).map(p => ({
+          text: `${p.notionTeam} - ${p.theme} - ${truncate(p.title)}`,
+          value: p.id,
+        })),
+        "OPTIONS RETURN"
+      );
+
       return reply.status(200).send({
         options: processes.map((p) => ({
           text: {
             type: "plain_text",
-            text: `${p.notionTeam} › ${p.theme} › ${truncate(p.title)}`,
+            text: `${p.notionTeam} | ${p.theme} | ${truncate(p.title)}`,
           },
           value: p.id,
         })),
