@@ -657,6 +657,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           text: {
             type: "plain_text",
             text: `${p.notionTeam} | ${p.theme} | ${truncate(p.title)}`,
+            emoji: true,
           },
           value: p.id,
         })),
