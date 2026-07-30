@@ -96,6 +96,13 @@ export function sidebar(active: string = "dashboard") {
         </a>
 
         <a
+  href="/portal/processes"
+  class="${item("processes")}"
+>
+  📚 Processos
+</a>
+
+        <a
           href="/portal/reports"
           class="${item("reports")}"
         >
