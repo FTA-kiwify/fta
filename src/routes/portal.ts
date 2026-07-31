@@ -277,10 +277,7 @@ export async function portalRoutes(app: FastifyInstance) {
             title: department,
             user: getTopbarUser(request),
           }),
-          body: processDepartmentPage(
-            department,
-            teams
-          ),
+          body: processDepartmentPage(teams),
         })
       );
 

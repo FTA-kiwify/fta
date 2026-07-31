@@ -1,15 +1,10 @@
 import { DepartmentTeam } from "../../services/portal/processDepartmentDetailsService";
 
 export function processDepartmentPage(
-  department: string,
   teams: DepartmentTeam[]
 ) {
 
   return `
-
-    <h1 style="margin-bottom:24px;">
-      ${department}
-    </h1>
 
     ${teams.map(team => `
 
