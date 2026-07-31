@@ -1,23 +1,28 @@
 import { prisma } from "../../lib/prisma";
 
-export type ProcessTree = {
-    team: {
-        id: string;
-        name: string;
-    };
-    verticals: {
-        name: string;
-        themes: {
-            name: string;
-            processes: {
-                id: string;
-                title: string;
-            }[];
-        }[];
-    }[];
+export type DepartmentTree = {
+    name: string;
+    teams: TeamTree[];
+};
+
+type TeamTree = {
+    id: string;
+    name: string;
+    themes: ThemeTree[];
+};
+
+type ThemeTree = {
+    name: string;
+    processes: ProcessTree[];
+};
+
+type ProcessTree = {
+    id: string;
+    title: string;
 };
 
 export async function getProcessTree() {
+
     const processes = await prisma.process.findMany({
         where: {
             active: true,
@@ -31,11 +36,13 @@ export async function getProcessTree() {
         orderBy: [
             {
                 team: {
-                    name: "asc",
+                    group: "asc",
                 },
             },
             {
-                notionVertical: "asc",
+                team: {
+                    name: "asc",
+                },
             },
             {
                 theme: "asc",
@@ -45,45 +52,48 @@ export async function getProcessTree() {
             },
         ],
     });
-    const teams = new Map<string, ProcessTree>();
+    const departments = new Map<string, DepartmentTree>();
+
     for (const process of processes) {
 
         if (!process.team) {
             continue;
         }
-        let team = teams.get(process.team.id);
+        const teamData = process.team;
+
+        const departmentName = teamData.group || "Sem departamento";
+
+        let department = departments.get(departmentName);
+
+        if (!department) {
+
+            department = {
+                name: departmentName,
+                teams: [],
+            };
+
+            departments.set(departmentName, department);
+
+        }
+        let team = department.teams.find(
+            team => team.id === teamData.id
+        );
 
         if (!team) {
 
             team = {
-                team: {
-                    id: process.team.id,
-                    name: process.team.name,
-                },
-                verticals: [],
-            };
-
-            teams.set(process.team.id, team);
-
-        }
-
-        let vertical = team.verticals.find(
-            vertical => vertical.name === process.notionVertical
-        );
-
-        if (!vertical) {
-
-            vertical = {
-                name: process.notionVertical,
+                id: teamData.id,
+                name: teamData.name,
                 themes: [],
             };
 
-            team.verticals.push(vertical);
+            department.teams.push(team);
 
         }
+
         const themeName = process.theme?.trim() || "Sem tema";
 
-        let theme = vertical.themes.find(
+        let theme = team.themes.find(
             theme => theme.name === themeName
         );
 
@@ -94,13 +104,14 @@ export async function getProcessTree() {
                 processes: [],
             };
 
-            vertical.themes.push(theme);
+            team.themes.push(theme);
 
         }
         theme.processes.push({
             id: process.id,
             title: process.title,
         });
+
     }
-    return [...teams.values()];
+    return [...departments.values()];
 }

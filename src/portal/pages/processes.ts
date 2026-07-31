@@ -1,68 +1,75 @@
-import { ProcessTree } from "../../services/portal/processService";
+import { DepartmentTree } from "../../services/portal/processService";
 import { treeItem } from "../components/treeItem";
 
 export function processesPage(
-  tree: ProcessTree[]
+    departments: DepartmentTree[]
 ) {
 
-  return `
+    return departments
+        .map(renderDepartment)
+        .join("");
 
-    <div class="card">
+    function renderDepartment(
+        department: DepartmentTree
+    ) {
 
-      ${tree.map(renderTeam).join("")}
+        return `
+
+    <div
+      class="card"
+      style="margin-bottom:24px;"
+    >
+
+      <h2 style="margin-top:0;">
+        🏦 ${department.name}
+      </h2>
+
+      ${department.teams
+                .map(renderTeam)
+                .join("")}
 
     </div>
 
   `;
+        function renderTeam(team: DepartmentTree["teams"][0]) {
 
-}
-function renderTeam(team: ProcessTree) {
+            return treeItem({
 
-  return treeItem({
+                title: `📁 ${team.name}`,
 
-    title: `🏢 ${team.team.name}`,
+                body: team.themes
+                    .map(renderTheme)
+                    .join(""),
 
-    body: team.verticals
-      .map(renderVertical)
-      .join(""),
+            });
 
-  });
+        }
+        function renderTheme(
+            theme: DepartmentTree["teams"][0]["themes"][0]
+        ) {
 
-}
+            return treeItem({
 
-function renderVertical(vertical: ProcessTree["verticals"][0]) {
+                title: `📂 ${theme.name}`,
 
-  return treeItem({
-
-    title: `📂 ${vertical.name}`,
-
-    body: vertical.themes
-      .map(renderTheme)
-      .join(""),
-
-  });
-
-}
-
-function renderTheme(theme: ProcessTree["verticals"][0]["themes"][0]) {
-
-  return treeItem({
-
-    title: `📁 ${theme.name}`,
-
-    body: theme.processes
-      .map(process => `
+                body: theme.processes
+                    .map(process => `
         <div
           style="
-            padding:6px 0;
-            margin-left:12px;
+            padding:8px 0 8px 12px;
+            border-left:2px solid #E5E7EB;
+            margin-left:8px;
           "
         >
           📄 ${process.title}
         </div>
       `)
-      .join(""),
+                    .join(""),
 
-  });
+            });
+
+        }
+
+    }
 
 }
