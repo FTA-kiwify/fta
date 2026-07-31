@@ -3,26 +3,32 @@ import { loadNotionTree } from "../notion/loadNotionTree";
 import { renderNotionBlocks } from "../../portal/notion/renderNotionBlocks";
 
 export async function getProcessDetails(
-  processId: string
+    processId: string
 ) {
 
-  const process = await prisma.process.findUnique({
-    where: {
-      id: processId,
-    },
-  });
+    const process = await prisma.process.findUnique({
+        where: {
+            id: processId,
+        },
+    });
 
-  if (!process) {
-    return null;
-  }
+    if (!process) {
+        return null;
+    }
 
-  const blocks = await loadNotionTree(
-    process.notionPageId
-  );
+    const blocks = await loadNotionTree(
+        process.notionPageId
+    );
+    console.log("BLOCKS:", blocks.length);
 
-  return {
-    process,
-    content: await renderNotionBlocks(blocks),
-  };
+    const content = await renderNotionBlocks(blocks);
+
+    console.log("BLOCKS:", blocks.length);
+    console.log("CONTENT:", content.length);
+
+    return {
+        process,
+        content,
+    };
 
 }
