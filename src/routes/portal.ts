@@ -45,7 +45,7 @@ import { getTeams } from "../services/portal/teamService";
 import { addTeamMemberModal } from "../portal/components/addTeamMemberModal";
 import { getAvailableCollaborators } from "../services/portal/availableCollaboratorsService";
 import { processesPage } from "../portal/pages/processes";
-import { getProcessTree } from "../services/portal/processService";
+import { getDepartments } from "../services/portal/processDepartmentsService";
 
 function getTopbarUser(request: any) {
 
@@ -236,56 +236,28 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
-  app.get(
-    "/portal/processes",
-    async (request, reply) => {
+app.get(
+  "/portal/processes",
+  async (request, reply) => {
 
-      const processes = await getProcessTree();
-
-      return reply.type("text/html").send(
-
-        portalLayout({
-
-          title: "Processos",
-
-          sidebar: sidebar("processes"),
-
-          topbar: topbar({
-            title: "Processos",
-            searchPlaceholder: "Pesquisar processo...",
-            user: getTopbarUser(request),
-          }),
-
-          body: processesPage(processes),
-
-        })
-
-      );
-
-    }
-  );
-
-  app.get("/portal/projects/:id", async (request, reply) => {
-
-    const { id } = request.params as {
-      id: string;
-    };
-
-    const project = await getProjectDetails(id);
+    const departments = await getDepartments();
 
     return reply.type("text/html").send(
       portalLayout({
-        title: project.name,
-        sidebar: sidebar("projects"),
+        title: "Processos",
+        sidebar: sidebar("processes"),
         topbar: topbar({
-          title: project.name,
+          title: "Processos",
+          searchPlaceholder: "Pesquisar processo...",
           user: getTopbarUser(request),
         }),
-        body: projectPage(project),
+        body: processesPage(departments),
       })
     );
 
-  });
+  }
+);
+
 
   app.get("/portal/teams/:id", async (request, reply) => {
 

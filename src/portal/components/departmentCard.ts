@@ -9,6 +9,7 @@ type DepartmentCardProps = {
   subtitle?: string;
   footer?: string;
   icon?: string;
+  href?: string;
 };
 
 
@@ -21,12 +22,13 @@ export function departmentCard({
   subtitle = "Departamento",
   footer = "Clique para visualizar.",
   icon = "💰",
+  href,
 }: DepartmentCardProps) {
-
+const cardHref = href ?? `/portal/teams/${id}`;
   return `
     <div
       class="card"
-      onclick="window.location='/portal/teams/${id}'"
+      onclick="window.location='${cardHref}'"
       style="
         cursor:pointer;
         margin-bottom:24px;

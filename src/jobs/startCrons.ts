@@ -68,6 +68,8 @@ export function startCrons() {
   if (process.env.FORCE_LIGHT_REMINDER === "1") safeRun("lightUrgencyReminderCron (forced)", runLightUrgencyReminderCron);
   if (process.env.FORCE_ASAP_REMINDER === "1") safeRun("asapUrgencyReminderCron (forced)", runAsapUrgencyReminderCron);
   if (process.env.FORCE_CUTOFF_ROLLOVER === "1") safeRun("cutoffRolloverCron (forced)", runCutoffRolloverCron);
+  if (process.env.FORCE_NOTION_SYNC === "1")
+    safeRun("notionSyncCron (forced)", runNotionSyncCron);
 
   console.log("[crons] scheduled", {
     tz: TZ,
