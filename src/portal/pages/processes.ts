@@ -12,15 +12,13 @@ export function processesPage(
         departmentCard({
           id: department.name,
           name: department.name,
-          members: 0,
+          members: department.processCount,
           openTasks: 0,
           todayTasks: 0,
           subtitle: "Departamento",
           footer: "Clique para visualizar os processos.",
           icon: "💰",
-          href: `/portal/processes/department/${encodeURIComponent(
-            department.name
-          )}`,
+          href: `/portal/processes/department/${encodeURIComponent(department.name)}`
         })
       )
       .join("")}

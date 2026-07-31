@@ -46,6 +46,8 @@ import { addTeamMemberModal } from "../portal/components/addTeamMemberModal";
 import { getAvailableCollaborators } from "../services/portal/availableCollaboratorsService";
 import { processesPage } from "../portal/pages/processes";
 import { getDepartments } from "../services/portal/processDepartmentsService";
+import { getDepartmentTeams } from "../services/portal/processDepartmentDetailsService";
+import { processDepartmentPage } from "../portal/pages/processDepartment";
 
 function getTopbarUser(request: any) {
 
@@ -236,28 +238,54 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
-app.get(
-  "/portal/processes",
-  async (request, reply) => {
+  app.get(
+    "/portal/processes",
+    async (request, reply) => {
 
-    const departments = await getDepartments();
+      const departments = await getDepartments();
 
-    return reply.type("text/html").send(
-      portalLayout({
-        title: "Processos",
-        sidebar: sidebar("processes"),
-        topbar: topbar({
+      return reply.type("text/html").send(
+        portalLayout({
           title: "Processos",
-          searchPlaceholder: "Pesquisar processo...",
-          user: getTopbarUser(request),
-        }),
-        body: processesPage(departments),
-      })
-    );
+          sidebar: sidebar("processes"),
+          topbar: topbar({
+            title: "Processos",
+            searchPlaceholder: "Pesquisar processo...",
+            user: getTopbarUser(request),
+          }),
+          body: processesPage(departments),
+        })
+      );
 
-  }
-);
+    }
+  );
+  app.get(
+    "/portal/processes/department/:department",
+    async (request, reply) => {
 
+      const { department } = request.params as {
+        department: string;
+      };
+
+      const teams = await getDepartmentTeams(department);
+
+      return reply.type("text/html").send(
+        portalLayout({
+          title: department,
+          sidebar: sidebar("processes"),
+          topbar: topbar({
+            title: department,
+            user: getTopbarUser(request),
+          }),
+          body: processDepartmentPage(
+            department,
+            teams
+          ),
+        })
+      );
+
+    }
+  );
 
   app.get("/portal/teams/:id", async (request, reply) => {
 

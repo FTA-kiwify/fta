@@ -70,11 +70,9 @@ const cardHref = href ?? `/portal/teams/${id}`;
     "
   >
 
-    <span>👥 ${members} colaboradores</span>
+    <span>📂 ${members} processos</span>
 
-    <span>📋 ${openTasks} tarefas</span>
 
-    <span>📅 ${todayTasks} hoje</span>
 
   </div>
 
