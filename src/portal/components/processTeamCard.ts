@@ -10,7 +10,7 @@ export function processTeamCard({
   id,
   name,
   processCount,
-}: DepartmentCardProps) {
+}: ProcessTeamCardProps) {
 const cardHref = `/portal/processes/team/${id}`;
   return `
     <div
