@@ -15,9 +15,7 @@ export function processPage(
         ${process.title}
       </h1>
 
-      <div
-        class="notion-content"
-      >
+      <div class="notion-content">
         ${content}
       </div>
 
