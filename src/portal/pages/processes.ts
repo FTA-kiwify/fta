@@ -1,5 +1,5 @@
 import { Department } from "../../services/portal/processDepartmentsService";
-import { departmentCard } from "../components/departmentCard";
+import { processDepartmentCard } from "../components/processDepartmentCard";
 
 export function processesPage(
   departments: Department[]
@@ -9,15 +9,9 @@ export function processesPage(
 
     ${departments
       .map(department =>
-        departmentCard({
-          id: department.name,
+        processDepartmentCard({
           name: department.name,
-          members: department.processCount,
-          openTasks: 0,
-          todayTasks: 0,
-          subtitle: "Departamento",
-          footer: "Clique para visualizar os processos.",
-          icon: "💰",
+          processCount: department.processCount,
           href: `/portal/processes/department/${encodeURIComponent(department.name)}`
         })
       )

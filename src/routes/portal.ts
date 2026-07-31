@@ -48,6 +48,8 @@ import { processesPage } from "../portal/pages/processes";
 import { getDepartments } from "../services/portal/processDepartmentsService";
 import { getDepartmentTeams } from "../services/portal/processDepartmentDetailsService";
 import { processDepartmentPage } from "../portal/pages/processDepartment";
+import { getProcessTeamDetails } from "../services/portal/processTeamDetailsService";
+import { processTeamPage } from "../portal/pages/processTeam";
 
 function getTopbarUser(request: any) {
 
@@ -283,7 +285,34 @@ export async function portalRoutes(app: FastifyInstance) {
 
     }
   );
+  app.get(
+    "/portal/processes/team/:teamId",
+    async (request, reply) => {
 
+      const { teamId } = request.params as {
+        teamId: string;
+      };
+
+      const team = await getProcessTeamDetails(teamId);
+
+      if (!team) {
+        return reply.status(404).send("Time não encontrado.");
+      }
+
+      return reply.type("text/html").send(
+        portalLayout({
+          title: team.name,
+          sidebar: sidebar("processes"),
+          topbar: topbar({
+            title: team.name,
+            user: getTopbarUser(request),
+          }),
+          body: processTeamPage(team),
+        })
+      );
+
+    }
+  );
   app.get("/portal/teams/:id", async (request, reply) => {
 
     const { id } = request.params as {
