@@ -339,7 +339,7 @@ export async function portalRoutes(app: FastifyInstance) {
           }),
           body: processPage(
             result.process,
-            result.blocks
+            result.content
           ),
         })
       );

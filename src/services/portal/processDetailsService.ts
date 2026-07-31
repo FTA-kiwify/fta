@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { getProcessBlocks } from "../notion/processContent";
+import { renderNotionBlocks } from "../../portal/notion/renderNotionBlocks";
 
 export async function getProcessDetails(
     processId: string
@@ -21,7 +22,8 @@ export async function getProcessDetails(
 
     return {
         process,
-        blocks,
+        content: renderNotionBlocks(blocks),
+
     };
 
 }
