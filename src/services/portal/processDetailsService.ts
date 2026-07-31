@@ -16,6 +16,9 @@ export async function getProcessDetails(
         return null;
     }
 
+    console.log("PAGE ID:", process.notionPageId);
+    console.log("PAGE URL:", process.notionPageUrl);
+
     const blocks = await loadNotionTree(
         process.notionPageId
     );
