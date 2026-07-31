@@ -24,7 +24,7 @@ export function departmentCard({
   icon = "💰",
   href,
 }: DepartmentCardProps) {
-const cardHref = href ?? `/portal/teams/${id}`;
+  const cardHref = href ?? `/portal/teams/${id}`;
   return `
     <div
       class="card"
@@ -46,7 +46,7 @@ const cardHref = href ?? `/portal/teams/${id}`;
       font-size:30px;
     "
   >
-    ${icon} ${name}
+   🏢 ${name}
   </h2>
 
   <div
