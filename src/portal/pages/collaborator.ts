@@ -2,6 +2,9 @@ import type { CollaboratorDetails } from "../../services/portal/collaboratorDeta
 import { taskRow } from "../components/taskRow";
 import { accordion } from "../components/accordion";
 import { statCard } from "../components/statCard";
+import { dashboardSection } from "../components/dashboardSection";
+import { upcomingTask } from "../components/upcomingTask";
+import { completedTask } from "../components/completedTask";
 import { getBrazilToday } from "../../utils/date";
 
 export function collaboratorPage(
@@ -44,159 +47,181 @@ export function collaboratorPage(
       new Date(task.term) >= dayAfter
     );
   });
+
   const onDemandTasks = collaborator.tasks.filter(
     task => task.taskType === "on_demand"
   );
 
   return `
 
-
     <div class="dashboard-grid">
 
-  ${collaborator.isTeam
-      ? statCard({
-        title: "Membros",
-        value: collaborator.members?.length ?? 0,
-        subtitle: "No time",
-        icon: "👥",
-        onclick: `openPortalModal('/portal/teams/${collaborator.slackUserId}/members/modal')`,
-      })
-      : ""
-    }
+      ${collaborator.isTeam
+        ? statCard({
+            title: "Membros",
+            value: collaborator.members?.length ?? 0,
+            subtitle: "No time",
+            icon: "👥",
+            onclick: `openPortalModal('/portal/teams/${collaborator.slackUserId}/members/modal')`,
+          })
+        : ""
+      }
 
-  ${statCard({
-      title: "Tarefas abertas",
-      value: collaborator.totalTasks,
-      subtitle: "Pendentes",
-      icon: "📋",
-      onclick: collaborator.isTeam
-        ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/pending/modal')`
-        : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/pending/modal')`,
-    })}
+      ${statCard({
+        title: "Tarefas abertas",
+        value: collaborator.totalTasks,
+        subtitle: "Pendentes",
+        icon: "📋",
+        onclick: collaborator.isTeam
+          ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/pending/modal')`
+          : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/pending/modal')`,
+      })}
 
-  ${statCard({
-      title: "Vencem hoje",
-      value: collaborator.todayTasks,
-      subtitle: "Para hoje",
-      icon: "📅",
-      color: "#F59E0B",
-      onclick: collaborator.isTeam
-        ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/today/modal')`
-        : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/today/modal')`,
-    })}
+      ${statCard({
+        title: "Vencem hoje",
+        value: collaborator.todayTasks,
+        subtitle: "Para hoje",
+        icon: "📅",
+        color: "#F59E0B",
+        onclick: collaborator.isTeam
+          ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/today/modal')`
+          : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/today/modal')`,
+      })}
 
-</div>
+    </div>
+
+    <div class="dashboard-grid" style="margin-top:28px;">
+
+      ${dashboardSection({
+        title: "📅 Próximas tarefas",
+        body: collaborator.tasks.length === 0
+          ? `
+              <p>
+                Nenhuma tarefa pendente.
+              </p>
+            `
+          : `
+              <h3
+                style="
+                  margin-bottom:14px;
+                  font-size:18px;
+                "
+              >
+                Hoje
+              </h3>
+
+              ${todayTasks.length
+                ? todayTasks.map(task =>
+                    upcomingTask({
+                      id: task.id,
+                      title: task.title,
+                      responsible: task.project ?? "Sem projeto",
+                      urgency: task.urgency,
+                      deadlineTime: task.deadlineTime,
+                      hideResponsible: true,
+                    })
+                  ).join("")
+                : `
+                    <p>
+                      Nenhuma tarefa para hoje.
+                    </p>
+                  `
+              }
+
+              ${tomorrowTasks.length
+                ? accordion({
+                    id: "tomorrow-tasks",
+                    title: "Amanhã",
+                    count: tomorrowTasks.length,
+                    body: tomorrowTasks
+                      .map(task =>
+                        upcomingTask({
+                          id: task.id,
+                          title: task.title,
+                          responsible: task.project ?? "Sem projeto",
+                          urgency: task.urgency,
+                          deadlineTime: task.deadlineTime,
+                          hideResponsible: true,
+                        })
+                      )
+                      .join(""),
+                  })
+                : ""
+              }
+
+              ${futureTasks.length
+                ? accordion({
+                    id: "future-tasks",
+                    title: "Futuras",
+                    count: futureTasks.length,
+                    body: futureTasks
+                      .map(task =>
+                        upcomingTask({
+                          id: task.id,
+                          title: task.title,
+                          responsible: task.project ?? "Sem projeto",
+                          urgency: task.urgency,
+                          deadlineTime: task.deadlineTime,
+                          hideResponsible: true,
+                        })
+                      )
+                      .join(""),
+                  })
+                : ""
+              }
+            `,
+      })}
+
+      ${dashboardSection({
+        title: "✅ Concluídas hoje",
+        body: collaborator.completedToday.length
+          ? collaborator.completedToday
+              .map(task =>
+                completedTask({
+                  id: task.id,
+                  title: task.title,
+                  urgency: task.urgency,
+                  completedAt: task.completedAt,
+                })
+              )
+              .join("")
+          : `
+              <p>
+                Nenhuma tarefa concluída hoje.
+              </p>
+            `,
+      })}
+
+    </div>
 
     <div
       class="card"
       style="margin-top:28px;"
     >
 
-      <h2 style="margin-bottom:24px;">
-        📅 Próximas tarefas
+      <h2 style="margin-bottom:20px;">
+        📌 Sob demanda
       </h2>
 
-      ${todayTasks.length
-      ? accordion({
-        id: "today-tasks",
-        title: "Hoje",
-        count: todayTasks.length,
-        body: todayTasks
-          .map(task =>
-            taskRow({
-              id: task.id,
-              title: task.title,
-              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-              deadlineTime: task.deadlineTime,
-              urgency: task.urgency,
-            })
-          )
-          .join(""),
-      })
-      : ""
-    }
-
-${tomorrowTasks.length
-      ? accordion({
-        id: "tomorrow-tasks",
-        title: "Amanhã",
-        count: tomorrowTasks.length,
-        body: tomorrowTasks
-          .map(task =>
-            taskRow({
-              id: task.id,
-              title: task.title,
-              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-              deadlineTime: task.deadlineTime,
-              urgency: task.urgency,
-            })
-          )
-          .join(""),
-      })
-      : ""
-    }
-
-${futureTasks.length
-      ? accordion({
-        id: "future-tasks",
-        title: "Futuras",
-        count: futureTasks.length,
-        body: futureTasks
-          .map(task =>
-            taskRow({
-              id: task.id,
-              title: task.title,
-              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-              deadlineTime: task.deadlineTime,
-              rightText: new Date(task.term!).toLocaleDateString("pt-BR"),
-              urgency: task.urgency,
-            })
-          )
-          .join(""),
-      })
-      : ""
-    }
-
-
-${collaborator.tasks.length === 0
-      ? `
-      <p>
-        Nenhuma tarefa pendente.
-      </p>
-    `
-      : ""
-    }
+      ${onDemandTasks.length
+        ? onDemandTasks
+            .map(task =>
+              taskRow({
+                id: task.id,
+                title: task.title,
+                subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+                deadlineTime: task.deadlineTime,
+              })
+            )
+            .join("")
+        : `
+            <p>
+              Nenhuma tarefa sob demanda.
+            </p>
+          `
+      }
 
     </div>
-
-    <div
-  class="card"
-  style="margin-top:28px;"
->
-
-  <h2 style="margin-bottom:20px;">
-    📌 Sob demanda
-  </h2>
-
-  ${onDemandTasks.length
-      ? onDemandTasks
-        .map(task =>
-          taskRow({
-            id: task.id,
-            title: task.title,
-            subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-            deadlineTime: task.deadlineTime,
-          })
-        )
-        .join("")
-      : `
-        <p>
-          Nenhuma tarefa sob demanda.
-        </p>
-      `
-    }
-
-</div>
 
     <div
       class="card"
@@ -208,145 +233,144 @@ ${collaborator.tasks.length === 0
       </h2>
 
       ${collaborator.projects
-      .map(project => `
+        .map(project => `
+          <div
+            onclick="openPortalModal('/portal/projects/${project.id}/modal')"
+            style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              padding:16px 0;
+              border-bottom:1px solid #E5E7EB;
+              cursor:pointer;
+              transition:background .15s;
+            "
+            onmouseover="this.style.background='#F9FAFB'"
+            onmouseout="this.style.background='transparent'"
+          >
+
+            <div style="font-weight:600;">
+              📁 ${project.name}
+            </div>
+
+            <div
+              style="
+                color:#6B7280;
+                font-weight:600;
+              "
+            >
+              ${project.count}
+            </div>
+
+          </div>
+        `)
+        .join("")
+      }
+
+    </div>
+
     <div
-      onclick="openPortalModal('/portal/projects/${project.id}/modal')"
-      style="
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        padding:16px 0;
-        border-bottom:1px solid #E5E7EB;
-        cursor:pointer;
-        transition:background .15s;
-      "
-      onmouseover="this.style.background='#F9FAFB'"
-      onmouseout="this.style.background='transparent'"
+      class="card"
+      style="margin-top:28px;"
     >
 
-      <div style="font-weight:600;">
-        📁 ${project.name}
-      </div>
+      <h2 style="margin-bottom:20px;">
+        🔁 Recorrências
+      </h2>
 
-      <div
-        style="
-          color:#6B7280;
-          font-weight:600;
-        "
-      >
-        ${project.count}
-      </div>
-
-    </div>
-  `)
-      .join("")
-    }
+      ${collaborator.recurrences
+        .map(group =>
+          accordion({
+            id: `recurrence-${group.name}`,
+            title: group.name,
+            count: group.tasks.length,
+            body: group.tasks
+              .map(task =>
+                taskRow({
+                  id: task.id,
+                  title: task.title,
+                  subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+                  deadlineTime: task.deadlineTime,
+                  urgency: task.urgency,
+                })
+              )
+              .join(""),
+          })
+        )
+        .join("")
+      }
 
     </div>
 
     <div
-  class="card"
-  style="margin-top:28px;"
->
+      class="card"
+      style="margin-top:28px;"
+    >
 
+      <h2 style="margin-bottom:20px;">
+        🔥 Prioridades
+      </h2>
 
+      ${collaborator.urgencies
+        .map(group =>
+          accordion({
+            id: `urgency-${group.name}`,
+            title: group.name,
+            count: group.tasks.length,
+            body: group.tasks
+              .map(task =>
+                taskRow({
+                  id: task.id,
+                  title: task.title,
+                  subtitle: `📁 ${task.project ?? "Sem projeto"}`,
+                  deadlineTime: task.deadlineTime,
+                  urgency: task.urgency,
+                })
+              )
+              .join(""),
+          })
+        )
+        .join("")
+      }
 
-  <h2 style="margin-bottom:20px;">
-    🔁 Recorrências
-  </h2>
+    </div>
 
-  ${collaborator.recurrences.map(group =>
+    ${collaborator.isTeam ? `
 
-      accordion({
-        id: `recurrence-${group.name}`,
-        title: group.name,
-        count: group.tasks.length,
-        body: group.tasks
-          .map(task =>
-            taskRow({
-              id: task.id,
-              title: task.title,
-              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-              deadlineTime: task.deadlineTime,
-              urgency: task.urgency,
-            })
-          )
-          .join(""),
-      })
+      <div
+        class="card"
+        style="
+          margin-top:28px;
+          border:1px solid #FECACA;
+        "
+      >
 
-    ).join("")}
-    
+        <h2 style="color:#DC2626;">
+          🗑 Zona de perigo
+        </h2>
 
-</div>
+        <p style="margin-bottom:20px;">
+          Exclua este time caso ele não seja mais utilizado.
+        </p>
 
-<div
-  class="card"
-  style="margin-top:28px;"
->
+        <button
+          onclick="deleteTeam('${collaborator.slackUserId}')"
+          style="
+            background:#DC2626;
+            color:white;
+            border:none;
+            padding:12px 18px;
+            border-radius:10px;
+            cursor:pointer;
+            font-weight:600;
+          "
+        >
+          Excluir time
+        </button>
 
-  <h2 style="margin-bottom:20px;">
-    🔥 Prioridades
-  </h2>
+      </div>
 
-  ${collaborator.urgencies.map(group =>
-
-      accordion({
-        id: `urgency-${group.name}`,
-        title: group.name,
-        count: group.tasks.length,
-        body: group.tasks
-          .map(task =>
-            taskRow({
-              id: task.id,
-              title: task.title,
-              subtitle: `📁 ${task.project ?? "Sem projeto"}`,
-              deadlineTime: task.deadlineTime,
-              urgency: task.urgency,
-            })
-          )
-          .join(""),
-      })
-
-    ).join("")}
-
-</div>
-
-${collaborator.isTeam ? `
-
-<div
-  class="card"
-  style="
-    margin-top:28px;
-    border:1px solid #FECACA;
-  "
->
-
-  <h2 style="color:#DC2626;">
-    🗑 Zona de perigo
-  </h2>
-
-  <p style="margin-bottom:20px;">
-    Exclua este time caso ele não seja mais utilizado.
-  </p>
-
-  <button
-    onclick="deleteTeam('${collaborator.slackUserId}')"
-    style="
-      background:#DC2626;
-      color:white;
-      border:none;
-      padding:12px 18px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:600;
-    "
-  >
-    Excluir time
-  </button>
-
-</div>
-
-` : ""}
+    ` : ""}
 
   `;
 

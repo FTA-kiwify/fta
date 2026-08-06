@@ -9,7 +9,6 @@ export type CollaboratorTask = {
   project: string | null;
   urgency: "light" | "asap" | "turbo";
   taskType: "normal" | "on_demand";
-
 };
 
 export type CollaboratorProject = {
@@ -34,7 +33,16 @@ export type CollaboratorDetails = {
   name: string;
   totalTasks: number;
   todayTasks: number;
+
   tasks: CollaboratorTask[];
+
+  completedToday: {
+    id: string;
+    title: string;
+    urgency: "light" | "asap" | "turbo";
+    completedAt: Date;
+  }[];
+
   projects: CollaboratorProject[];
   recurrences: CollaboratorRecurrence[];
   urgencies: CollaboratorUrgency[];
@@ -49,34 +57,70 @@ export async function getCollaboratorDetails(
   slackUserId: string
 ): Promise<CollaboratorDetails> {
 
-  const tasks = await prisma.task.findMany({
-    where: {
-      responsible: slackUserId,
-      status: "pending",
-      calendarPrivate: false,
-
-    },
-    include: {
-      project: true,
-    },
-    orderBy: {
-      term: "asc",
-    },
-  });
-
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);
 
   const tomorrow = new Date(today);
 
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setDate(
+    tomorrow.getDate() + 1
+  );
+
+  const tasks = await prisma.task.findMany({
+
+    where: {
+      responsible: slackUserId,
+      status: "pending",
+      calendarPrivate: false,
+    },
+
+    include: {
+      project: true,
+    },
+
+    orderBy: {
+      term: "asc",
+    },
+
+  });
+
+  const completedLogs =
+    await prisma.taskAuditLog.findMany({
+
+      where: {
+
+        actorSlackId: slackUserId,
+
+        action: "TASK_DONE",
+
+        createdAt: {
+          gte: today,
+          lt: tomorrow,
+        },
+
+      },
+
+      include: {
+        task: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+
+    });
 
   const todayTasks = tasks.filter(task => {
 
-    if (!task.term) return false;
+    if (!task.term) {
+      return false;
+    }
 
-    return task.term >= today && task.term < tomorrow;
+    return (
+      task.term >= today &&
+      task.term < tomorrow
+    );
 
   }).length;
 
@@ -95,7 +139,8 @@ export async function getCollaboratorDetails(
       continue;
     }
 
-    const existing = projectsMap.get(task.project.id);
+    const existing =
+      projectsMap.get(task.project.id);
 
     if (existing) {
 
@@ -103,24 +148,31 @@ export async function getCollaboratorDetails(
 
     } else {
 
-      projectsMap.set(task.project.id, {
-        id: task.project.id,
-        name: task.project.name,
-        count: 1,
-      });
+      projectsMap.set(
+        task.project.id,
+        {
+          id: task.project.id,
+          name: task.project.name,
+          count: 1,
+        }
+      );
 
     }
 
   }
 
-  const projects = [...projectsMap.values()]
-    .sort((a, b) => b.count - a.count);
+  const projects =
+    [...projectsMap.values()]
+      .sort(
+        (a, b) => b.count - a.count
+      );
 
   const recurrences: CollaboratorRecurrence[] = [
 
     {
       name: "Diárias",
-      tasks: tasks.filter(task => task.recurrence === "daily")
+      tasks: tasks
+        .filter(task => task.recurrence === "daily")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -134,7 +186,8 @@ export async function getCollaboratorDetails(
 
     {
       name: "Semanais",
-      tasks: tasks.filter(task => task.recurrence === "weekly")
+      tasks: tasks
+        .filter(task => task.recurrence === "weekly")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -148,7 +201,8 @@ export async function getCollaboratorDetails(
 
     {
       name: "Quinzenais",
-      tasks: tasks.filter(task => task.recurrence === "biweekly")
+      tasks: tasks
+        .filter(task => task.recurrence === "biweekly")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -162,7 +216,8 @@ export async function getCollaboratorDetails(
 
     {
       name: "Mensais",
-      tasks: tasks.filter(task => task.recurrence === "monthly")
+      tasks: tasks
+        .filter(task => task.recurrence === "monthly")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -176,7 +231,8 @@ export async function getCollaboratorDetails(
 
     {
       name: "Trimestrais",
-      tasks: tasks.filter(task => task.recurrence === "quarterly")
+      tasks: tasks
+        .filter(task => task.recurrence === "quarterly")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -190,7 +246,8 @@ export async function getCollaboratorDetails(
 
     {
       name: "Semestrais",
-      tasks: tasks.filter(task => task.recurrence === "semiannual")
+      tasks: tasks
+        .filter(task => task.recurrence === "semiannual")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -198,13 +255,14 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           project: task.project?.name ?? null,
           urgency: task.urgency,
-          taskType: task.taskType,  
+          taskType: task.taskType,
         })),
     },
 
     {
       name: "Anuais",
-      tasks: tasks.filter(task => task.recurrence === "annual")
+      tasks: tasks
+        .filter(task => task.recurrence === "annual")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -218,7 +276,8 @@ export async function getCollaboratorDetails(
 
     {
       name: "Sem recorrência",
-      tasks: tasks.filter(task => task.recurrence === "none")
+      tasks: tasks
+        .filter(task => task.recurrence === "none")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -230,10 +289,12 @@ export async function getCollaboratorDetails(
         })),
     },
 
-  ].filter(group => group.tasks.length > 0);
+  ].filter(
+    group => group.tasks.length > 0
+  );
 
 
-  const urgencies: CollaboratorUrgency[] = [
+    const urgencies: CollaboratorUrgency[] = [
 
     {
       name: "🔴 Turbo",
@@ -283,14 +344,32 @@ export async function getCollaboratorDetails(
   ].filter(group => group.tasks.length > 0);
 
   return {
+
     isTeam: false,
+
     slackUserId,
-    name: await getSlackUserName(slackUserId),
+
+    name: await getSlackUserName(
+      slackUserId
+    ),
+
     totalTasks: tasks.length,
+
     todayTasks,
+
+    completedToday: completedLogs.map(log => ({
+      id: log.task.id,
+      title: log.task.title,
+      urgency: log.task.urgency,
+      completedAt: log.createdAt,
+    })),
+
     projects,
+
     recurrences,
+
     urgencies,
+
     tasks: tasks.map(task => ({
       id: task.id,
       title: task.title,
@@ -300,6 +379,7 @@ export async function getCollaboratorDetails(
       urgency: task.urgency,
       taskType: task.taskType,
     })),
+
   };
 
 }

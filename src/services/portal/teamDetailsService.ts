@@ -41,6 +41,12 @@ export type CollaboratorDetails = {
         name: string;
         openTasks: number;
     }[];
+    completedToday: {
+        id: string;
+        title: string;
+        urgency: "light" | "asap" | "turbo";
+        completedAt: Date;
+    }[];
     isTeam?: boolean;
 };
 
@@ -121,6 +127,33 @@ export async function getTeamDetails(
     const tomorrow = new Date(today);
 
     tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const completedLogs = await prisma.taskAuditLog.findMany({
+
+        where: {
+
+            actorSlackId: {
+                in: slackUserIds,
+            },
+
+            action: "TASK_DONE",
+
+            createdAt: {
+                gte: today,
+                lt: tomorrow,
+            },
+
+        },
+
+        include: {
+            task: true,
+        },
+
+        orderBy: {
+            createdAt: "desc",
+        },
+
+    });
 
     const todayTasks = tasks.filter(task => {
 
@@ -402,6 +435,12 @@ export async function getTeamDetails(
             project: task.project?.name ?? null,
             urgency: task.urgency,
             taskType: task.taskType,
+        })),
+        completedToday: completedLogs.map(log => ({
+            id: log.task.id,
+            title: log.task.title,
+            urgency: log.task.urgency,
+            completedAt: log.createdAt,
         })),
     };
 
