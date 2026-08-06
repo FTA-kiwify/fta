@@ -484,7 +484,7 @@ async function renderBlock(
 
         case "table": {
 
-  return `
+            return `
     <table
       style="
         width:100%;
@@ -495,13 +495,13 @@ async function renderBlock(
       ${await renderNotionBlocks(block.children)}
     </table>
   `;
-}
+        }
 
-case "table_row": {
+        case "table_row": {
 
-  const cells = raw.table_row.cells;
+            const cells = raw.table_row.cells;
 
-  return `
+            return `
     <tr>
 
       ${cells.map((cell: any) => `
@@ -518,10 +518,10 @@ case "table_row": {
 
     </tr>
   `;
-}
-case "column_list": {
+        }
+        case "column_list": {
 
-  return `
+            return `
     <div
       style="
         display:flex;
@@ -533,10 +533,10 @@ case "column_list": {
       ${await renderNotionBlocks(block.children)}
     </div>
   `;
-}
-case "column": {
+        }
+        case "column": {
 
-  return `
+            return `
     <div
       style="
         flex:1;
@@ -545,17 +545,17 @@ case "column": {
       ${await renderNotionBlocks(block.children)}
     </div>
   `;
-}
-case "synced_block": {
+        }
+        case "synced_block": {
 
-  return await renderNotionBlocks(
-    block.children
-  );
+            return await renderNotionBlocks(
+                block.children
+            );
 
-}
-case "table_of_contents": {
+        }
+        case "table_of_contents": {
 
-  return `
+            return `
     <div
       style="
         padding:12px;
@@ -568,15 +568,15 @@ case "table_of_contents": {
       📑 Índice (Table of Contents)
     </div>
   `;
-}
-case "breadcrumb": {
+        }
+        case "breadcrumb": {
 
-  return "";
+            return "";
 
-}
-case "equation": {
+        }
+        case "equation": {
 
-  return `
+            return `
     <pre
       style="
         background:#F9FAFB;
@@ -587,7 +587,50 @@ case "equation": {
 ${raw.equation.expression}
     </pre>
   `;
-}
+        }
+        case "child_database":
+
+            return `
+    <div
+      style="
+        margin:20px 0;
+        padding:18px;
+        border:1px solid #E5E7EB;
+        border-radius:12px;
+        background:#F9FAFB;
+      "
+    >
+
+      <div
+        style="
+          font-size:18px;
+          font-weight:600;
+          margin-bottom:8px;
+        "
+      >
+        📋 Banco de dados do Notion
+      </div>
+
+      <div
+        style="
+          color:#374151;
+          margin-bottom:18px;
+        "
+      >
+        ${raw.child_database.title}
+      </div>
+
+      <div
+        style="
+          color:#6B7280;
+          font-size:14px;
+        "
+      >
+        Este banco de dados deve ser consultado diretamente no Notion.
+      </div>
+
+    </div>
+  `;
         case "divider":
             return `
         <hr
