@@ -12,68 +12,99 @@ export function processTeamPage(
 
         accordion({
 
-          id: theme.name.replace(/\s+/g, "-").toLowerCase(),
+          id: theme.name
+            .replace(/\s+/g, "-")
+            .toLowerCase(),
 
           title: `📂 ${theme.name}`,
 
           count: theme.processes.length,
 
-          body: theme.processes
+          body: `
 
-            .map(process => `
+            <div
+              style="
+                display:grid;
+                grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+                gap:18px;
+                padding-top:18px;
+              "
+            >
 
-              <div
-                onclick="window.location='/portal/processes/${process.id}'"
-                style="
-                  display:flex;
-                  justify-content:space-between;
-                  align-items:center;
-                  padding:18px 0;
-                  cursor:pointer;
-                  border-bottom:1px solid #E5E7EB;
-                  transition:background .15s;
-                "
-                onmouseover="this.style.background='#F9FAFB'"
-                onmouseout="this.style.background='transparent'"
-              >
-
-                <div>
-
-                  <div
-                    style="
-                      font-weight:600;
-                      font-size:15px;
-                      color:#111827;
-                    "
-                  >
-                    📚 ${process.title}
-                  </div>
-
-                  <div
-                    style="
-                      color:#6B7280;
-                      font-size:13px;
-                      margin-top:4px;
-                    "
-                  >
-                    Clique para abrir o processo
-                  </div>
-
-                </div>
+              ${theme.processes.map(process => `
 
                 <div
+                  onclick="window.location='/portal/processes/${process.id}'"
                   style="
-                    color:#9CA3AF;
-                    font-size:18px;
+                    border:1px solid #E5E7EB;
+                    border-radius:14px;
+                    padding:18px;
+                    cursor:pointer;
+                    transition:.15s;
+                    background:white;
+                  "
+                  onmouseover="
+                    this.style.boxShadow='0 6px 20px rgba(0,0,0,.08)';
+                    this.style.transform='translateY(-2px)';
+                  "
+                  onmouseout="
+                    this.style.boxShadow='none';
+                    this.style.transform='translateY(0)';
                   "
                 >
-                  →
+
+                  <div
+                    style="
+                      display:flex;
+                      justify-content:space-between;
+                      align-items:flex-start;
+                      gap:12px;
+                    "
+                  >
+
+                    <div>
+
+                      <div
+                        style="
+                          font-size:16px;
+                          font-weight:600;
+                          color:#111827;
+                          line-height:1.4;
+                        "
+                      >
+                        📚 ${process.title}
+                      </div>
+
+                      <div
+                        style="
+                          margin-top:10px;
+                          color:#6B7280;
+                          font-size:13px;
+                        "
+                      >
+                        Clique para abrir o processo
+                      </div>
+
+                    </div>
+
+                    <div
+                      style="
+                        font-size:20px;
+                        color:#9CA3AF;
+                      "
+                    >
+                      →
+                    </div>
+
+                  </div>
+
                 </div>
 
-              </div>
+              `).join("")}
 
-            `)
-            .join(""),
+            </div>
+
+          `,
 
         })
 
