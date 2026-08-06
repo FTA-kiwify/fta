@@ -324,9 +324,9 @@ export async function portalRoutes(app: FastifyInstance) {
         processId: string;
       };
 
-      const result = await getProcessDetails(processId);
+      const process = await getProcessDetails(processId);
 
-      if (!result) {
+      if (!process) {
         return reply.status(404).send("Processo não encontrado.");
       }
 
@@ -338,9 +338,7 @@ export async function portalRoutes(app: FastifyInstance) {
             title: process.title,
             user: getTopbarUser(request),
           }),
-          body: processPage(
-            process
-          ),
+          body: processPage(process),
         })
       );
 
