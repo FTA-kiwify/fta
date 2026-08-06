@@ -1,38 +1,48 @@
 import { prisma } from "../../lib/prisma";
 
 export async function getProcessDetails(
-  processId: string
+    processId: string
 ) {
 
-  return prisma.process.findUnique({
-
-    where: {
-      id: processId,
-    },
-
-    include: {
-
-      team: true,
-
-      tasks: {
+    return prisma.process.findUnique({
 
         where: {
-          calendarPrivate: false,
+            id: processId,
         },
 
-        orderBy: [
-          {
-            status: "asc",
-          },
-          {
-            term: "asc",
-          },
-        ],
+        include: {
 
-      },
+            team: true,
 
-    },
+            tasks: {
 
-  });
+                where: {
+
+                    calendarPrivate: false,
+
+                    status: {
+                        in: [
+                            "pending",
+                            "blocked",
+                            "overdue",
+                        ],
+                    },
+
+                },
+
+                orderBy: [
+                    {
+                        status: "asc",
+                    },
+                    {
+                        term: "asc",
+                    },
+                ],
+
+            },
+
+        },
+
+    });
 
 }
