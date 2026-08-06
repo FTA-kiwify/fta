@@ -32,34 +32,30 @@ export function processPage(
         </h1>
 
         <div
-          style="
-            display:flex;
-            gap:14px;
-            flex-wrap:wrap;
-            margin-top:16px;
-            color:#6B7280;
-            font-size:14px;
-          "
-        >
+  style="
+    display:flex;
+    gap:16px;
+    align-items:center;
+    margin-top:16px;
+    color:#6B7280;
+    font-size:14px;
+  "
+>
 
-          <span>
-            📝 ${process.tasks.length} tarefa${process.tasks.length !== 1 ? "s" : ""}
-          </span>
+  <span>
+    📝 ${process.tasks.length} tarefa${process.tasks.length !== 1 ? "s" : ""}
+  </span>
 
-          <span>
-            👥 ${process.team?.name ?? "Sem time"}
-          </span>
+  <span
+    style="
+      color:#16A34A;
+      font-weight:600;
+    "
+  >
+    ● Sincronizado
+  </span>
 
-          <span
-            style="
-              color:#16A34A;
-              font-weight:600;
-            "
-          >
-            ● Sincronizado
-          </span>
-
-        </div>
+</div>
 
         <div
           style="
@@ -83,9 +79,8 @@ export function processPage(
             ${process.notionVertical}
           </span>
 
-          ${
-            process.theme
-              ? `
+          ${process.theme
+      ? `
                 <span
                   style="
                     background:#EDE9FE;
@@ -99,33 +94,43 @@ export function processPage(
                   ${process.theme}
                 </span>
               `
-              : ""
-          }
+      : ""
+    }
 
         </div>
 
         <div
-          style="
-            display:flex;
-            gap:12px;
-            margin-top:28px;
-          "
-        >
+  style="
+    display:flex;
+    gap:16px;
+    margin-top:32px;
+    flex-wrap:wrap;
+  "
+>
 
           <a
-            href="${process.notionPageUrl}"
-            target="_blank"
-            class="button"
-          >
+  href="${process.notionPageUrl}"
+  target="_blank"
+  class="button"
+  style="
+    min-width:180px;
+    justify-content:center;
+  "
+>
             📖 Abrir no Notion
           </a>
 
-          <button
-            class="button"
-            onclick="openDocumentation('${process.id}')"
-          >
-            👁 Ver documentação
-          </button>
+          <a
+  href="javascript:void(0)"
+  class="button"
+  style="
+    min-width:180px;
+    justify-content:center;
+  "
+  onclick="openDocumentation('${process.id}')"
+>
+  📚 Documentação
+</a>
 
         </div>
 
@@ -161,10 +166,9 @@ export function processPage(
 
         </div>
 
-        ${
-          process.tasks.length === 0
+        ${process.tasks.length === 0
 
-            ? `
+      ? `
                 <p
                   style="
                     color:#6B7280;
@@ -175,24 +179,24 @@ export function processPage(
                 </p>
               `
 
-            : process.tasks.map((task: any) =>
+      : process.tasks.map((task: any) =>
 
-                upcomingTask({
+        upcomingTask({
 
-                  id: task.id,
+          id: task.id,
 
-                  title: task.title,
+          title: task.title,
 
-                  responsible: task.responsible,
+          responsible: task.responsible,
 
-                  urgency: task.urgency,
+          urgency: task.urgency,
 
-                  deadlineTime: task.deadlineTime,
+          deadlineTime: task.deadlineTime,
 
-                })
+        })
 
-              ).join("")
-        }
+      ).join("")
+    }
 
       </div>
 
