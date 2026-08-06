@@ -1,3 +1,5 @@
+import { upcomingTask } from "../components/upcomingTask";
+
 export function processPage(
   process: any
 ) {
@@ -32,6 +34,36 @@ export function processPage(
         <div
           style="
             display:flex;
+            gap:14px;
+            flex-wrap:wrap;
+            margin-top:16px;
+            color:#6B7280;
+            font-size:14px;
+          "
+        >
+
+          <span>
+            📝 ${process.tasks.length} tarefa${process.tasks.length !== 1 ? "s" : ""}
+          </span>
+
+          <span>
+            👥 ${process.team?.name ?? "Sem time"}
+          </span>
+
+          <span
+            style="
+              color:#16A34A;
+              font-weight:600;
+            "
+          >
+            ● Sincronizado
+          </span>
+
+        </div>
+
+        <div
+          style="
+            display:flex;
             gap:10px;
             margin-top:20px;
             flex-wrap:wrap;
@@ -51,8 +83,9 @@ export function processPage(
             ${process.notionVertical}
           </span>
 
-          ${process.theme
-      ? `
+          ${
+            process.theme
+              ? `
                 <span
                   style="
                     background:#EDE9FE;
@@ -66,8 +99,8 @@ export function processPage(
                   ${process.theme}
                 </span>
               `
-      : ""
-    }
+              : ""
+          }
 
         </div>
 
@@ -76,7 +109,6 @@ export function processPage(
             display:flex;
             gap:12px;
             margin-top:28px;
-            flex-wrap:wrap;
           "
         >
 
@@ -89,251 +121,78 @@ export function processPage(
           </a>
 
           <button
-            class="button button-secondary"
+            class="button"
             onclick="openDocumentation('${process.id}')"
           >
-            📚 Ver documentação
+            👁 Ver documentação
           </button>
 
         </div>
 
       </div>
 
-      <div
-        style="
-          display:grid;
-          grid-template-columns:2fr 320px;
-          gap:24px;
-        "
-      >
+      <div class="card">
 
-        <div class="card">
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:24px;
+          "
+        >
 
-          <div
+          <h2
             style="
-              display:flex;
-              justify-content:space-between;
-              align-items:center;
-              margin-bottom:24px;
+              margin:0;
             "
           >
+            Tarefas relacionadas
+          </h2>
 
-            <h2
-              style="
-                margin:0;
-              "
-            >
-              Tarefas relacionadas
-            </h2>
-
-            <span
-              style="
-                color:#6B7280;
-                font-size:14px;
-              "
-            >
-              ${process.tasks.length} tarefa(s)
-            </span>
-
-          </div>
-
-          ${process.tasks.length === 0
-
-      ? `
-                <div
-                  style="
-                    color:#6B7280;
-                  "
-                >
-                  Nenhuma tarefa vinculada a este processo.
-                </div>
-              `
-
-      : process.tasks.map((task: any) => `
-
-                <div
-                  style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    padding:14px 0;
-                    border-bottom:1px solid #E5E7EB;
-                  "
-                >
-
-                  <div>
-
-                    <a
-                      href="/portal/tasks/${task.id}"
-                      style="
-                        font-weight:600;
-                        color:#111827;
-                        text-decoration:none;
-                      "
-                    >
-                      ${task.title}
-                    </a>
-
-                    <div
-                      style="
-                        color:#6B7280;
-                        font-size:14px;
-                        margin-top:4px;
-                      "
-                    >
-                      ${task.responsible ?? ""}
-                    </div>
-
-                  </div>
-
-                  <span
-                    style="
-                      background:${task.status === "done"
-          ? "#DCFCE7"
-          : task.status === "pending"
-            ? "#FEF3C7"
-            : "#F3F4F6"
-        };
-                      color:${task.status === "done"
-          ? "#166534"
-          : task.status === "pending"
-            ? "#92400E"
-            : "#374151"
-        };
-                      padding:4px 10px;
-                      border-radius:999px;
-                      font-size:12px;
-                      font-weight:600;
-                    "
-                  >
-                    ${task.status === "done"
-          ? "Concluída"
-          : task.status === "pending"
-            ? "Pendente"
-            : task.status === "blocked"
-              ? "Bloqueada"
-              : task.status
-        }
-                  </span>
-
-                </div>
-
-              `).join("")
-    }
+          <span
+            style="
+              color:#6B7280;
+              font-size:14px;
+            "
+          >
+            ${process.tasks.length}
+          </span>
 
         </div>
 
-       <div class="card">
+        ${
+          process.tasks.length === 0
 
-  <h2
-    style="
-      margin-top:0;
-      margin-bottom:24px;
-    "
-  >
-    Resumo
-  </h2>
+            ? `
+                <p
+                  style="
+                    color:#6B7280;
+                    margin:0;
+                  "
+                >
+                  Nenhuma tarefa vinculada.
+                </p>
+              `
 
-  <div
-    style="
-      text-align:center;
-      margin-bottom:24px;
-    "
-  >
+            : process.tasks.map((task: any) =>
 
-    <div
-      style="
-        font-size:38px;
-        font-weight:700;
-        color:#111827;
-      "
-    >
-      ${process.tasks.length}
-    </div>
+                upcomingTask({
 
-    <div
-      style="
-        color:#6B7280;
-        font-size:14px;
-      "
-    >
-      tarefa(s) vinculada(s)
-    </div>
+                  id: task.id,
 
-  </div>
+                  title: task.title,
 
-  <hr
-    style="
-      border:none;
-      border-top:1px solid #E5E7EB;
-      margin:20px 0;
-    "
-  />
+                  responsible: task.responsible,
 
-  <div style="margin-bottom:18px;">
+                  urgency: task.urgency,
 
-    <div
-      style="
-        color:#6B7280;
-        font-size:13px;
-      "
-    >
-      Time
-    </div>
+                  deadlineTime: task.deadlineTime,
 
-    <strong>
-      ${process.team?.name ?? "Não vinculado"}
-    </strong>
+                })
 
-  </div>
-
-  <div style="margin-bottom:18px;">
-
-    <div
-      style="
-        color:#6B7280;
-        font-size:13px;
-      "
-    >
-      Processo
-    </div>
-
-    <a
-      href="${process.notionPageUrl}"
-      target="_blank"
-      style="
-        font-weight:600;
-        text-decoration:none;
-      "
-    >
-      Abrir no Notion ↗
-    </a>
-
-  </div>
-
-  <div>
-
-    <div
-      style="
-        color:#6B7280;
-        font-size:13px;
-      "
-    >
-      Status
-    </div>
-
-    <span
-      style="
-        color:#166534;
-        font-weight:600;
-      "
-    >
-      ● Sincronizado
-    </span>
-
-  </div>
-
-</div>
+              ).join("")
+        }
 
       </div>
 

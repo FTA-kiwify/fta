@@ -335,7 +335,7 @@ export async function portalRoutes(app: FastifyInstance) {
           title: process.title,
           sidebar: sidebar("processes"),
           topbar: topbar({
-            title: process.title,
+            title: "Processos",
             user: getTopbarUser(request),
           }),
           body: processPage(process),
