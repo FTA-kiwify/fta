@@ -18,7 +18,7 @@ export function modalContainer() {
       <div
         id="portal-modal-content"
         style="
-          width:min(720px, 100%);
+  width:min(var(--portal-modal-width,720px), 100%);
           max-height:88vh;
           overflow:auto;
           background:#FFFFFF;
@@ -32,11 +32,16 @@ export function modalContainer() {
     </div>
 
     <script>
-      async function openPortalModal(url) {
+      async function openPortalModal(url, width) {
         const modal = document.getElementById("portal-modal");
         const content = document.getElementById("portal-modal-content");
 
         if (!modal || !content) return;
+
+        content.style.setProperty(
+  "--portal-modal-width",
+  width || "720px"
+);
 
         content.innerHTML = \`
           <div style="padding:32px; text-align:center;">
@@ -270,6 +275,15 @@ window.deleteTeam = async function(teamId) {
     alert("Não foi possível excluir o time.");
 
   }
+
+};
+
+window.openDocumentation = function(processId) {
+
+  openPortalModal(
+    "/portal/processes/" + processId + "/documentation",
+    "1200px"
+  );
 
 };
 

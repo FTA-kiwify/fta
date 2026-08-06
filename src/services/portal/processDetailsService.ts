@@ -1,35 +1,38 @@
 import { prisma } from "../../lib/prisma";
-import { loadNotionTree } from "../notion/loadNotionTree";
-import { extractNotionPageId } from "../notion/extractNotionPageId";
-import { renderNotionBlocks } from "../../portal/notion/renderNotionBlocks";
 
 export async function getProcessDetails(
   processId: string
 ) {
 
-  const process = await prisma.process.findUnique({
+  return prisma.process.findUnique({
+
     where: {
       id: processId,
     },
+
+    include: {
+
+      team: true,
+
+      tasks: {
+
+        where: {
+          calendarPrivate: false,
+        },
+
+        orderBy: [
+          {
+            status: "asc",
+          },
+          {
+            term: "asc",
+          },
+        ],
+
+      },
+
+    },
+
   });
 
-  if (!process) {
-    return null;
-  }
-
-  const realNotionPageId =
-    extractNotionPageId(process.notionPageUrl);
-
-  const blocks = await loadNotionTree(
-    realNotionPageId
-  );
-
-  const content = await renderNotionBlocks(
-    blocks
-  );
-
-  return {
-    process,
-    content,
-  };
 }
