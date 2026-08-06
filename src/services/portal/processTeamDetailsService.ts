@@ -5,6 +5,7 @@ export type ProcessTheme = {
   processes: {
     id: string;
     title: string;
+    pendingTasks: number;
   }[];
 };
 
@@ -24,9 +25,24 @@ export async function getProcessTeamDetails(
     },
     include: {
       processes: {
+
         where: {
           active: true,
         },
+
+        include: {
+          _count: {
+            select: {
+              tasks: {
+                where: {
+                  status: "pending",
+                  calendarPrivate: false,
+                },
+              },
+            },
+          },
+        },
+
         orderBy: [
           {
             theme: "asc",
@@ -35,6 +51,7 @@ export async function getProcessTeamDetails(
             title: "asc",
           },
         ],
+
       },
     },
   });
@@ -65,6 +82,7 @@ export async function getProcessTeamDetails(
     theme.processes.push({
       id: process.id,
       title: process.title,
+      pendingTasks: process._count.tasks,
     });
 
   }

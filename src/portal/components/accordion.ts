@@ -1,89 +1,107 @@
 type AccordionProps = {
-    id: string;
-    title: string;
-    count: number;
-    body: string;
+  id: string;
+  title: string;
+  count: number;
+  body: string;
 };
 
 export function accordion({
-    id,
-    title,
-    count,
-    body,
+  id,
+  title,
+  count,
+  body,
 }: AccordionProps) {
 
-    return `
+  return `
+
     <div
       style="
-        margin-bottom:18px;
+        margin-bottom:20px;
+        border:1px solid #E5E7EB;
+        border-radius:14px;
+        overflow:hidden;
+        background:white;
       "
     >
 
       <div
         onclick="
-          document.querySelectorAll('.portal-accordion-body').forEach(el=>{
-            if(el.id!=='${id}'){
-              el.style.display='none';
-            }
-          });
-
-          document.querySelectorAll('.portal-accordion-arrow').forEach(el=>{
-            if(el.id!=='${id}-arrow'){
-              el.innerHTML='▸';
-            }
-          });
 
           const body=document.getElementById('${id}');
           const arrow=document.getElementById('${id}-arrow');
 
           const open=body.style.display==='block';
 
-          body.style.display=open?'none':'block';
-          arrow.innerHTML=open?'▸':'▾';
+          body.style.display=open ? 'none' : 'block';
+
+          arrow.style.transform=open
+            ? 'rotate(0deg)'
+            : 'rotate(90deg)';
+
         "
         style="
           display:flex;
           justify-content:space-between;
           align-items:center;
           cursor:pointer;
-          padding:14px 0;
-          border-bottom:1px solid #E5E7EB;
-          font-weight:600;
+          padding:18px 22px;
+          transition:.15s;
           user-select:none;
+        "
+        onmouseover="
+          this.style.background='#F9FAFB'
+        "
+        onmouseout="
+          this.style.background='white'
         "
       >
 
-        <span
+        <div
           style="
             display:flex;
             align-items:center;
-            gap:10px;
+            gap:14px;
           "
         >
 
-          <span
+          <div
             id="${id}-arrow"
-            class="portal-accordion-arrow"
             style="
-              width:14px;
-              color:#6B7280;
+              width:18px;
+              display:flex;
+              justify-content:center;
+              color:#9CA3AF;
+              transition:.18s;
             "
           >
-            ▸
-          </span>
+            ▶
+          </div>
 
-          ${title}
+          <div>
 
-        </span>
+            <div
+              style="
+                font-size:16px;
+                font-weight:600;
+                color:#111827;
+              "
+            >
+              ${title}
+            </div>
 
-        <span
-          style="
-            color:#6B7280;
-            font-weight:500;
-          "
-        >
-          ${count}
-        </span>
+            <div
+              style="
+                margin-top:3px;
+                font-size:13px;
+                color:#6B7280;
+              "
+            >
+              ${count} processo${count !== 1 ? "s" : ""}
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
 
@@ -92,6 +110,8 @@ export function accordion({
         class="portal-accordion-body"
         style="
           display:none;
+          border-top:1px solid #E5E7EB;
+          padding:0 22px 22px;
           animation:fadeIn .18s ease;
         "
       >
@@ -101,6 +121,7 @@ export function accordion({
       </div>
 
     </div>
+
   `;
 
 }

@@ -17,17 +17,8 @@ export async function getProcessDetails(
             tasks: {
 
                 where: {
-
                     calendarPrivate: false,
-
-                    status: {
-                        in: [
-                            "pending",
-                            "blocked",
-                            "overdue",
-                        ],
-                    },
-
+                    status: "pending",
                 },
 
                 orderBy: [

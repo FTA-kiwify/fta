@@ -43,7 +43,7 @@ export function processPage(
 >
 
   <span>
-    📝 ${process.tasks.length} tarefa${process.tasks.length !== 1 ? "s" : ""}
+    📝 ${process.tasks.length} tarefa${process.tasks.length !== 1 ? "s" : ""} pendente${process.tasks.length !== 1 ? "s" : ""}
   </span>
 
   <span
@@ -152,7 +152,7 @@ export function processPage(
               margin:0;
             "
           >
-            Tarefas relacionadas
+            Tarefas pendentes
           </h2>
 
           <span
@@ -175,7 +175,7 @@ export function processPage(
                     margin:0;
                   "
                 >
-                  Nenhuma tarefa vinculada.
+                  Nenhuma tarefa pendente.
                 </p>
               `
 
