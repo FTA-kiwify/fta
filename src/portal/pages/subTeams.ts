@@ -1,60 +1,86 @@
-import { departmentCard } from "../components/departmentCard";
-import type { SubTeam } from "../../services/portal/subTeamsService";
+import { ProcessTeamDetails } from "../../services/portal/processTeamDetailsService";
+import { accordion } from "../components/accordion";
 
-export function subTeamsPage(
-    departmentId: string,
-    teams: SubTeam[]
+export function processTeamPage(
+  team: ProcessTeamDetails
 ) {
 
-    return `
+  return `
 
-    <div class="collaborator-list">
+    ${team.themes
+      .map(theme =>
 
-      ${teams
-            .map(team =>
-                departmentCard({
-                    ...team,
-                    subtitle: "Subárea",
-                    footer: "Clique para visualizar o dashboard.",
-                    icon: "🏦",
-                })
-            )
-            .join("")}
+        `
+          <div
+            class="card"
+            style="
+              margin-bottom:20px;
+              padding:0;
+              overflow:hidden;
+            "
+          >
 
-        </div>
+            ${accordion({
 
-    <div
-      class="card"
-      style="
-        margin-top:28px;
-        border:1px solid #FECACA;
-      "
-    >
+              id: theme.name
+                .replace(/\s+/g, "-")
+                .toLowerCase(),
 
-      <h2 style="color:#DC2626;">
-        🗑 Zona de perigo
-      </h2>
+              title: `📂 ${theme.name}`,
 
-      <p style="margin-bottom:20px;">
-        Exclua este departamento caso ele não seja mais utilizado.
-      </p>
+              count: theme.processes.length,
 
-      <button
-        onclick="deleteTeam('${departmentId}')"
-        style="
-          background:#DC2626;
-          color:white;
-          border:none;
-          padding:12px 18px;
-          border-radius:10px;
-          cursor:pointer;
-          font-weight:600;
-        "
-      >
-        Excluir departamento
-      </button>
+              body: theme.processes
 
-    </div>
+                .map(process => `
+
+                  <div
+                    onclick="window.location='/portal/processes/${process.id}'"
+                    style="
+                      display:flex;
+                      justify-content:space-between;
+                      align-items:center;
+                      padding:18px 24px;
+                      cursor:pointer;
+                      border-top:1px solid #E5E7EB;
+                      transition:background .15s;
+                    "
+                    onmouseover="this.style.background='#F9FAFB'"
+                    onmouseout="this.style.background='white'"
+                  >
+
+                    <div
+                      style="
+                        display:flex;
+                        align-items:center;
+                        gap:12px;
+                        font-weight:600;
+                      "
+                    >
+                      📚 ${process.title}
+                    </div>
+
+                    <div
+                      style="
+                        color:#9CA3AF;
+                        font-size:18px;
+                      "
+                    >
+                      →
+                    </div>
+
+                  </div>
+
+                `)
+                .join(""),
+
+            })}
+
+          </div>
+        `
+
+      )
+      .join("")}
 
   `;
 
