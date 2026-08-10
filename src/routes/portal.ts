@@ -50,6 +50,14 @@ import { processTeamPage } from "../portal/pages/processTeam";
 import { getProcessDetails } from "../services/portal/processDetailsService";
 import { processPage } from "../portal/pages/process";
 import { getProcessDocumentation } from "../services/portal/processDocumentationService";
+import {
+  getPortalAccess,
+  canAccessCollaborator,
+  canAccessTeam,
+  canAccessDepartment,
+  canAccessProcess,
+  canAccessTask,
+} from "../services/portal/portalAccessService";
 
 function getTopbarUser(request: any) {
 
@@ -136,7 +144,23 @@ export async function portalRoutes(app: FastifyInstance) {
 
   app.get("/portal/collaborators", async (request, reply) => {
 
-    const collaborators = await getCollaborators();
+    const portalUser = getPortalUser(request);
+
+    if (!portalUser) {
+      return reply.redirect("/portal/login");
+    }
+
+    const access = await getPortalAccess(
+      portalUser.slackUserId
+    );
+
+    const collaborators = (
+      await getCollaborators()
+    ).filter((collaborator) =>
+      access.memberSlackUserIds.includes(
+        collaborator.slackUserId
+      )
+    );
 
     return reply.type("text/html").send(
       portalLayout({
@@ -155,11 +179,32 @@ export async function portalRoutes(app: FastifyInstance) {
 
   app.get("/portal/collaborators/:slackUserId", async (request, reply) => {
 
+    const portalUser = getPortalUser(request);
+
+    if (!portalUser) {
+      return reply.redirect("/portal/login");
+    }
+
     const { slackUserId } = request.params as {
       slackUserId: string;
     };
 
-    const collaborator = await getCollaboratorDetails(slackUserId);
+    const allowed = await canAccessCollaborator(
+      portalUser.slackUserId,
+      slackUserId
+    );
+
+    if (!allowed) {
+      return reply.code(403).type("text/html").send(`
+      <h2>Acesso não permitido</h2>
+      <p>Você não tem acesso a este colaborador.</p>
+      <a href="/portal/collaborators">← Voltar</a>
+    `);
+    }
+
+    const collaborator = await getCollaboratorDetails(
+      slackUserId
+    );
 
     return reply.type("text/html").send(
       portalLayout({
@@ -201,24 +246,6 @@ export async function portalRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get("/portal/teams", async (request, reply) => {
-
-    const teams = await getTeams();
-
-    return reply.type("text/html").send(
-      portalLayout({
-        title: "Times",
-        sidebar: sidebar("teams"),
-        topbar: topbar({
-          title: "Times",
-          searchPlaceholder: "Pesquisar time...",
-          user: getTopbarUser(request),
-        }),
-        body: teamsPage(teams),
-      })
-    );
-
-  });
 
 
 
@@ -226,7 +253,21 @@ export async function portalRoutes(app: FastifyInstance) {
     "/portal/processes",
     async (request, reply) => {
 
-      const departments = await getDepartments();
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply.redirect("/portal/login");
+      }
+
+      const access = await getPortalAccess(
+        portalUser.slackUserId
+      );
+
+      const departments = (
+        await getDepartments()
+      ).filter((department) =>
+        department.name === access.department?.name
+      );
 
       return reply.type("text/html").send(
         portalLayout({
@@ -247,9 +288,28 @@ export async function portalRoutes(app: FastifyInstance) {
     "/portal/processes/department/:department",
     async (request, reply) => {
 
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply.redirect("/portal/login");
+      }
+
       const { department } = request.params as {
         department: string;
       };
+
+      const allowed = await canAccessDepartment(
+        portalUser.slackUserId,
+        department
+      );
+
+      if (!allowed) {
+        return reply.code(403).type("text/html").send(`
+        <h2>Acesso não permitido</h2>
+        <p>Você não tem acesso a este departamento.</p>
+        <a href="/portal/processes">← Voltar</a>
+      `);
+      }
 
       const teams = await getDepartmentTeams(department);
 
@@ -271,9 +331,28 @@ export async function portalRoutes(app: FastifyInstance) {
     "/portal/processes/team/:teamId",
     async (request, reply) => {
 
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply.redirect("/portal/login");
+      }
+
       const { teamId } = request.params as {
         teamId: string;
       };
+
+      const allowed = await canAccessTeam(
+        portalUser.slackUserId,
+        teamId
+      );
+
+      if (!allowed) {
+        return reply.code(403).type("text/html").send(`
+        <h2>Acesso não permitido</h2>
+        <p>Você não tem acesso a este time.</p>
+        <a href="/portal/processes">← Voltar</a>
+      `);
+      }
 
       const team = await getProcessTeamDetails(teamId);
 
@@ -299,9 +378,28 @@ export async function portalRoutes(app: FastifyInstance) {
     "/portal/processes/:processId",
     async (request, reply) => {
 
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply.redirect("/portal/login");
+      }
+
       const { processId } = request.params as {
         processId: string;
       };
+
+      const allowed = await canAccessProcess(
+        portalUser.slackUserId,
+        processId
+      );
+
+      if (!allowed) {
+        return reply.code(403).type("text/html").send(`
+        <h2>Acesso não permitido</h2>
+        <p>Você não tem acesso a este processo.</p>
+        <a href="/portal/processes">← Voltar</a>
+      `);
+      }
 
       const process = await getProcessDetails(processId);
 
@@ -327,9 +425,26 @@ export async function portalRoutes(app: FastifyInstance) {
     "/portal/processes/:processId/documentation",
     async (request, reply) => {
 
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply.redirect("/portal/login");
+      }
+
       const { processId } = request.params as {
         processId: string;
       };
+
+      const allowed = await canAccessProcess(
+        portalUser.slackUserId,
+        processId
+      );
+
+      if (!allowed) {
+        return reply.code(403).send(
+          "Acesso não permitido."
+        );
+      }
 
       const html = await getProcessDocumentation(
         processId
@@ -352,6 +467,25 @@ export async function portalRoutes(app: FastifyInstance) {
     const { id } = request.params as {
       id: string;
     };
+
+    const portalUser = getPortalUser(request);
+
+    if (!portalUser) {
+      return reply.redirect("/portal/login");
+    }
+
+    const allowed = await canAccessTeam(
+      portalUser.slackUserId,
+      id
+    );
+
+    if (!allowed) {
+      return reply.code(403).type("text/html").send(`
+      <h2>Acesso não permitido</h2>
+      <p>Você não tem acesso a este time.</p>
+      <a href="/portal/teams">← Voltar</a>
+    `);
+    }
 
     const team = await prisma.team.findUnique({
       where: {
@@ -408,6 +542,25 @@ export async function portalRoutes(app: FastifyInstance) {
       id: string;
     };
 
+    const portalUser = getPortalUser(request);
+
+    if (!portalUser) {
+      return reply.redirect("/portal/login");
+    }
+
+    const allowed = await canAccessTask(
+      portalUser.slackUserId,
+      id
+    );
+
+    if (!allowed) {
+      return reply.code(403).type("text/html").send(`
+      <h2>Acesso não permitido</h2>
+      <p>Você não tem acesso a esta tarefa.</p>
+      <a href="/portal">← Voltar</a>
+    `);
+    }
+
     const task = await getTaskDetails(id);
 
     return reply.type("text/html").send(
@@ -429,6 +582,25 @@ export async function portalRoutes(app: FastifyInstance) {
     const { id } = request.params as {
       id: string;
     };
+
+    const portalUser = getPortalUser(request);
+
+    if (!portalUser) {
+      return reply
+        .code(401)
+        .send("Não autenticado.");
+    }
+
+    const allowed = await canAccessTask(
+      portalUser.slackUserId,
+      id
+    );
+
+    if (!allowed) {
+      return reply
+        .code(403)
+        .send("Acesso não permitido.");
+    }
 
     const task = await getTaskDetails(id);
 
@@ -489,6 +661,25 @@ export async function portalRoutes(app: FastifyInstance) {
         filter: string;
       };
 
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const allowed = await canAccessCollaborator(
+        portalUser.slackUserId,
+        slackUserId
+      );
+
+      if (!allowed) {
+        return reply
+          .code(403)
+          .send("Acesso não permitido.");
+      }
+
       const tasks = await getCollaboratorTaskList(
         slackUserId,
         filter
@@ -524,6 +715,25 @@ export async function portalRoutes(app: FastifyInstance) {
         filter: string;
       };
 
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const allowed = await canAccessTeam(
+        portalUser.slackUserId,
+        teamId
+      );
+
+      if (!allowed) {
+        return reply
+          .code(403)
+          .send("Acesso não permitido.");
+      }
+
       const tasks = await getTeamTaskList(
         teamId,
         filter
@@ -554,6 +764,25 @@ export async function portalRoutes(app: FastifyInstance) {
       const { id } = request.params as {
         id: string;
       };
+
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const allowed = await canAccessTeam(
+        portalUser.slackUserId,
+        id
+      );
+
+      if (!allowed) {
+        return reply
+          .code(403)
+          .send("Acesso não permitido.");
+      }
 
       const team = await getTeamDetails(id);
 
@@ -625,20 +854,36 @@ export async function portalRoutes(app: FastifyInstance) {
 
 
 
-  app.post("/portal/teams", async (request, reply) => {
+  app.get("/portal/teams", async (request, reply) => {
 
-    const body = request.body as {
-      name: string;
-      description?: string;
-      color?: string;
-      group?: string;
-    };
+    const portalUser = getPortalUser(request);
 
-    await createTeam(body);
+    if (!portalUser) {
+      return reply.redirect("/portal/login");
+    }
 
-    return reply.send({
-      success: true,
-    });
+    const access = await getPortalAccess(
+      portalUser.slackUserId
+    );
+
+    const teams = (
+      await getTeams()
+    ).filter((team) =>
+      access.teamIds.includes(team.id)
+    );
+
+    return reply.type("text/html").send(
+      portalLayout({
+        title: "Times",
+        sidebar: sidebar("teams"),
+        topbar: topbar({
+          title: "Times",
+          searchPlaceholder: "Pesquisar time...",
+          user: getTopbarUser(request),
+        }),
+        body: teamsPage(teams),
+      })
+    );
 
   });
   app.get(
