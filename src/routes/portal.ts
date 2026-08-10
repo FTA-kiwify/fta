@@ -150,17 +150,7 @@ export async function portalRoutes(app: FastifyInstance) {
       return reply.redirect("/portal/login");
     }
 
-    const access = await getPortalAccess(
-      portalUser.slackUserId
-    );
-
-    const collaborators = (
-      await getCollaborators()
-    ).filter((collaborator) =>
-      access.memberSlackUserIds.includes(
-        collaborator.slackUserId
-      )
-    );
+    const collaborators = await getCollaborators();
 
     return reply.type("text/html").send(
       portalLayout({
@@ -259,15 +249,7 @@ export async function portalRoutes(app: FastifyInstance) {
         return reply.redirect("/portal/login");
       }
 
-      const access = await getPortalAccess(
-        portalUser.slackUserId
-      );
-
-      const departments = (
-        await getDepartments()
-      ).filter((department) =>
-        department.name === access.department?.name
-      );
+      const departments = await getDepartments();
 
       return reply.type("text/html").send(
         portalLayout({
@@ -862,15 +844,7 @@ export async function portalRoutes(app: FastifyInstance) {
       return reply.redirect("/portal/login");
     }
 
-    const access = await getPortalAccess(
-      portalUser.slackUserId
-    );
-
-    const teams = (
-      await getTeams()
-    ).filter((team) =>
-      access.teamIds.includes(team.id)
-    );
+    const teams = await getTeams();
 
     return reply.type("text/html").send(
       portalLayout({
