@@ -688,414 +688,519 @@ export async function portalRoutes(app: FastifyInstance) {
           query.verticalId?.trim() || undefined,
 
         collaboratorId:
-          query.collaboratorId?.trim() ||
-          undefined,
+          query.collaboratorId?.trim() || undefined,
 
         processId:
           query.processId?.trim() || undefined,
       };
 
-      const report =
-        await getReportData(
-          portalUser.slackUserId,
-          filters
-        );
+      try {
 
-      let title = "";
-      let body = "";
-
-      if (type === "activities") {
-
-        const tasks = await prisma.task.findMany({
-          where: {
-            id: {
-              in: report.rows.map(row => row.id),
-            },
-          },
-
-          select: {
-            id: true,
-            title: true,
-            deadlineTime: true,
-            urgency: true,
-          },
-
-          orderBy: {
-            title: "asc",
-          },
-        });
-
-        return reply
-          .type("text/html")
-          .send(
-            dashboardTasksModal({
-              title: "📋 Atividades",
-              tasks,
-              completed: false,
-            })
+        const report =
+          await getReportData(
+            portalUser.slackUserId,
+            filters
           );
-      }
 
-      else if (type === "collaborators") {
+        /*
+         * =====================================================
+         * ATIVIDADES
+         * =====================================================
+         *
+         * Usa exatamente o mesmo componente do Dashboard.
+         */
 
-        title = "👥 Colaboradores";
+        if (type === "activities") {
 
-        const collaborators =
-          new Map<string, {
-            id: string;
-            name: string;
-            count: number;
-          }>();
+          const tasks =
+            await prisma.task.findMany({
+              where: {
+                id: {
+                  in: report.rows.map(
+                    row => row.id
+                  ),
+                },
+              },
 
-        for (const row of report.rows) {
+              select: {
+                id: true,
+                title: true,
+                deadlineTime: true,
+                urgency: true,
+              },
 
-          const current =
-            collaborators.get(
-              row.responsibleId
+              orderBy: {
+                title: "asc",
+              },
+            });
+
+          return reply
+            .type("text/html")
+            .send(
+              dashboardTasksModal({
+                title: "📋 Atividades",
+                tasks,
+                completed: false,
+              })
             );
-
-          if (current) {
-            current.count++;
-          } else {
-            collaborators.set(
-              row.responsibleId,
-              {
-                id: row.responsibleId,
-                name: row.responsibleName,
-                count: 1,
-              }
-            );
-          }
         }
 
-        body = [...collaborators.values()]
-          .sort((a, b) =>
-            a.name.localeCompare(b.name)
-          )
-          .map(item => `
-      <div
-        onclick="window.location.href='/portal/collaborators/${encodeURIComponent(item.id)}'"
-        style="
-          padding:14px 6px;
-          border-bottom:1px solid #E5E7EB;
-          cursor:pointer;
-          transition:background .15s ease;
-        "
-        onmouseover="
-          this.style.background='#F8FAFC';
-        "
-        onmouseout="
-          this.style.background='transparent';
-        "
-      >
+        /*
+         * =====================================================
+         * COLABORADORES
+         * =====================================================
+         */
 
-        <div
-          style="
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:16px;
-          "
-        >
+        if (type === "collaborators") {
 
-          <div>
-
-            <div
-              style="
-                font-weight:600;
-                color:#1F2937;
-              "
-            >
-              ${item.name}
-            </div>
-
-            <div
-              style="
-                font-size:13px;
-                color:#6B7280;
-                margin-top:4px;
-              "
-            >
-              ${item.count}
-              atividade${item.count === 1 ? "" : "s"}
-            </div>
-
-          </div>
-
-          <span
-            style="
-              color:#94A3B8;
-              font-size:20px;
-            "
-          >
-            ›
-          </span>
-
-        </div>
-
-      </div>
-    `)
-          .join("");
-      }
-
-      else if (type === "processes") {
-
-        title = "📚 Processos";
-
-        const processes =
-          new Map<string, {
-            id: string;
-            name: string;
-            count: number;
-          }>();
-
-        for (const row of report.rows) {
-
-          if (
-            !row.processId ||
-            !row.processTitle
-          ) {
-            continue;
-          }
-
-          const current =
-            processes.get(row.processId);
-
-          if (current) {
-            current.count++;
-          } else {
-            processes.set(
-              row.processId,
+          const collaborators =
+            new Map<
+              string,
               {
-                id: row.processId,
-                name: row.processTitle,
-                count: 1,
+                id: string;
+                name: string;
+                count: number;
               }
-            );
-          }
-        }
+            >();
 
-        body = [...processes.values()]
-          .sort((a, b) =>
-            a.name.localeCompare(b.name)
-          )
-          .map(item => `
-      <div
-        onclick="window.location.href='/portal/processes/${encodeURIComponent(item.id)}'"
-        style="
-          padding:14px 6px;
-          border-bottom:1px solid #E5E7EB;
-          cursor:pointer;
-          transition:background .15s ease;
-        "
-        onmouseover="
-          this.style.background='#F8FAFC';
-        "
-        onmouseout="
-          this.style.background='transparent';
-        "
-      >
+          for (const row of report.rows) {
 
-        <div
-          style="
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:16px;
-          "
-        >
+            const current =
+              collaborators.get(
+                row.responsibleId
+              );
 
-          <div>
+            if (current) {
 
-            <div
-              style="
-                font-weight:600;
-                color:#1F2937;
-              "
-            >
-              ${item.name}
-            </div>
+              current.count++;
 
-            <div
-              style="
-                font-size:13px;
-                color:#6B7280;
-                margin-top:4px;
-              "
-            >
-              ${item.count}
-              atividade${item.count === 1 ? "" : "s"}
-            </div>
+            } else {
 
-          </div>
-
-          <span
-            style="
-              color:#94A3B8;
-              font-size:20px;
-            "
-          >
-            ›
-          </span>
-
-        </div>
-
-      </div>
-    `)
-          .join("");
-      }
-
-      else if (type === "verticals") {
-
-        title = "🏢 Verticais";
-
-        const verticals =
-          new Map<string, {
-            id: string;
-            name: string;
-            count: number;
-          }>();
-
-        for (const row of report.rows) {
-
-          if (
-            !row.verticalId ||
-            !row.verticalName
-          ) {
-            continue;
+              collaborators.set(
+                row.responsibleId,
+                {
+                  id: row.responsibleId,
+                  name: row.responsibleName,
+                  count: 1,
+                }
+              );
+            }
           }
 
-          const current =
-            verticals.get(row.verticalId);
+          const items =
+            [...collaborators.values()]
+              .sort((a, b) =>
+                a.name.localeCompare(b.name)
+              );
 
-          if (current) {
-            current.count++;
-          } else {
-            verticals.set(
-              row.verticalId,
-              {
-                id: row.verticalId,
-                name: row.verticalName,
-                count: 1,
-              }
-            );
-          }
-        }
-
-        body = [...verticals.values()]
-          .sort((a, b) =>
-            a.name.localeCompare(b.name)
-          )
-          .map(item => `
-      <div
-        onclick="window.location.href='/portal/teams/${encodeURIComponent(item.id)}'"
-        style="
-          padding:14px 6px;
-          border-bottom:1px solid #E5E7EB;
-          cursor:pointer;
-          transition:background .15s ease;
-        "
-        onmouseover="
-          this.style.background='#F8FAFC';
-        "
-        onmouseout="
-          this.style.background='transparent';
-        "
-      >
-
-        <div
-          style="
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:16px;
-          "
-        >
-
-          <div>
-
+          return reply
+            .type("text/html")
+            .send(`
             <div
               style="
-                font-weight:600;
-                color:#1F2937;
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:28px;
               "
             >
-              ${item.name}
-            </div>
 
-            <div
-              style="
-                font-size:13px;
-                color:#6B7280;
-                margin-top:4px;
-              "
-            >
-              ${item.count}
-              atividade${item.count === 1 ? "" : "s"}
-            </div>
+              <h2 style="margin:0;">
+                👥 Colaboradores
+              </h2>
 
-          </div>
-
-          <span
-            style="
-              color:#94A3B8;
-              font-size:20px;
-            "
-          >
-            ›
-          </span>
-
-        </div>
-
-      </div>
-    `)
-          .join("");
-      }
-
-      else {
-        return reply
-          .code(404)
-          .send("Relatório não encontrado.");
-      }
-
-      return reply
-        .type("text/html")
-        .send(`
-        <div
-          style="
-            width:min(560px,90vw);
-            max-height:75vh;
-            overflow-y:auto;
-            padding:26px;
-          "
-        >
-
-          <h2
-            style="
-              margin:0 0 20px 0;
-            "
-          >
-            ${title}
-          </h2>
-
-          ${body ||
-          `
-              <p
+              <button
+                onclick="closePortalModal()"
                 style="
+                  border:none;
+                  background:none;
+                  font-size:28px;
+                  cursor:pointer;
                   color:#6B7280;
                 "
               >
-                Nenhum item encontrado.
-              </p>
-            `
+                ✕
+              </button>
+
+            </div>
+
+            ${items.length
+                ? items
+                  .map(item => `
+                      <div
+                        onclick="window.location.href='/portal/collaborators/${encodeURIComponent(item.id)}'"
+                        style="
+                          display:flex;
+                          justify-content:space-between;
+                          align-items:center;
+                          gap:16px;
+                          padding:14px 0;
+                          border-bottom:1px solid #E5E7EB;
+                          cursor:pointer;
+                        "
+                      >
+
+                        <div>
+
+                          <div
+                            style="
+                              font-weight:600;
+                              margin-bottom:6px;
+                              color:#1F2937;
+                            "
+                          >
+                            ${item.name}
+                          </div>
+
+                          <div
+                            style="
+                              color:#6B7280;
+                              font-size:14px;
+                            "
+                          >
+                            ${item.count}
+                            atividade${item.count === 1 ? "" : "s"}
+                          </div>
+
+                        </div>
+
+                        <div
+                          style="
+                            color:#94A3B8;
+                            font-size:20px;
+                          "
+                        >
+                          ›
+                        </div>
+
+                      </div>
+                    `)
+                  .join("")
+                : `
+                    <p>
+                      Nenhum colaborador encontrado.
+                    </p>
+                  `
+              }
+          `);
+        }
+
+        /*
+         * =====================================================
+         * PROCESSOS
+         * =====================================================
+         */
+
+        if (type === "processes") {
+
+          const processes =
+            new Map<
+              string,
+              {
+                id: string;
+                title: string;
+                count: number;
+              }
+            >();
+
+          for (const row of report.rows) {
+
+            if (
+              !row.processId ||
+              !row.processTitle
+            ) {
+              continue;
+            }
+
+            const current =
+              processes.get(
+                row.processId
+              );
+
+            if (current) {
+
+              current.count++;
+
+            } else {
+
+              processes.set(
+                row.processId,
+                {
+                  id: row.processId,
+                  title: row.processTitle,
+                  count: 1,
+                }
+              );
+            }
           }
 
-        </div>
-      `);
+          const items =
+            [...processes.values()]
+              .sort((a, b) =>
+                a.title.localeCompare(b.title)
+              );
 
+          return reply
+            .type("text/html")
+            .send(`
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:28px;
+              "
+            >
+
+              <h2 style="margin:0;">
+                📚 Processos
+              </h2>
+
+              <button
+                onclick="closePortalModal()"
+                style="
+                  border:none;
+                  background:none;
+                  font-size:28px;
+                  cursor:pointer;
+                  color:#6B7280;
+                "
+              >
+                ✕
+              </button>
+
+            </div>
+
+            ${items.length
+                ? items
+                  .map(item => `
+                      <div
+                        onclick="window.location.href='/portal/processes/${encodeURIComponent(item.id)}'"
+                        style="
+                          display:flex;
+                          justify-content:space-between;
+                          align-items:center;
+                          gap:16px;
+                          padding:14px 0;
+                          border-bottom:1px solid #E5E7EB;
+                          cursor:pointer;
+                        "
+                      >
+
+                        <div>
+
+                          <div
+                            style="
+                              font-weight:600;
+                              margin-bottom:6px;
+                              color:#1F2937;
+                            "
+                          >
+                            ${item.title}
+                          </div>
+
+                          <div
+                            style="
+                              color:#6B7280;
+                              font-size:14px;
+                            "
+                          >
+                            ${item.count}
+                            atividade${item.count === 1 ? "" : "s"}
+                          </div>
+
+                        </div>
+
+                        <div
+                          style="
+                            color:#94A3B8;
+                            font-size:20px;
+                          "
+                        >
+                          ›
+                        </div>
+
+                      </div>
+                    `)
+                  .join("")
+                : `
+                    <p>
+                      Nenhum processo encontrado.
+                    </p>
+                  `
+              }
+          `);
+        }
+
+        /*
+         * =====================================================
+         * VERTICAIS
+         * =====================================================
+         */
+
+        if (type === "verticals") {
+
+          const verticals =
+            new Map<
+              string,
+              {
+                id: string;
+                name: string;
+                count: number;
+              }
+            >();
+
+          for (const row of report.rows) {
+
+            if (
+              !row.verticalId ||
+              !row.verticalName
+            ) {
+              continue;
+            }
+
+            const current =
+              verticals.get(
+                row.verticalId
+              );
+
+            if (current) {
+
+              current.count++;
+
+            } else {
+
+              verticals.set(
+                row.verticalId,
+                {
+                  id: row.verticalId,
+                  name: row.verticalName,
+                  count: 1,
+                }
+              );
+            }
+          }
+
+          const items =
+            [...verticals.values()]
+              .sort((a, b) =>
+                a.name.localeCompare(b.name)
+              );
+
+          return reply
+            .type("text/html")
+            .send(`
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:28px;
+              "
+            >
+
+              <h2 style="margin:0;">
+                🏢 Verticais
+              </h2>
+
+              <button
+                onclick="closePortalModal()"
+                style="
+                  border:none;
+                  background:none;
+                  font-size:28px;
+                  cursor:pointer;
+                  color:#6B7280;
+                "
+              >
+                ✕
+              </button>
+
+            </div>
+
+            ${items.length
+                ? items
+                  .map(item => `
+                      <div
+                        onclick="window.location.href='/portal/processes/team/${encodeURIComponent(item.id)}'"
+                        style="
+                          display:flex;
+                          justify-content:space-between;
+                          align-items:center;
+                          gap:16px;
+                          padding:14px 0;
+                          border-bottom:1px solid #E5E7EB;
+                          cursor:pointer;
+                        "
+                      >
+
+                        <div>
+
+                          <div
+                            style="
+                              font-weight:600;
+                              margin-bottom:6px;
+                              color:#1F2937;
+                            "
+                          >
+                            ${item.name}
+                          </div>
+
+                          <div
+                            style="
+                              color:#6B7280;
+                              font-size:14px;
+                            "
+                          >
+                            ${item.count}
+                            atividade${item.count === 1 ? "" : "s"}
+                          </div>
+
+                        </div>
+
+                        <div
+                          style="
+                            color:#94A3B8;
+                            font-size:20px;
+                          "
+                        >
+                          ›
+                        </div>
+
+                      </div>
+                    `)
+                  .join("")
+                : `
+                    <p>
+                      Nenhuma vertical encontrada.
+                    </p>
+                  `
+              }
+          `);
+        }
+
+        return reply
+          .code(404)
+          .send("Relatório não encontrado.");
+
+      } catch (error) {
+
+        if (
+          error instanceof Error &&
+          error.message ===
+          "REPORT_ACCESS_DENIED"
+        ) {
+          return reply
+            .code(403)
+            .send(
+              "Acesso não permitido."
+            );
+        }
+
+        throw error;
+      }
     }
   );
-
   app.get(
     "/portal/reports/export",
     async (request, reply) => {
