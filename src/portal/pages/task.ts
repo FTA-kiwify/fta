@@ -21,8 +21,6 @@ export function taskPage(
 
       <p><b>Delegado por:</b> ${task.delegatedBy ?? "-"}</p>
 
-      <p><b>Projeto:</b> ${task.project ?? "-"}</p>
-
       <p><b>Urgência:</b> ${task.urgency}</p>
 
       <p><b>Recorrência:</b> ${task.recurrence ?? "-"}</p>

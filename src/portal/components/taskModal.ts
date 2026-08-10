@@ -266,13 +266,6 @@ export function taskModal(task: TaskDetails) {
     task.delegatedBy ?? "-"
   )}
 
-        ${infoCard(
-    "📁 Projeto",
-    `${task.project ?? "-"}`,
-    task.projectId
-      ? `openPortalModal('/portal/projects/${task.projectId}/modal')`
-      : undefined
-  )}
 
   ${infoCard(
     "📘 Processo",

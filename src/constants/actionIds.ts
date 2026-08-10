@@ -3,7 +3,6 @@
 // ===== HOME (header actions) =====
 export const HOME_CREATE_TASK_ACTION_ID = "home_create_task" as const;
 export const HOME_SEND_BATCH_ACTION_ID = "home_send_batch" as const;
-export const HOME_NEW_PROJECT_ACTION_ID = "home_new_project" as const;
 
 // ===== HOME (tasks list) =====
 export const TASK_SELECT_ACTION_ID = "task_select" as const;
@@ -29,8 +28,3 @@ export const CC_SEND_QUESTION_ACTION_ID = "cc_send_question" as const;
 // ===== NOVOS: recorrências (layout apenas) =====
 export const RECURRENCE_CANCEL_ACTION_ID = "recurrence_cancel" as const;
 
-// ===== NOVOS: projetos (layout apenas) =====
-export const PROJECT_VIEW_ACTION_ID = "project_view" as const;
-export const PROJECT_CREATE_TASK_ACTION_ID = "project_create_task" as const;
-export const PROJECT_EDIT_ACTION_ID = "project_edit" as const;
-export const PROJECT_CONCLUDE_ACTION_ID = "project_conclude" as const;

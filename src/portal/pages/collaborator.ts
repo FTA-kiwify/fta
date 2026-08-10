@@ -115,7 +115,6 @@ export function collaboratorPage(
                     upcomingTask({
                       id: task.id,
                       title: task.title,
-                      responsible: task.project ?? "Sem projeto",
                       urgency: task.urgency,
                       deadlineTime: task.deadlineTime,
                       hideResponsible: true,
@@ -138,7 +137,6 @@ export function collaboratorPage(
                         upcomingTask({
                           id: task.id,
                           title: task.title,
-                          responsible: task.project ?? "Sem projeto",
                           urgency: task.urgency,
                           deadlineTime: task.deadlineTime,
                           hideResponsible: true,
@@ -159,7 +157,6 @@ export function collaboratorPage(
                         upcomingTask({
                           id: task.id,
                           title: task.title,
-                          responsible: task.project ?? "Sem projeto",
                           urgency: task.urgency,
                           deadlineTime: task.deadlineTime,
                           hideResponsible: true,
@@ -209,7 +206,6 @@ export function collaboratorPage(
               taskRow({
                 id: task.id,
                 title: task.title,
-                subtitle: `📁 ${task.project ?? "Sem projeto"}`,
                 deadlineTime: task.deadlineTime,
               })
             )
@@ -223,49 +219,7 @@ export function collaboratorPage(
 
     </div>
 
-    <div
-      class="card"
-      style="margin-top:28px;"
-    >
 
-      <h2 style="margin-bottom:20px;">
-        📁 Projetos
-      </h2>
-
-      ${collaborator.projects
-        .map(project => `
-          <div
-            onclick="openPortalModal('/portal/projects/${project.id}/modal')"
-            style="
-              display:flex;
-              justify-content:space-between;
-              align-items:center;
-              padding:16px 0;
-              border-bottom:1px solid #E5E7EB;
-              cursor:pointer;
-              transition:background .15s;
-            "
-            onmouseover="this.style.background='#F9FAFB'"
-            onmouseout="this.style.background='transparent'"
-          >
-
-            <div style="font-weight:600;">
-              📁 ${project.name}
-            </div>
-
-            <div
-              style="
-                color:#6B7280;
-                font-weight:600;
-              "
-            >
-              ${project.count}
-            </div>
-
-          </div>
-        `)
-        .join("")
-      }
 
     </div>
 
@@ -289,7 +243,6 @@ export function collaboratorPage(
                 taskRow({
                   id: task.id,
                   title: task.title,
-                  subtitle: `📁 ${task.project ?? "Sem projeto"}`,
                   deadlineTime: task.deadlineTime,
                   urgency: task.urgency,
                 })
@@ -322,7 +275,6 @@ export function collaboratorPage(
                 taskRow({
                   id: task.id,
                   title: task.title,
-                  subtitle: `📁 ${task.project ?? "Sem projeto"}`,
                   deadlineTime: task.deadlineTime,
                   urgency: task.urgency,
                 })

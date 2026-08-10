@@ -81,12 +81,7 @@ export function sidebar(active: string = "dashboard") {
           👥 Colaboradores
         </a>
 
-        <a
-          href="/portal/projects"
-          class="${item("projects")}"
-        >
-          📁 Projetos
-        </a>
+
 
         <a
           href="/portal/teams"

@@ -23,9 +23,6 @@ export const EDIT_RESP_ACTION_ID = "edit_resp" as const;
 export const EDIT_CC_BLOCK_ID = "edit_cc_block" as const;
 export const EDIT_CC_ACTION_ID = "edit_cc" as const;
 
-// ✅ NOVO: Projeto
-export const EDIT_PROJECT_BLOCK_ID = "edit_project_block" as const;
-export const EDIT_PROJECT_ACTION_ID = "edit_project" as const;
 
 export const EDIT_RECURRENCE_BLOCK_ID = "edit_recurrence_block" as const;
 export const EDIT_RECURRENCE_ACTION_ID = "edit_recurrence" as const;
@@ -39,10 +36,7 @@ export const EDIT_REMINDER_MODE_ACTION_ID = "reminder_mode" as const;
 export const EDIT_CAL_PRIVATE_BLOCK_ID = "edit_cal_private_block" as const;
 export const EDIT_CAL_PRIVATE_ACTION_ID = "edit_cal_private_action" as const;
 
-export type EditTaskProjectOption = {
-  id: string;
-  name: string;
-};
+
 
 type RecurrenceValue =
   | "none"
@@ -95,9 +89,7 @@ export function editTaskModalView(args: {
   carbonCopiesSlackIds: string[];
   recurrence: string | null; // pode vir "none" ou null
 
-  // ✅ NOVO: projeto atual + lista de projetos disponíveis
-  currentProjectId?: string | null;
-  projects?: EditTaskProjectOption[];
+
 
   urgency?: "light" | "asap" | "turbo" | string | null;
   reminderMode?: "until" | "from" | string | null;
@@ -135,28 +127,6 @@ export function editTaskModalView(args: {
   const isOnDemand = args.taskType === "on_demand";
   const showTurbo = urgencyValue === "turbo" && !isOnDemand;
 
-  // ✅ NOVO: bloco de projeto (com opção "Sem projeto" para permitir desvincular)
-  const incomingProjects = Array.isArray(args.projects) ? args.projects : [];
-  const uniqueProjects = Array.from(
-    new Map(
-      incomingProjects
-        .filter((p) => p?.id && p?.name)
-        .map((p) => [p.id, { id: p.id, name: p.name }])
-    ).values()
-  );
-
-  const projectOptions = [
-    { text: { type: "plain_text" as const, text: "Sem projeto" }, value: "none" },
-    ...uniqueProjects.slice(0, 99).map((p) => ({
-      text: { type: "plain_text" as const, text: p.name.slice(0, 75) },
-      value: p.id,
-    })),
-  ];
-
-  const selectedProjectOption =
-    args.currentProjectId && projectOptions.some((o) => o.value === args.currentProjectId)
-      ? projectOptions.find((o) => o.value === args.currentProjectId)
-      : projectOptions[0];
 
   const selectedProcessOption =
     args.currentProcessId && args.currentProcessLabel
@@ -308,20 +278,6 @@ export function editTaskModalView(args: {
         label: { type: "plain_text", text: "Pessoas em cópia" },
       },
 
-      // ✅ NOVO: Projeto
-      {
-        type: "input",
-        optional: true,
-        block_id: EDIT_PROJECT_BLOCK_ID,
-        element: {
-          type: "static_select",
-          action_id: EDIT_PROJECT_ACTION_ID,
-          placeholder: { type: "plain_text", text: "Selecione um projeto" },
-          initial_option: selectedProjectOption,
-          options: projectOptions,
-        },
-        label: { type: "plain_text", text: "Projeto" },
-      },
 
       // Urgência
       ...(

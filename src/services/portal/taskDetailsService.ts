@@ -16,8 +16,6 @@ export type TaskDetails = {
   calendarPrivate: boolean;
 
   recurrence: string | null;
-  project: string | null;
-  projectId: string | null;
   notionProcessUrl: string | null;
   copies: string[];
 
@@ -43,7 +41,6 @@ export async function getTaskDetails(
     },
 
     include: {
-      project: true,
       carbonCopies: true,
 
       auditLogs: {
@@ -109,10 +106,8 @@ export async function getTaskDetails(
 
     recurrence: task.recurrence,
 
-    project: task.project?.name ?? null,
 
     copies,
-    projectId: task.project?.id ?? null,
     notionProcessUrl: task.notionProcessUrl,
     auditLogs,
     taskType: task.taskType,

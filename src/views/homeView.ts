@@ -27,7 +27,6 @@ export function homeView(args: {
         ccFuture: [],
 
         recurrences: [],
-        projects: [],
       }),
     ],
   };

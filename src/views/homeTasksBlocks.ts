@@ -41,13 +41,7 @@ export type RecurrenceItem = {
   recurrence: string;
 };
 
-export type ProjectItem = {
-  id: string;
-  name: string;
-  openCount: number;
-  doneCount: number;
-  overdueCount: number;
-};
+
 
 // =========================
 // ✅ Feedback (Home)
@@ -89,10 +83,7 @@ export const RECURRENCE_CANCEL_ACTION_ID = "recurrence_cancel" as const;
 export const HOME_FEEDBACK_OPEN_ACTION_ID = "home_feedback_open" as const;
 export const HOME_FEEDBACK_ADMIN_ACTION_ID = "home_feedback_admin" as const;
 
-export const PROJECT_VIEW_ACTION_ID = "project_view" as const;
-export const PROJECT_CREATE_TASK_ACTION_ID = "project_create_task" as const;
-export const PROJECT_EDIT_ACTION_ID = "project_edit" as const;
-export const PROJECT_CONCLUDE_ACTION_ID = "project_conclude" as const;
+
 
 export type PagerInfo = {
   scope:
@@ -438,8 +429,6 @@ export function homeTasksBlocks(args: {
   // recorrências
   recurrences: RecurrenceItem[];
 
-  // projetos
-  projects: ProjectItem[];
 
   // feedback
   myOpenFeedback?: FeedbackHomeItem[];
@@ -695,44 +684,7 @@ export function homeTasksBlocks(args: {
   }
   pushDivider();
 
-  // =========================
-  // PROJETOS (capado)
-  // =========================
-  pushHeader("📁 Projetos que participo");
-  const MAX_PROJECTS = 8;
-  const visibleProjects = (args.projects ?? []).slice(0, MAX_PROJECTS);
-  const hiddenProjects = Math.max(0, (args.projects?.length ?? 0) - visibleProjects.length);
 
-  if (visibleProjects.length) {
-    blocks.push(
-      ...visibleProjects.flatMap((p) => [
-        {
-          type: "section",
-          text: { type: "mrkdwn", text: `*${p.name}*\n${p.openCount} abertas • ${p.doneCount} concluídas • ${p.overdueCount} atrasadas` },
-        } as KnownBlock,
-        {
-          type: "actions",
-          elements: [
-            { type: "button", text: { type: "plain_text", text: "👀 Ver" }, action_id: PROJECT_VIEW_ACTION_ID, value: p.id },
-            { type: "button", text: { type: "plain_text", text: "➕ Criar Tarefa" }, action_id: PROJECT_CREATE_TASK_ACTION_ID, value: p.id },
-            { type: "button", text: { type: "plain_text", text: "✏️ Editar" }, action_id: PROJECT_EDIT_ACTION_ID, value: p.id },
-            { type: "button", text: { type: "plain_text", text: "✅ Concluir" }, action_id: PROJECT_CONCLUDE_ACTION_ID, value: p.id },
-          ],
-        } as KnownBlock,
-      ])
-    );
-
-    if (hiddenProjects > 0) {
-      blocks.push({
-        type: "section",
-        text: { type: "mrkdwn", text: `_… e mais ${hiddenProjects} projetos (use "👀 Ver" para navegar)._` },
-      } as KnownBlock);
-    }
-  } else {
-    blocks.push({ type: "section", text: { type: "mrkdwn", text: "_Nenhum_" } } as KnownBlock);
-  }
-
-  pushDivider();
 
   // =========================
   // BUGS / SUGESTÕES

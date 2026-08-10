@@ -6,16 +6,11 @@ export type CollaboratorTask = {
     title: string;
     term: Date | null;
     deadlineTime: string | null;
-    project: string | null;
     urgency: "light" | "asap" | "turbo";
     taskType: "normal" | "on_demand";
 };
 
-export type CollaboratorProject = {
-    id: string | null;
-    name: string;
-    count: number;
-};
+
 
 export type CollaboratorRecurrence = {
     name: string;
@@ -33,7 +28,6 @@ export type CollaboratorDetails = {
     totalTasks: number;
     todayTasks: number;
     tasks: CollaboratorTask[];
-    projects: CollaboratorProject[];
     recurrences: CollaboratorRecurrence[];
     urgencies: CollaboratorUrgency[];
     members?: {
@@ -112,9 +106,7 @@ export async function getTeamDetails(
             status: "pending",
             calendarPrivate: false,
         },
-        include: {
-            project: true,
-        },
+
         orderBy: {
             term: "asc",
         },
@@ -163,41 +155,7 @@ export async function getTeamDetails(
 
     }).length;
 
-    const projectsMap = new Map<
-        string,
-        {
-            id: string | null;
-            name: string;
-            count: number;
-        }
-    >();
 
-    for (const task of tasks) {
-
-        if (!task.project) {
-            continue;
-        }
-
-        const existing = projectsMap.get(task.project.id);
-
-        if (existing) {
-
-            existing.count++;
-
-        } else {
-
-            projectsMap.set(task.project.id, {
-                id: task.project.id,
-                name: task.project.name,
-                count: 1,
-            });
-
-        }
-
-    }
-
-    const projects = [...projectsMap.values()]
-        .sort((a, b) => b.count - a.count);
 
     const recurrences: CollaboratorRecurrence[] = [
 
@@ -209,7 +167,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -223,7 +180,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -237,7 +193,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -251,7 +206,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -265,7 +219,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -279,7 +232,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -293,7 +245,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -307,7 +258,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -327,7 +277,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -342,7 +291,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -357,7 +305,6 @@ export async function getTeamDetails(
                     title: task.title,
                     term: task.term,
                     deadlineTime: task.deadlineTime,
-                    project: task.project?.name ?? null,
                     urgency: task.urgency,
                     taskType: task.taskType,
                 })),
@@ -399,7 +346,6 @@ export async function getTeamDetails(
         name: team.name,
         totalTasks: tasks.length,
         todayTasks,
-        projects,
         recurrences,
         urgencies,
         members: await Promise.all(
@@ -432,7 +378,6 @@ export async function getTeamDetails(
             title: task.title,
             term: task.term,
             deadlineTime: task.deadlineTime,
-            project: task.project?.name ?? null,
             urgency: task.urgency,
             taskType: task.taskType,
         })),

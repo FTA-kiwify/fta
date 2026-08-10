@@ -10,8 +10,6 @@ export const TASK_TIME_ACTION_ID = "deadline_time" as const;
 export const TASK_RECURRENCE_BLOCK_ID = "recurrence_block" as const;
 export const TASK_RECURRENCE_ACTION_ID = "recurrence" as const;
 
-export const TASK_PROJECT_BLOCK_ID = "project_block" as const;
-export const TASK_PROJECT_ACTION_ID = "project" as const;
 
 // ✅ NOVO: depende de (external_select)
 export const TASK_DEPENDS_BLOCK_ID = "depends_block" as const;
@@ -26,15 +24,12 @@ export const TASK_REMINDER_MODE_ACTION_ID = "reminder_mode" as const;
 export const TASK_CAL_PRIVATE_BLOCK_ID = "task_cal_private_block" as const;
 export const TASK_CAL_PRIVATE_ACTION_ID = "task_cal_private_action" as const;
 
-export type ProjectOption = { id: string; name: string };
 export const TASK_URGENCY_BLOCK_ID = "urgency_block" as const;
 export const TASK_URGENCY_ACTION_ID = "urgency" as const;
 export const TASK_TYPE_BLOCK_ID = "task_type_block" as const;
 export const TASK_TYPE_ACTION_ID = "task_type" as const;
 
 type CreateTaskModalArgs = {
-  projects?: ProjectOption[];
-  initialProjectId?: string | null;
 
   showTurboFields?: boolean;
 
@@ -56,8 +51,7 @@ type CreateTaskModalArgs = {
 };
 
 export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
-  const projects = args?.projects ?? [];
-  const initialProjectId = args?.initialProjectId ?? null;
+
   const showTurboFields = Boolean(args?.showTurboFields);
 
 
@@ -115,34 +109,7 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
     { text: { type: "plain_text" as const, text: "▶️ Entregar a partir do prazo" }, value: "from" },
   ];
 
-  const projectOptions = projects.slice(0, 100).map((p) => ({
-    text: { type: "plain_text" as const, text: p.name.slice(0, 75) },
-    value: p.id,
-  }));
 
-  const initialProjectOption = initialProjectId
-    ? projectOptions.find((opt) => opt.value === initialProjectId)
-    : undefined;
-
-  const projectBlock: KnownBlock =
-    projects.length > 0
-      ? ({
-        type: "input",
-        optional: true,
-        block_id: TASK_PROJECT_BLOCK_ID,
-        label: { type: "plain_text", text: "Projeto" },
-        element: {
-          type: "static_select",
-          action_id: TASK_PROJECT_ACTION_ID,
-          placeholder: { type: "plain_text", text: "Selecione um projeto" },
-          options: projectOptions,
-          ...(initialProjectOption ? { initial_option: initialProjectOption } : {}), // ✅ pré-seleção
-        },
-      } as const)
-      : ({
-        type: "section",
-        text: { type: "mrkdwn", text: "_Nenhum projeto cadastrado ainda._" },
-      } as const);
 
   return {
     type: "modal",
@@ -329,7 +296,6 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
           : []
       ),
 
-      projectBlock,
 
       ...(
         !isOnDemand

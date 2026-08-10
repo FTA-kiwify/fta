@@ -13,11 +13,7 @@ function normalizeRecurrence(input: string | null): string | null {
   return v;
 }
 
-function normalizeProjectId(input: string | null | undefined): string | null {
-  const v = (input ?? "").trim();
-  if (!v || v === "none" || v === "null") return null;
-  return v;
-}
+
 
 function normalizeUrgency(input: string | null | undefined): "light" | "asap" | "turbo" {
   const v = String(input ?? "light").trim().toLowerCase();
@@ -27,7 +23,6 @@ function normalizeUrgency(input: string | null | undefined): "light" | "asap" | 
 
 /**
  * ✅ Select fixo => TS infere corretamente
- * ✅ Inclui projectId para diff/notificações
  */
 const TASK_SELECT = {
   id: true,
@@ -44,7 +39,6 @@ const TASK_SELECT = {
   urgency: true,
   reminderMode: true,
   calendarPrivate: true,
-  projectId: true, // ✅ NOVO
   createdAt: true,
   turboPreviousDay: true,
   turboStartTime: true,
@@ -69,7 +63,6 @@ type TaskSelected = {
   calendarPrivate: boolean;
   turboPreviousDay: boolean;
   turboStartTime: string | null;
-  projectId: string | null; // ✅ NOVO
   createdAt: Date;
   carbonCopies: { slackUserId: string }[];
   taskType: "normal" | "on_demand";
@@ -92,7 +85,6 @@ type TaskSnapshot = {
   turboPreviousDay: boolean;
   turboStartTime: string | null;
   taskType: "normal" | "on_demand";
-  projectId: string | null; // ✅ NOVO
   createdAt: Date;
   carbonCopies: string[];
 };
@@ -114,7 +106,6 @@ function toSnapshot(t: TaskSelected): TaskSnapshot {
     calendarPrivate: Boolean(t.calendarPrivate ?? false),
     turboPreviousDay: Boolean(t.turboPreviousDay ?? false),
     turboStartTime: t.turboStartTime ?? null,
-    projectId: t.projectId ?? null, // ✅ NOVO
     createdAt: t.createdAt,
     taskType: t.taskType,
     carbonCopies: (t.carbonCopies ?? []).map((c) => c.slackUserId),
@@ -143,8 +134,6 @@ export async function updateTaskService(args: {
   turboStartTime: string | null;
   calendarPrivate: boolean;
 
-  // ✅ NOVO: projeto (null = sem projeto)
-  projectId: string | null;
 }) {
   const {
     taskId,
@@ -163,7 +152,6 @@ export async function updateTaskService(args: {
     turboPreviousDay,
     turboStartTime,
     calendarPrivate,
-    projectId,
   } = args;
 
   // -------------------------
@@ -177,7 +165,6 @@ export async function updateTaskService(args: {
 
   const recurrenceValue = normalizeRecurrence(recurrence);
   const urgencyValue = normalizeUrgency(urgency);
-  const normalizedProjectId = normalizeProjectId(projectId);
   const normalizedProcessId = processId?.trim() ? processId.trim() : null;
   const normalizedNotionProcessUrl = notionProcessUrl?.trim() ? notionProcessUrl.trim() : null;
 
@@ -221,22 +208,7 @@ export async function updateTaskService(args: {
 
   const finalTurboStartTime =
     isOnDemand ? null : turboStartTime;
-  // -------------------------
-  // Valida projeto (se informado)
-  // -------------------------
-  if (normalizedProjectId) {
-    const project = await prisma.project.findFirst({
-      where: {
-        id: normalizedProjectId,
-        status: "active",
-      },
-      select: { id: true },
-    });
 
-    if (!project) {
-      throw new Error("Invalid or inactive project");
-    }
-  }
 
   // -------------------------
   // Update (atômico)
@@ -262,8 +234,6 @@ export async function updateTaskService(args: {
       turboPreviousDay: finalTurboPreviousDay,
       turboStartTime: finalTurboStartTime,
 
-      // ✅ NOVO: vínculo de projeto
-      projectId: normalizedProjectId,
 
       // ✅ regra de recorrência: ancora no prazo se houver recorrência
       recurrenceAnchor: finalRecurrence ? finalTerm : null,

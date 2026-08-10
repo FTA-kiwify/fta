@@ -7,37 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-model Project {
-  id               String          @id @default(uuid())
-  name             String
-  description      String?
-  endDate          DateTime?
-  createdAt        DateTime        @default(now())
-  createdBySlackId String?
-  status           ProjectStatus   @default(active)
-  concludedAt      DateTime?
-  members          ProjectMember[]
-  tasks            Task[]
-
-  @@index([createdBySlackId])
-  @@map("projects")
-}
-
-model ProjectMember {
-  id          String   @id @default(uuid())
-  projectId   String
-  slackUserId String
-  email       String?
-  createdAt   DateTime @default(now())
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, slackUserId])
-  @@index([slackUserId])
-  @@index([projectId])
-  @@map("project-members")
-}
-
 model Task {
   id                 String       @id @default(uuid())
   title              String
@@ -53,13 +22,12 @@ model Task {
   status             TaskStatus   @default(pending)
   recurrence         Recurrence?
   urgency            Urgency
-  taskType TaskType @default(normal)
+  taskType           TaskType     @default(normal)
   reminderMode       ReminderMode @default(until)
   turboPreviousDay   Boolean      @default(false)
   turboStartTime     String?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @default(now()) @updatedAt
-  projectId          String?
   recurrenceAnchor   DateTime?
   dependsOnId        String?
   slackOpenChannelId String?
@@ -76,8 +44,6 @@ model Task {
 
   dependsOn  Task?  @relation("TaskDependsOn", fields: [dependsOnId], references: [id])
   dependents Task[] @relation("TaskDependsOn")
-
-  project Project? @relation(fields: [projectId], references: [id])
 
   process Process? @relation(fields: [processId], references: [id])
 
@@ -285,11 +251,6 @@ enum Recurrence {
   semiannual
   annual
   none
-}
-
-enum ProjectStatus {
-  active
-  concluded
 }
 
 enum FeedbackType {

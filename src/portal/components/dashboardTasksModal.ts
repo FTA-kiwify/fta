@@ -65,7 +65,6 @@ export function dashboardTasksModal({
           : taskRow({
             id: task.id,
             title: task.title,
-            subtitle: `📁 ${task.project?.name ?? "Sem projeto"}`,
             deadlineTime: task.deadlineTime,
             urgency: task.urgency,
           })

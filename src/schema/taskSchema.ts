@@ -116,7 +116,6 @@ export const createTaskSchema = z
 
     recurrence: recurrenceSchema,
 
-    projectId: z.string().uuid().nullable().optional(),
     dependsOnId: z.string().uuid().nullable().optional(),
 
     urgency: urgencySchema,

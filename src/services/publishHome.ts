@@ -222,7 +222,6 @@ export async function publishHome(
   // =========================================================
   const now = new Date();
   const todayIso = getSaoPauloTodayIso(now);
-  const todayUtc = new Date(`${todayIso}T00:00:00.000Z`);
 
   const visibleWhere: Prisma.TaskWhereInput = {
     OR: [{ dependsOnId: null }, { dependsOn: { status: "done" } }],
@@ -614,44 +613,7 @@ export async function publishHome(
     take: 15,
   })) as unknown as Array<{ id: string; title: string; recurrence: string }>;
 
-  // =========================================================
-  // 6) Projetos
-  // =========================================================
-  const projects = await prisma.project.findMany({
-    where: {
-      status: "active",
-      OR: [
-        { createdBySlackId: userSlackId },
-        { members: { some: { slackUserId: userSlackId } } },
-        {
-          tasks: {
-            some: {
-              OR: [
-                { delegation: userSlackId },
-                { responsible: userSlackId },
-                { carbonCopies: { some: { slackUserId: userSlackId } } },
-              ],
-            },
-          },
-        },
-      ],
-    },
-    orderBy: { createdAt: "desc" },
-    select: { id: true, name: true },
-  });
-
-  const projectsWithCounts = await Promise.all(
-    projects.map(async (p) => {
-      const [openCount, doneCount, overdueCount] = await Promise.all([
-        prisma.task.count({ where: { projectId: p.id, status: { notIn: ["done", "cancelled"] }, AND: [visibleWhere] } }),
-        prisma.task.count({ where: { projectId: p.id, status: "done" } }),
-        prisma.task.count({
-          where: { projectId: p.id, status: { notIn: ["done", "cancelled"] }, term: { lt: todayUtc }, AND: [visibleWhere] },
-        }),
-      ]);
-      return { id: p.id, name: p.name, openCount, doneCount, overdueCount };
-    })
-  );
+ 
 
   // =========================================================
   // 6.5) Feedback
@@ -757,7 +719,6 @@ export async function publishHome(
       })),
 
       recurrences: recurrenceTasks.map((r) => ({ id: r.id, title: r.title, recurrence: r.recurrence })),
-      projects: projectsWithCounts,
 
       myOpenFeedback: myOpenFeedback.map((f) => ({
         id: f.id,

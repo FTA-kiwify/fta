@@ -26,7 +26,6 @@ export function layout(args: {
     <nav class="nav">
       <div class="nav-left">
         <a href="/admin/tasks">Tasks</a>
-        <a href="/admin/projects">Projects</a>
       </div>
       <div class="nav-right">
         <span class="muted">${esc(user)}</span>

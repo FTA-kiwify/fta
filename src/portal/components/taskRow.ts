@@ -1,7 +1,7 @@
 export type TaskRow = {
   id: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   urgency?: "light" | "asap" | "turbo";
   deadlineTime?: string | null;
   rightText?: string;
@@ -98,9 +98,10 @@ export function taskRow(task: TaskRow) {
           "
         >
 
-          <span>
-            ${task.subtitle}
-          </span>
+          ${task.subtitle
+      ? `<span>${task.subtitle}</span>`
+      : ""
+    }
 
           ${task.deadlineTime
       ? `<span>🕒 ${task.deadlineTime}</span>`

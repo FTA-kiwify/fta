@@ -29,7 +29,6 @@ export function taskDetailsModalView(args: {
   urgency: Urgency;
   taskType: "normal" | "on_demand";
   recurrence: string | null;
-  projectNameOrId: string | null;
   description: string | null;
   notionProcessUrl: string | null;
   calendarPrivate: boolean;
@@ -53,7 +52,6 @@ export function taskDetailsModalView(args: {
     : "—";
 
   const delegatedText = args.delegationSlackId ? `<@${args.delegationSlackId}>` : "—";
-  const projectText = args.projectNameOrId ?? "—";
   const recurrenceText = args.recurrence ?? "—";
   const isOnDemand = args.taskType === "on_demand";
 
@@ -102,7 +100,6 @@ export function taskDetailsModalView(args: {
             },
           ]),
 
-        { type: "mrkdwn", text: `*Projeto:*\n${projectText}\n\n` },
         { type: "mrkdwn", text: `*Processo:*\n${notionText}\n\n` },
         { type: "mrkdwn", text: `*Privacidade:*\n${privacy}` },
       ],

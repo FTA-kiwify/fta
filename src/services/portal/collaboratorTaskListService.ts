@@ -23,9 +23,7 @@ export async function getCollaboratorTaskList(
           lt: tomorrow,
         },
       },
-      include: {
-        project: true,
-      },
+
       orderBy: [
         {
           deadlineTime: "asc",
@@ -43,9 +41,6 @@ export async function getCollaboratorTaskList(
       responsible: slackUserId,
       status: "pending",
       calendarPrivate: false,
-    },
-    include: {
-      project: true,
     },
     orderBy: [
       {

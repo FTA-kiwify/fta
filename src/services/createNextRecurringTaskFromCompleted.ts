@@ -71,7 +71,7 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       recurrenceAnchor: true,
       deadlineTime: true,
       recurrence: true,
-      projectId: true,
+      processId: true,
       dependsOnId: true,
       urgency: true,
       reminderMode: true,
@@ -112,7 +112,7 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       recurrenceAnchor: nextSafeDate,
       responsible: completed.responsible,
       title: completed.title,
-      projectId: completed.projectId ?? null,
+      processId: completed.processId ?? null,
       // se quiser ficar ainda mais preciso, pode descomentar:
       // delegation: completed.delegation ?? null,
     },
@@ -139,11 +139,7 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
     };
   }
 
-  console.log("ORIGINAL", completed.calendarPrivate);
 
-  console.log("VAI GRAVAR", {
-    calendarPrivate: completed.calendarPrivate,
-  });
 
   const nextTask = await prisma.task.create({
     data: {
@@ -168,7 +164,7 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       turboPreviousDay: (completed as any).turboPreviousDay ?? false,
       turboStartTime: (completed as any).turboStartTime ?? null,
 
-      projectId: completed.projectId ?? null,
+      processId: completed.processId ?? null,
       dependsOnId: completed.dependsOnId ?? null,
 
       calendarPrivate: (completed as any).calendarPrivate ?? false,
@@ -196,14 +192,6 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
     },
   });
 
-  const check = await prisma.task.findUnique({
-    where: { id: nextTask.id },
-    select: {
-      calendarPrivate: true,
-    },
-  });
-
-  console.log("SALVO NO BANCO", check);
 
   // calendário do novo
   void syncCalendarEventForTask(nextTask.id).catch((e) => {

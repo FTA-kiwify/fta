@@ -3,7 +3,6 @@ import type { KnownBlock } from "@slack/web-api";
 
 export const HOME_CREATE_TASK_ACTION_ID = "home_create_task" as const;
 export const HOME_SEND_BATCH_ACTION_ID = "home_send_batch" as const;
-export const HOME_NEW_PROJECT_ACTION_ID = "home_new_project" as const;
 
 export function homeHeaderActionsBlocks(): KnownBlock[] {
   return [
@@ -26,12 +25,6 @@ export function homeHeaderActionsBlocks(): KnownBlock[] {
           text: { type: "plain_text", text: "📦 Enviar atividades em lote" },
           action_id: HOME_SEND_BATCH_ACTION_ID,
           value: "open_send_batch_modal",
-        },
-        {
-          type: "button",
-          text: { type: "plain_text", text: "📁 Criar Projeto" },
-          action_id: HOME_NEW_PROJECT_ACTION_ID,
-          value: "open_create_project_modal",
         },
       ],
     },

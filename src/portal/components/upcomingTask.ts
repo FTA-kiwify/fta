@@ -1,7 +1,7 @@
 type UpcomingTaskProps = {
   id: string;
   title: string;
-  responsible: string;
+  responsible?: string;
   urgency?: "light" | "asap" | "turbo";
   deadlineTime?: string | null;
   hideResponsible?: boolean;

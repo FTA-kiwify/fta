@@ -40,8 +40,7 @@ type NotifyTaskEditedArgs = {
   oldTurboStartTime?: string | null;
   newTurboStartTime?: string | null;
 
-  oldProjectId?: string | null;
-  newProjectId?: string | null;
+
 
   oldCalendarPrivate?: boolean | null;
   newCalendarPrivate?: boolean | null;
@@ -207,8 +206,6 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
     oldTurboStartTime,
     newTurboStartTime,
 
-    oldProjectId,
-    newProjectId,
 
     oldCalendarPrivate,
     newCalendarPrivate,
@@ -284,16 +281,7 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
     );
   }
 
-  if (
-    (oldProjectId || newProjectId) &&
-    oldProjectId !== newProjectId
-  ) {
-    changes.push(
-      `• *Projeto:* ${oldProjectId ?? "_nenhum_"
-      } → ${newProjectId ?? "_nenhum_"
-      }`
-    );
-  }
+
 
   if (
     oldCalendarPrivate !== undefined &&
