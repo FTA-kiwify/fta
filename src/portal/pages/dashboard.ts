@@ -149,7 +149,9 @@ export function dashboardPage(data: DashboardData) {
           }
 
                 ${tomorrowTasks.length
-            ? accordion({
+            ? `
+      <div style="margin-top:16px;">
+        ${accordion({
               id: "dashboard-tomorrow",
               title: "Amanhã",
               count: tomorrowTasks.length,
@@ -164,7 +166,9 @@ export function dashboardPage(data: DashboardData) {
                   })
                 )
                 .join(""),
-            })
+            })}
+      </div>
+    `
             : ""
           }
 

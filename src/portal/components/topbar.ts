@@ -38,17 +38,29 @@ export function topbar({
       aria-label="Voltar"
       title="Voltar"
       style="
-        display:none;
-        align-items:center;
-        border:none;
-        background:transparent;
-        padding:6px 8px 6px 0;
-        cursor:pointer;
-        color:#4B5563;
-        font-size:14px;
-        font-weight:600;
-        white-space:nowrap;
-      "
+  display:none;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border:1px solid #E5E7EB;
+  background:#F9FAFB;
+  padding:8px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  color:#4B5563;
+  font-size:13px;
+  font-weight:600;
+  white-space:nowrap;
+  transition:all .15s ease;
+"
+onmouseover="
+  this.style.background='#F3F4F6';
+  this.style.borderColor='#D1D5DB';
+"
+onmouseout="
+  this.style.background='#F9FAFB';
+  this.style.borderColor='#E5E7EB';
+"
     >
       ← Voltar
     </button>
@@ -70,9 +82,8 @@ export function topbar({
       gap:16px;
     "
   >
-    ${
-      searchPlaceholder
-        ? `
+    ${searchPlaceholder
+      ? `
           <input
             id="portal-search"
             placeholder="${searchPlaceholder}"
@@ -86,12 +97,11 @@ export function topbar({
             "
           />
         `
-        : ""
+      : ""
     }
 
-    ${
-      user
-        ? `
+    ${user
+      ? `
           <div
             id="portal-user"
             style="
@@ -103,9 +113,8 @@ export function topbar({
               user-select:none;
             "
           >
-            ${
-              user.image
-                ? `
+            ${user.image
+        ? `
                   <img
                     src="${user.image}"
                     alt="${user.name}"
@@ -117,7 +126,7 @@ export function topbar({
                     "
                   />
                 `
-                : `
+        : `
                   <div
                     style="
                       width:42px;
@@ -135,7 +144,7 @@ export function topbar({
                     ${user.name.charAt(0).toUpperCase()}
                   </div>
                 `
-            }
+      }
 
             <div
               style="
@@ -152,9 +161,8 @@ export function topbar({
                 ${user.name}
               </span>
 
-              ${
-                user.email
-                  ? `
+              ${user.email
+        ? `
                     <span
                       style="
                         font-size:12px;
@@ -164,8 +172,8 @@ export function topbar({
                       ${user.email}
                     </span>
                   `
-                  : ""
-              }
+        : ""
+      }
             </div>
 
             <span
@@ -207,9 +215,8 @@ export function topbar({
                   ${user.name}
                 </div>
 
-                ${
-                  user.email
-                    ? `
+                ${user.email
+        ? `
                       <div
                         style="
                           font-size:13px;
@@ -219,8 +226,8 @@ export function topbar({
                         ${user.email}
                       </div>
                     `
-                    : ""
-                }
+        : ""
+      }
               </div>
 
               <a
@@ -239,7 +246,7 @@ export function topbar({
             </div>
           </div>
         `
-        : ""
+      : ""
     }
   </div>
 </header>
