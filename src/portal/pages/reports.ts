@@ -16,7 +16,6 @@ function escapeHtml(
 function recurrenceLabel(
   recurrence: string
 ) {
-
   const labels: Record<string, string> = {
     daily: "Diária",
     weekly: "Semanal",
@@ -31,29 +30,135 @@ function recurrenceLabel(
   return labels[recurrence] ?? recurrence;
 }
 
+function reportCard({
+  title,
+  value,
+  subtitle,
+  icon,
+}: {
+  title: string;
+  value: number | string;
+  subtitle: string;
+  icon: string;
+}) {
+  return `
+    <div
+      class="card"
+      style="
+        padding:20px 22px;
+        min-height:105px;
+      "
+    >
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:16px;
+        "
+      >
+        <div>
+          <div
+            style="
+              font-size:13px;
+              color:#6B7280;
+              margin-bottom:8px;
+            "
+          >
+            ${escapeHtml(title)}
+          </div>
+
+          <div
+            style="
+              font-size:28px;
+              font-weight:700;
+              line-height:1;
+              margin-bottom:8px;
+            "
+          >
+            ${escapeHtml(String(value))}
+          </div>
+
+          <div
+            style="
+              font-size:12px;
+              color:#94A3B8;
+            "
+          >
+            ${escapeHtml(subtitle)}
+          </div>
+        </div>
+
+        <div
+          style="
+            width:44px;
+            height:44px;
+            border-radius:12px;
+            background:#F1F5F9;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:22px;
+          "
+        >
+          ${icon}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 export function reportsPage(
   data: ReportData
 ) {
+  const collaboratorCount =
+    new Set(
+      data.rows.map(row => row.responsibleId)
+    ).size;
 
-  const query = new URLSearchParams();
+  const processCount =
+    new Set(
+      data.rows
+        .map(row => row.processId)
+        .filter(Boolean)
+    ).size;
 
-  if (data.filters.teamId) {
-    query.set("teamId", data.filters.teamId);
+  const verticalCount =
+    new Set(
+      data.rows
+        .map(row => row.verticalId)
+        .filter(Boolean)
+    ).size;
+
+  const exportParams = new URLSearchParams();
+
+  if (data.filters.verticalId) {
+    exportParams.set(
+      "verticalId",
+      data.filters.verticalId
+    );
   }
 
   if (data.filters.collaboratorId) {
-    query.set(
+    exportParams.set(
       "collaboratorId",
       data.filters.collaboratorId
     );
   }
 
   if (data.filters.processId) {
-    query.set(
+    exportParams.set(
       "processId",
       data.filters.processId
     );
   }
+
+  const exportUrl =
+    `/portal/reports/export${
+      exportParams.toString()
+        ? `?${exportParams.toString()}`
+        : ""
+    }`;
 
   return `
 
@@ -80,9 +185,9 @@ export function reportsPage(
               font-size:14px;
             "
           >
-            Vertical:
+            Time:
             <strong>
-              ${escapeHtml(data.vertical ?? "—")}
+              ${escapeHtml(data.team ?? "—")}
             </strong>
           </div>
         </div>
@@ -122,11 +227,11 @@ export function reportsPage(
               margin-bottom:7px;
             "
           >
-            Time
+            Vertical
           </div>
 
           <select
-            name="teamId"
+            name="verticalId"
             style="
               width:100%;
               padding:10px 12px;
@@ -136,23 +241,24 @@ export function reportsPage(
             "
           >
             <option value="">
-              Todos
+              Todas
             </option>
 
-            ${data.teams
-              .map(team => `
+            ${data.verticals
+              .map(vertical => `
                 <option
-                  value="${escapeHtml(team.id)}"
+                  value="${escapeHtml(vertical.id)}"
                   ${
-                    data.filters.teamId === team.id
+                    data.filters.verticalId === vertical.id
                       ? "selected"
                       : ""
                   }
                 >
-                  ${escapeHtml(team.name)}
+                  ${escapeHtml(vertical.name)}
                 </option>
               `)
               .join("")}
+
           </select>
         </label>
 
@@ -196,6 +302,7 @@ export function reportsPage(
                 </option>
               `)
               .join("")}
+
           </select>
         </label>
 
@@ -238,6 +345,7 @@ export function reportsPage(
                 </option>
               `)
               .join("")}
+
           </select>
         </label>
 
@@ -256,6 +364,48 @@ export function reportsPage(
 
     </div>
 
+
+    <div
+      style="
+        display:grid;
+        grid-template-columns:
+          repeat(4,minmax(0,1fr));
+        gap:18px;
+        margin-top:28px;
+      "
+    >
+
+      ${reportCard({
+        title: "Atividades",
+        value: data.rows.length,
+        subtitle: "No relatório",
+        icon: "📋",
+      })}
+
+      ${reportCard({
+        title: "Colaboradores",
+        value: collaboratorCount,
+        subtitle: "Com atividades",
+        icon: "👥",
+      })}
+
+      ${reportCard({
+        title: "Processos",
+        value: processCount,
+        subtitle: "Vinculados",
+        icon: "📚",
+      })}
+
+      ${reportCard({
+        title: "Verticais",
+        value: verticalCount,
+        subtitle: `Time ${data.team ?? ""}`,
+        icon: "🏢",
+      })}
+
+    </div>
+
+
     <div
       class="card"
       style="
@@ -269,22 +419,52 @@ export function reportsPage(
           display:flex;
           justify-content:space-between;
           align-items:center;
+          gap:16px;
           margin-bottom:20px;
         "
       >
-        <h2 style="margin:0;">
-          Atividades
-        </h2>
 
-        <span
-          style="
-            font-size:13px;
-            color:#6B7280;
-          "
-        >
-          ${data.rows.length}
-          atividade${data.rows.length === 1 ? "" : "s"}
-        </span>
+        <div>
+          <h2 style="margin:0 0 5px 0;">
+            Atividades
+          </h2>
+
+          <span
+            style="
+              font-size:13px;
+              color:#6B7280;
+            "
+          >
+            ${data.rows.length}
+            atividade${data.rows.length === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        ${
+          data.rows.length
+            ? `
+              <a
+                href="${escapeHtml(exportUrl)}"
+                style="
+                  display:inline-flex;
+                  align-items:center;
+                  gap:8px;
+                  padding:10px 16px;
+                  background:#16A34A;
+                  color:white;
+                  border-radius:10px;
+                  text-decoration:none;
+                  font-size:13px;
+                  font-weight:700;
+                  white-space:nowrap;
+                "
+              >
+                📥 Exportar Excel
+              </a>
+            `
+            : ""
+        }
+
       </div>
 
       ${
@@ -308,23 +488,29 @@ export function reportsPage(
                   <th style="padding:12px;">
                     Atividade
                   </th>
+
                   <th style="padding:12px;">
                     Responsável
                   </th>
+
                   <th style="padding:12px;">
                     Recorrência
                   </th>
+
                   <th style="padding:12px;">
                     Processo
                   </th>
+
                   <th style="padding:12px;">
                     Notion
                   </th>
-                  <th style="padding:12px;">
-                    Time
-                  </th>
+
                   <th style="padding:12px;">
                     Vertical
+                  </th>
+
+                  <th style="padding:12px;">
+                    Time
                   </th>
                 </tr>
               </thead>
@@ -390,15 +576,16 @@ export function reportsPage(
 
                       <td style="padding:14px 12px;">
                         ${escapeHtml(
-                          row.teamName ?? "—"
+                          row.verticalName ?? "—"
                         )}
                       </td>
 
                       <td style="padding:14px 12px;">
                         ${escapeHtml(
-                          row.vertical ?? "—"
+                          row.teamName ?? "—"
                         )}
                       </td>
+
                     </tr>
                   `)
                   .join("")}

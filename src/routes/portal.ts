@@ -67,6 +67,7 @@ import {
 import {
   reportsPage,
 } from "../portal/pages/reports";
+import ExcelJS from "exceljs";
 
 function getTopbarUser(request: any) {
 
@@ -569,93 +570,312 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
-app.get(
-  "/portal/reports",
-  async (request, reply) => {
+  app.get(
+    "/portal/reports",
+    async (request, reply) => {
 
-    const portalUser =
-      getPortalUser(request);
+      const portalUser =
+        getPortalUser(request);
 
-    if (!portalUser) {
-      return reply.redirect(
-        "/portal/login"
-      );
-    }
+      if (!portalUser) {
+        return reply.redirect(
+          "/portal/login"
+        );
+      }
 
-    const query =
-      request.query as {
-        teamId?: string;
-        collaboratorId?: string;
-        processId?: string;
+      const query =
+        request.query as {
+          verticalId?: string;
+          collaboratorId?: string;
+          processId?: string;
+        };
+
+      const filters: ReportFilters = {
+        verticalId:
+          query.verticalId?.trim() || undefined,
+
+        collaboratorId:
+          query.collaboratorId?.trim() ||
+          undefined,
+
+        processId:
+          query.processId?.trim() || undefined,
       };
 
-    const filters: ReportFilters = {
-      teamId:
-        query.teamId?.trim() || undefined,
+      try {
 
-      collaboratorId:
-        query.collaboratorId?.trim() ||
-        undefined,
+        const report =
+          await getReportData(
+            portalUser.slackUserId,
+            filters
+          );
 
-      processId:
-        query.processId?.trim() || undefined,
-    };
-
-    try {
-
-      const report =
-        await getReportData(
-          portalUser.slackUserId,
-          filters
-        );
-
-      return reply
-        .type("text/html")
-        .send(
-          portalLayout({
-            title: "Relatórios",
-            sidebar: sidebar("reports"),
-            topbar: topbar({
-              title: "Relatórios",
-              user: getTopbarUser(request),
-            }),
-            body: reportsPage(report),
-          })
-        );
-
-    } catch (error) {
-
-      if (
-        error instanceof Error &&
-        error.message ===
-          "REPORT_ACCESS_DENIED"
-      ) {
         return reply
-          .code(403)
           .type("text/html")
           .send(
             portalLayout({
-              title: "Acesso não permitido",
+              title: "Relatórios",
               sidebar: sidebar("reports"),
               topbar: topbar({
                 title: "Relatórios",
                 user: getTopbarUser(request),
               }),
-              body: accessDeniedPage({
-                message:
-                  "Você não tem acesso aos dados selecionados.",
-                backHref:
-                  "/portal/reports",
-              }),
+              body: reportsPage(report),
             })
           );
+
+      } catch (error) {
+
+        if (
+          error instanceof Error &&
+          error.message ===
+          "REPORT_ACCESS_DENIED"
+        ) {
+          return reply
+            .code(403)
+            .type("text/html")
+            .send(
+              portalLayout({
+                title: "Acesso não permitido",
+                sidebar: sidebar("reports"),
+                topbar: topbar({
+                  title: "Relatórios",
+                  user: getTopbarUser(request),
+                }),
+                body: accessDeniedPage({
+                  message:
+                    "Você não tem acesso aos dados selecionados.",
+                  backHref:
+                    "/portal/reports",
+                }),
+              })
+            );
+        }
+
+        throw error;
       }
 
-      throw error;
     }
+  );
 
-  }
-);
+  app.get(
+    "/portal/reports/export",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply.redirect(
+          "/portal/login"
+        );
+      }
+
+      const query =
+        request.query as {
+          verticalId?: string;
+          collaboratorId?: string;
+          processId?: string;
+        };
+
+      const filters: ReportFilters = {
+        verticalId:
+          query.verticalId?.trim() || undefined,
+
+        collaboratorId:
+          query.collaboratorId?.trim() ||
+          undefined,
+
+        processId:
+          query.processId?.trim() || undefined,
+      };
+
+      try {
+
+        const report =
+          await getReportData(
+            portalUser.slackUserId,
+            filters
+          );
+
+        const workbook =
+          new ExcelJS.Workbook();
+
+        const worksheet =
+          workbook.addWorksheet("Relatório FTA");
+
+        worksheet.columns = [
+          {
+            header: "Atividade",
+            key: "title",
+            width: 42,
+          },
+          {
+            header: "Responsável",
+            key: "responsibleName",
+            width: 28,
+          },
+          {
+            header: "Recorrência",
+            key: "recurrenceLabel",
+            width: 20,
+          },
+          {
+            header: "Processo",
+            key: "processTitle",
+            width: 36,
+          },
+          {
+            header: "Notion",
+            key: "notionUrl",
+            width: 48,
+          },
+          {
+            header: "Vertical",
+            key: "vertical",
+            width: 24,
+          },
+          {
+            header: "Time",
+            key: "team",
+            width: 24,
+          },
+        ];
+
+        for (const row of report.rows) {
+
+          worksheet.addRow({
+            title: row.title,
+            responsibleName:
+              row.responsibleName,
+            recurrenceLabel:
+              row.recurrence === "daily"
+                ? "Diária"
+                : row.recurrence === "weekly"
+                  ? "Semanal"
+                  : row.recurrence === "biweekly"
+                    ? "Quinzenal"
+                    : row.recurrence === "monthly"
+                      ? "Mensal"
+                      : row.recurrence === "quarterly"
+                        ? "Trimestral"
+                        : row.recurrence === "semiannual"
+                          ? "Semestral"
+                          : row.recurrence === "annual"
+                            ? "Anual"
+                            : "Sem recorrência",
+            processTitle:
+              row.processTitle ?? "",
+            notionUrl:
+              row.notionUrl ?? "",
+            vertical:
+              row.verticalName ?? "",
+            team:
+              row.teamName ?? "",
+          });
+
+        }
+
+        const headerRow =
+          worksheet.getRow(1);
+
+        headerRow.font = {
+          bold: true,
+          color: {
+            argb: "FFFFFFFF",
+          },
+        };
+
+        headerRow.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: {
+            argb: "FF25835D",
+          },
+        };
+
+        headerRow.alignment = {
+          vertical: "middle",
+        };
+
+        headerRow.height = 24;
+
+        worksheet.views = [
+          {
+            state: "frozen",
+            ySplit: 1,
+          },
+        ];
+
+        worksheet.autoFilter = {
+          from: "A1",
+          to: "G1",
+        };
+
+        worksheet.eachRow(
+          (row, rowNumber) => {
+
+            if (rowNumber === 1) {
+              return;
+            }
+
+            row.alignment = {
+              vertical: "top",
+            };
+
+            row.getCell(5).value =
+              row.getCell(5).value
+                ? {
+                  text: String(
+                    row.getCell(5).value
+                  ),
+                  hyperlink: String(
+                    row.getCell(5).value
+                  ),
+                }
+                : "";
+
+          }
+        );
+
+        const buffer =
+          await workbook.xlsx.writeBuffer();
+
+        const fileName =
+          `relatorio_fta_${new Date()
+            .toISOString()
+            .slice(0, 10)}.xlsx`;
+
+        return reply
+          .header(
+            "Content-Type",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          )
+          .header(
+            "Content-Disposition",
+            `attachment; filename="${fileName}"`
+          )
+          .send(Buffer.from(buffer));
+
+      } catch (error) {
+
+        if (
+          error instanceof Error &&
+          error.message ===
+          "REPORT_ACCESS_DENIED"
+        ) {
+          return reply
+            .code(403)
+            .send(
+              "Acesso não permitido."
+            );
+        }
+
+        throw error;
+      }
+
+    }
+  );
 
   app.get("/portal/tasks/:id", async (request, reply) => {
 

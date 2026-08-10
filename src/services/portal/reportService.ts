@@ -3,7 +3,7 @@ import { resolveManySlackNames } from "../slackUserLookup";
 import { getPortalAccess } from "./portalAccessService";
 
 export type ReportFilters = {
-  teamId?: string;
+  verticalId?: string;
   collaboratorId?: string;
   processId?: string;
 };
@@ -22,14 +22,14 @@ export type ReportRow = {
   processId: string | null;
   processTitle: string | null;
   notionUrl: string | null;
-  teamId: string | null;
+  verticalId: string | null;
+  verticalName: string | null;
   teamName: string | null;
-  vertical: string | null;
 };
 
 export type ReportData = {
-  vertical: string | null;
-  teams: ReportOption[];
+  team: string | null;
+  verticals: ReportOption[];
   collaborators: ReportOption[];
   processes: ReportOption[];
   rows: ReportRow[];
@@ -40,15 +40,12 @@ export async function getReportData(
   viewerSlackUserId: string,
   filters: ReportFilters = {}
 ): Promise<ReportData> {
-
-  const access = await getPortalAccess(
-    viewerSlackUserId
-  );
+  const access = await getPortalAccess(viewerSlackUserId);
 
   if (!access.department) {
     return {
-      vertical: null,
-      teams: [],
+      team: null,
+      verticals: [],
       collaborators: [],
       processes: [],
       rows: [],
@@ -57,9 +54,13 @@ export async function getReportData(
   }
 
   /*
-   * Times que pertencem à vertical permitida.
-   * O departamento principal também está em teamIds,
-   * mas para o filtro queremos principalmente os subtimes.
+   * REGRA:
+   *
+   * Time = departamento principal
+   * Ex.: Financeiro
+   *
+   * Vertical = subtimes
+   * Ex.: Tesouraria, Compras, FP&A...
    */
   const teams = await prisma.team.findMany({
     where: {
@@ -79,21 +80,35 @@ export async function getReportData(
     },
   });
 
-  /*
-   * Validação de segurança dos filtros recebidos.
-   */
-  const selectedTeam =
-    filters.teamId
-      ? teams.find(team => team.id === filters.teamId)
-      : null;
+  const verticals = teams.filter(
+    team => team.group !== null
+  );
 
-  if (filters.teamId && !selectedTeam) {
+  /*
+   * Segurança do filtro de vertical.
+   */
+  const selectedVertical = filters.verticalId
+    ? verticals.find(
+        vertical => vertical.id === filters.verticalId
+      )
+    : null;
+
+  if (filters.verticalId && !selectedVertical) {
     throw new Error("REPORT_ACCESS_DENIED");
   }
 
-  const allowedMemberIds = new Set(
-    access.memberSlackUserIds
-  );
+  /*
+   * Membros permitidos.
+   *
+   * Se houver vertical selecionada, limita aos membros dela.
+   */
+  const memberIds = selectedVertical
+    ? selectedVertical.members.map(
+        member => member.slackUserId
+      )
+    : access.memberSlackUserIds;
+
+  const allowedMemberIds = new Set(memberIds);
 
   if (
     filters.collaboratorId &&
@@ -103,9 +118,9 @@ export async function getReportData(
   }
 
   /*
-   * Processos acessíveis ao usuário.
+   * Processos do time.
    */
-  const processes = await prisma.process.findMany({
+  const allProcesses = await prisma.process.findMany({
     where: {
       active: true,
       teamId: {
@@ -131,40 +146,33 @@ export async function getReportData(
     },
   });
 
-  const selectedProcess =
-    filters.processId
-      ? processes.find(
-          process => process.id === filters.processId
-        )
-      : null;
+  /*
+   * Se uma vertical estiver selecionada,
+   * mostra somente os processos daquela vertical.
+   */
+  const processOptions = allProcesses.filter(
+    process =>
+      !selectedVertical ||
+      process.teamId === selectedVertical.id
+  );
+
+  const selectedProcess = filters.processId
+    ? processOptions.find(
+        process => process.id === filters.processId
+      )
+    : null;
 
   if (filters.processId && !selectedProcess) {
     throw new Error("REPORT_ACCESS_DENIED");
   }
 
   /*
-   * Se um time foi selecionado, limita colaboradores
-   * e processos às opções daquele time.
+   * Colaboradores disponíveis no filtro.
    */
-  const collaboratorIdsForOptions =
-    selectedTeam
-      ? selectedTeam.members.map(
-          member => member.slackUserId
-        )
-      : access.memberSlackUserIds;
-
-  const processOptions = processes.filter(
-    process =>
-      !selectedTeam ||
-      process.teamId === selectedTeam.id
-  );
-
   const collaboratorNames =
-    await resolveManySlackNames(
-      collaboratorIdsForOptions
-    );
+    await resolveManySlackNames(memberIds);
 
-  const collaborators = collaboratorIdsForOptions
+  const collaborators = memberIds
     .map(id => ({
       id,
       name: collaboratorNames[id] ?? id,
@@ -174,11 +182,32 @@ export async function getReportData(
     );
 
   /*
-   * Busca das tarefas.
+   * Mapa:
    *
-   * Segurança principal:
-   * responsável precisa estar dentro da vertical
-   * à qual o usuário tem acesso.
+   * colaborador -> vertical
+   */
+  const memberVerticalMap = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+    }
+  >();
+
+  for (const vertical of verticals) {
+    for (const member of vertical.members) {
+      memberVerticalMap.set(
+        member.slackUserId,
+        {
+          id: vertical.id,
+          name: vertical.name,
+        }
+      );
+    }
+  }
+
+  /*
+   * Busca das tarefas.
    */
   const tasks = await prisma.task.findMany({
     where: {
@@ -193,7 +222,7 @@ export async function getReportData(
       },
 
       responsible: {
-        in: access.memberSlackUserIds,
+        in: memberIds,
       },
 
       ...(filters.collaboratorId
@@ -205,7 +234,8 @@ export async function getReportData(
 
       ...(filters.processId
         ? {
-            processId: filters.processId,
+            processId:
+              filters.processId,
           }
         : {}),
     },
@@ -242,69 +272,29 @@ export async function getReportData(
   });
 
   /*
-   * Mapa responsável -> time.
-   * Serve também para tarefas sem processo.
+   * Segurança adicional:
+   *
+   * quando houver vertical selecionada,
+   * uma tarefa só entra se:
+   *
+   * - o processo for da vertical;
+   * OU
+   * - sem processo, o responsável pertencer à vertical.
    */
-  const memberTeamMap = new Map<
-    string,
-    {
-      id: string;
-      name: string;
-      vertical: string;
-    }
-  >();
-
-  for (const team of teams) {
-    for (const member of team.members) {
-
-      /*
-       * Dá preferência ao subtime.
-       * Evita que Financeiro sobrescreva Tesouraria,
-       * por exemplo.
-       */
-      const existing =
-        memberTeamMap.get(member.slackUserId);
-
-      if (
-        !existing ||
-        team.group !== null
-      ) {
-        memberTeamMap.set(
-          member.slackUserId,
-          {
-            id: team.id,
-            name: team.name,
-            vertical:
-              team.group ??
-              access.department.name,
-          }
-        );
-      }
-    }
-  }
-
   let filteredTasks = tasks;
 
-  /*
-   * O filtro de time precisa considerar:
-   *
-   * 1. time do processo, quando houver;
-   * 2. time do responsável, quando não houver processo.
-   */
-  if (selectedTeam) {
+  if (selectedVertical) {
     filteredTasks = tasks.filter(task => {
-
       if (task.process?.teamId) {
         return (
-          task.process.teamId === selectedTeam.id
+          task.process.teamId === selectedVertical.id
         );
       }
 
       return (
-        memberTeamMap.get(task.responsible)?.id ===
-        selectedTeam.id
+        memberVerticalMap.get(task.responsible)?.id ===
+        selectedVertical.id
       );
-
     });
   }
 
@@ -321,11 +311,10 @@ export async function getReportData(
 
   const rows: ReportRow[] =
     filteredTasks.map(task => {
+      const responsibleVertical =
+        memberVerticalMap.get(task.responsible);
 
-      const responsibleTeam =
-        memberTeamMap.get(task.responsible);
-
-      const processTeam =
+      const processVertical =
         task.process?.team ?? null;
 
       return {
@@ -350,35 +339,34 @@ export async function getReportData(
         notionUrl:
           task.process?.notionPageUrl ?? null,
 
-        teamId:
-          processTeam?.id ??
-          responsibleTeam?.id ??
+        verticalId:
+          processVertical?.id ??
+          responsibleVertical?.id ??
           null,
 
-        teamName:
-          processTeam?.name ??
-          responsibleTeam?.name ??
-          null,
-
-        vertical:
-          processTeam?.group ??
+        verticalName:
+          processVertical?.name ??
+          responsibleVertical?.name ??
           task.process?.notionVertical ??
-          responsibleTeam?.vertical ??
-          access.department?.name ??
           null,
-      };
 
+        /*
+         * O time é sempre o departamento principal.
+         */
+        teamName:
+          access.department?.name ?? null,
+      };
     });
 
   return {
-    vertical: access.department.name,
+    team: access.department.name,
 
-    teams: teams
-      .filter(team => team.group !== null)
-      .map(team => ({
-        id: team.id,
-        name: team.name,
-      })),
+    verticals: verticals.map(
+      vertical => ({
+        id: vertical.id,
+        name: vertical.name,
+      })
+    ),
 
     collaborators,
 
