@@ -58,6 +58,7 @@ import {
   canAccessProcess,
   canAccessTask,
 } from "../services/portal/portalAccessService";
+import { accessDeniedPage } from "../portal/pages/accessDenied";
 
 function getTopbarUser(request: any) {
 
@@ -185,11 +186,20 @@ export async function portalRoutes(app: FastifyInstance) {
     );
 
     if (!allowed) {
-      return reply.code(403).type("text/html").send(`
-      <h2>Acesso não permitido</h2>
-      <p>Você não tem acesso a este colaborador.</p>
-      <a href="/portal/collaborators">← Voltar</a>
-    `);
+      return reply.code(403).type("text/html").send(
+        portalLayout({
+          title: "Acesso não permitido",
+          sidebar: sidebar("collaborators"),
+          topbar: topbar({
+            title: "Colaboradores",
+            user: getTopbarUser(request),
+          }),
+          body: accessDeniedPage({
+            message: "Você não tem acesso a este colaborador.",
+            backHref: "/portal/collaborators",
+          }),
+        })
+      );
     }
 
     const collaborator = await getCollaboratorDetails(
@@ -286,11 +296,20 @@ export async function portalRoutes(app: FastifyInstance) {
       );
 
       if (!allowed) {
-        return reply.code(403).type("text/html").send(`
-        <h2>Acesso não permitido</h2>
-        <p>Você não tem acesso a este departamento.</p>
-        <a href="/portal/processes">← Voltar</a>
-      `);
+        return reply.code(403).type("text/html").send(
+          portalLayout({
+            title: "Acesso não permitido",
+            sidebar: sidebar("processes"),
+            topbar: topbar({
+              title: "Processos",
+              user: getTopbarUser(request),
+            }),
+            body: accessDeniedPage({
+              message: "Você não tem acesso a este departamento.",
+              backHref: "/portal/processes",
+            }),
+          })
+        );
       }
 
       const teams = await getDepartmentTeams(department);
@@ -329,11 +348,20 @@ export async function portalRoutes(app: FastifyInstance) {
       );
 
       if (!allowed) {
-        return reply.code(403).type("text/html").send(`
-        <h2>Acesso não permitido</h2>
-        <p>Você não tem acesso a este time.</p>
-        <a href="/portal/processes">← Voltar</a>
-      `);
+        return reply.code(403).type("text/html").send(
+          portalLayout({
+            title: "Acesso não permitido",
+            sidebar: sidebar("processes"),
+            topbar: topbar({
+              title: "Processos",
+              user: getTopbarUser(request),
+            }),
+            body: accessDeniedPage({
+              message: "Você não tem acesso a este time.",
+              backHref: "/portal/processes",
+            }),
+          })
+        );
       }
 
       const team = await getProcessTeamDetails(teamId);
@@ -376,11 +404,20 @@ export async function portalRoutes(app: FastifyInstance) {
       );
 
       if (!allowed) {
-        return reply.code(403).type("text/html").send(`
-        <h2>Acesso não permitido</h2>
-        <p>Você não tem acesso a este processo.</p>
-        <a href="/portal/processes">← Voltar</a>
-      `);
+        return reply.code(403).type("text/html").send(
+          portalLayout({
+            title: "Acesso não permitido",
+            sidebar: sidebar("processes"),
+            topbar: topbar({
+              title: "Processos",
+              user: getTopbarUser(request),
+            }),
+            body: accessDeniedPage({
+              message: "Você não tem acesso a este processo.",
+              backHref: "/portal/processes",
+            }),
+          })
+        );
       }
 
       const process = await getProcessDetails(processId);
@@ -462,11 +499,20 @@ export async function portalRoutes(app: FastifyInstance) {
     );
 
     if (!allowed) {
-      return reply.code(403).type("text/html").send(`
-      <h2>Acesso não permitido</h2>
-      <p>Você não tem acesso a este time.</p>
-      <a href="/portal/teams">← Voltar</a>
-    `);
+      return reply.code(403).type("text/html").send(
+        portalLayout({
+          title: "Acesso não permitido",
+          sidebar: sidebar("teams"),
+          topbar: topbar({
+            title: "Times",
+            user: getTopbarUser(request),
+          }),
+          body: accessDeniedPage({
+            message: "Você não tem acesso a este time.",
+            backHref: "/portal/teams",
+          }),
+        })
+      );
     }
 
     const team = await prisma.team.findUnique({
@@ -536,11 +582,20 @@ export async function portalRoutes(app: FastifyInstance) {
     );
 
     if (!allowed) {
-      return reply.code(403).type("text/html").send(`
-      <h2>Acesso não permitido</h2>
-      <p>Você não tem acesso a esta tarefa.</p>
-      <a href="/portal">← Voltar</a>
-    `);
+      return reply.code(403).type("text/html").send(
+        portalLayout({
+          title: "Acesso não permitido",
+          sidebar: sidebar("dashboard"),
+          topbar: topbar({
+            title: "Dashboard",
+            user: getTopbarUser(request),
+          }),
+          body: accessDeniedPage({
+            message: "Você não tem acesso a esta tarefa.",
+            backHref: "/portal",
+          }),
+        })
+      );
     }
 
     const task = await getTaskDetails(id);
