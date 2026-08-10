@@ -35,19 +35,42 @@ function reportCard({
   value,
   subtitle,
   icon,
+  href,
 }: {
   title: string;
   value: number | string;
   subtitle: string;
   icon: string;
+  href?: string;
 }) {
-  return `
+
+  const content = `
     <div
       class="card"
       style="
         padding:20px 22px;
         min-height:105px;
+        height:100%;
+        box-sizing:border-box;
+        transition:
+          transform .15s ease,
+          box-shadow .15s ease;
+        ${href ? "cursor:pointer;" : ""}
       "
+      ${
+        href
+          ? `
+            onmouseover="
+              this.style.transform='translateY(-2px)';
+              this.style.boxShadow='0 10px 25px rgba(15,23,42,.10)';
+            "
+            onmouseout="
+              this.style.transform='translateY(0)';
+              this.style.boxShadow='';
+            "
+          `
+          : ""
+      }
     >
       <div
         style="
@@ -99,6 +122,7 @@ function reportCard({
             align-items:center;
             justify-content:center;
             font-size:22px;
+            flex-shrink:0;
           "
         >
           ${icon}
@@ -106,14 +130,192 @@ function reportCard({
       </div>
     </div>
   `;
+
+  if (!href) {
+    return content;
+  }
+
+  return `
+    <a
+      href="${escapeHtml(href)}"
+      style="
+        display:block;
+        color:inherit;
+        text-decoration:none;
+      "
+    >
+      ${content}
+    </a>
+  `;
+}
+
+function activityCard(
+  row: ReportData["rows"][number]
+) {
+  return `
+    <a
+      href="/portal/tasks/${encodeURIComponent(row.id)}"
+      style="
+        display:block;
+        color:inherit;
+        text-decoration:none;
+      "
+    >
+      <div
+        style="
+          border:1px solid #E5E7EB;
+          border-radius:12px;
+          padding:16px 18px;
+          background:#FFFFFF;
+          min-height:125px;
+          height:100%;
+          box-sizing:border-box;
+          cursor:pointer;
+          transition:
+            transform .15s ease,
+            box-shadow .15s ease,
+            border-color .15s ease;
+        "
+        onmouseover="
+          this.style.transform='translateY(-2px)';
+          this.style.boxShadow='0 8px 22px rgba(15,23,42,.08)';
+          this.style.borderColor='#CBD5E1';
+        "
+        onmouseout="
+          this.style.transform='translateY(0)';
+          this.style.boxShadow='';
+          this.style.borderColor='#E5E7EB';
+        "
+      >
+
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            gap:16px;
+            align-items:flex-start;
+          "
+        >
+
+          <div
+            style="
+              min-width:0;
+              flex:1;
+            "
+          >
+
+            <div
+              style="
+                font-size:14px;
+                font-weight:700;
+                color:#1F2937;
+                margin-bottom:10px;
+              "
+            >
+              ${escapeHtml(row.title)}
+            </div>
+
+            <div
+              style="
+                font-size:12px;
+                color:#64748B;
+                line-height:1.7;
+              "
+            >
+              👤 ${escapeHtml(row.responsibleName)}
+
+              <br>
+
+              🔁 ${escapeHtml(
+                recurrenceLabel(row.recurrence)
+              )}
+
+              ${
+                row.processTitle
+                  ? `
+                    <br>
+                    📚 ${escapeHtml(row.processTitle)}
+                  `
+                  : ""
+              }
+            </div>
+
+          </div>
+
+          <div
+            style="
+              color:#94A3B8;
+              font-size:20px;
+              line-height:1;
+              flex-shrink:0;
+            "
+          >
+            ›
+          </div>
+
+        </div>
+
+        <div
+          style="
+            display:flex;
+            gap:8px;
+            flex-wrap:wrap;
+            margin-top:13px;
+          "
+        >
+
+          ${
+            row.verticalName
+              ? `
+                <span
+                  style="
+                    background:#F1F5F9;
+                    border-radius:999px;
+                    padding:4px 9px;
+                    font-size:11px;
+                    color:#475569;
+                  "
+                >
+                  ${escapeHtml(row.verticalName)}
+                </span>
+              `
+              : ""
+          }
+
+          ${
+            row.teamName
+              ? `
+                <span
+                  style="
+                    background:#F1F5F9;
+                    border-radius:999px;
+                    padding:4px 9px;
+                    font-size:11px;
+                    color:#475569;
+                  "
+                >
+                  ${escapeHtml(row.teamName)}
+                </span>
+              `
+              : ""
+          }
+
+        </div>
+
+      </div>
+    </a>
+  `;
 }
 
 export function reportsPage(
   data: ReportData
 ) {
+
   const collaboratorCount =
     new Set(
-      data.rows.map(row => row.responsibleId)
+      data.rows.map(
+        row => row.responsibleId
+      )
     ).size;
 
   const processCount =
@@ -130,7 +332,11 @@ export function reportsPage(
         .filter(Boolean)
     ).size;
 
-  const exportParams = new URLSearchParams();
+  /*
+   * URL DO EXCEL
+   */
+  const exportParams =
+    new URLSearchParams();
 
   if (data.filters.verticalId) {
     exportParams.set(
@@ -160,7 +366,39 @@ export function reportsPage(
         : ""
     }`;
 
+  /*
+   * LINKS DOS CARDS
+   */
+
+  const activitiesHref =
+    "#report-activities";
+
+  const collaboratorsHref =
+    data.filters.collaboratorId
+      ? `/portal/collaborators/${encodeURIComponent(
+          data.filters.collaboratorId
+        )}`
+      : "#report-activities";
+
+  const processesHref =
+    data.filters.processId
+      ? `/portal/processes/${encodeURIComponent(
+          data.filters.processId
+        )}`
+      : "#report-activities";
+
+  const verticalsHref =
+    data.filters.verticalId
+      ? `/portal/teams/${encodeURIComponent(
+          data.filters.verticalId
+        )}`
+      : "/portal/teams";
+
   return `
+
+    <!-- ========================= -->
+    <!-- FILTROS                   -->
+    <!-- ========================= -->
 
     <div class="card">
 
@@ -175,7 +413,12 @@ export function reportsPage(
       >
 
         <div>
-          <h2 style="margin:0 0 6px 0;">
+
+          <h2
+            style="
+              margin:0 0 6px 0;
+            "
+          >
             Filtros
           </h2>
 
@@ -190,6 +433,7 @@ export function reportsPage(
               ${escapeHtml(data.team ?? "—")}
             </strong>
           </div>
+
         </div>
 
         <a
@@ -206,6 +450,7 @@ export function reportsPage(
 
       </div>
 
+
       <form
         method="GET"
         action="/portal/reports"
@@ -219,7 +464,10 @@ export function reportsPage(
         "
       >
 
+        <!-- VERTICAL -->
+
         <label>
+
           <div
             style="
               font-size:13px;
@@ -240,6 +488,7 @@ export function reportsPage(
               background:white;
             "
           >
+
             <option value="">
               Todas
             </option>
@@ -249,7 +498,8 @@ export function reportsPage(
                 <option
                   value="${escapeHtml(vertical.id)}"
                   ${
-                    data.filters.verticalId === vertical.id
+                    data.filters.verticalId ===
+                    vertical.id
                       ? "selected"
                       : ""
                   }
@@ -260,9 +510,14 @@ export function reportsPage(
               .join("")}
 
           </select>
+
         </label>
 
+
+        <!-- COLABORADOR -->
+
         <label>
+
           <div
             style="
               font-size:13px;
@@ -283,6 +538,7 @@ export function reportsPage(
               background:white;
             "
           >
+
             <option value="">
               Todos
             </option>
@@ -290,7 +546,9 @@ export function reportsPage(
             ${data.collaborators
               .map(collaborator => `
                 <option
-                  value="${escapeHtml(collaborator.id)}"
+                  value="${escapeHtml(
+                    collaborator.id
+                  )}"
                   ${
                     data.filters.collaboratorId ===
                     collaborator.id
@@ -298,15 +556,22 @@ export function reportsPage(
                       : ""
                   }
                 >
-                  ${escapeHtml(collaborator.name)}
+                  ${escapeHtml(
+                    collaborator.name
+                  )}
                 </option>
               `)
               .join("")}
 
           </select>
+
         </label>
 
+
+        <!-- PROCESSO -->
+
         <label>
+
           <div
             style="
               font-size:13px;
@@ -327,6 +592,7 @@ export function reportsPage(
               background:white;
             "
           >
+
             <option value="">
               Todos
             </option>
@@ -336,7 +602,8 @@ export function reportsPage(
                 <option
                   value="${escapeHtml(process.id)}"
                   ${
-                    data.filters.processId === process.id
+                    data.filters.processId ===
+                    process.id
                       ? "selected"
                       : ""
                   }
@@ -347,7 +614,9 @@ export function reportsPage(
               .join("")}
 
           </select>
+
         </label>
+
 
         <button
           type="submit"
@@ -365,6 +634,10 @@ export function reportsPage(
     </div>
 
 
+    <!-- ========================= -->
+    <!-- CARDS RESUMO              -->
+    <!-- ========================= -->
+
     <div
       style="
         display:grid;
@@ -380,6 +653,7 @@ export function reportsPage(
         value: data.rows.length,
         subtitle: "No relatório",
         icon: "📋",
+        href: activitiesHref,
       })}
 
       ${reportCard({
@@ -387,6 +661,7 @@ export function reportsPage(
         value: collaboratorCount,
         subtitle: "Com atividades",
         icon: "👥",
+        href: collaboratorsHref,
       })}
 
       ${reportCard({
@@ -394,6 +669,7 @@ export function reportsPage(
         value: processCount,
         subtitle: "Vinculados",
         icon: "📚",
+        href: processesHref,
       })}
 
       ${reportCard({
@@ -401,16 +677,21 @@ export function reportsPage(
         value: verticalCount,
         subtitle: `Time ${data.team ?? ""}`,
         icon: "🏢",
+        href: verticalsHref,
       })}
 
     </div>
 
 
+    <!-- ========================= -->
+    <!-- ATIVIDADES                -->
+    <!-- ========================= -->
+
     <div
+      id="report-activities"
       class="card"
       style="
         margin-top:28px;
-        overflow-x:auto;
       "
     >
 
@@ -425,7 +706,12 @@ export function reportsPage(
       >
 
         <div>
-          <h2 style="margin:0 0 5px 0;">
+
+          <h2
+            style="
+              margin:0 0 5px 0;
+            "
+          >
             Atividades
           </h2>
 
@@ -436,9 +722,15 @@ export function reportsPage(
             "
           >
             ${data.rows.length}
-            atividade${data.rows.length === 1 ? "" : "s"}
+            atividade${
+              data.rows.length === 1
+                ? ""
+                : "s"
+            }
           </span>
+
         </div>
+
 
         ${
           data.rows.length
@@ -467,132 +759,29 @@ export function reportsPage(
 
       </div>
 
+
       ${
         data.rows.length
           ? `
-            <table
+            <div
               style="
-                width:100%;
-                border-collapse:collapse;
-                font-size:14px;
+                display:grid;
+                grid-template-columns:
+                  repeat(
+                    auto-fill,
+                    minmax(360px,1fr)
+                  );
+                gap:14px;
               "
             >
 
-              <thead>
-                <tr
-                  style="
-                    text-align:left;
-                    border-bottom:1px solid #E5E7EB;
-                  "
-                >
-                  <th style="padding:12px;">
-                    Atividade
-                  </th>
+              ${data.rows
+                .map(row =>
+                  activityCard(row)
+                )
+                .join("")}
 
-                  <th style="padding:12px;">
-                    Responsável
-                  </th>
-
-                  <th style="padding:12px;">
-                    Recorrência
-                  </th>
-
-                  <th style="padding:12px;">
-                    Processo
-                  </th>
-
-                  <th style="padding:12px;">
-                    Notion
-                  </th>
-
-                  <th style="padding:12px;">
-                    Vertical
-                  </th>
-
-                  <th style="padding:12px;">
-                    Time
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-
-                ${data.rows
-                  .map(row => `
-                    <tr
-                      style="
-                        border-bottom:1px solid #F3F4F6;
-                      "
-                    >
-                      <td
-                        style="
-                          padding:14px 12px;
-                          font-weight:600;
-                        "
-                      >
-                        ${escapeHtml(row.title)}
-                      </td>
-
-                      <td style="padding:14px 12px;">
-                        ${escapeHtml(
-                          row.responsibleName
-                        )}
-                      </td>
-
-                      <td style="padding:14px 12px;">
-                        ${escapeHtml(
-                          recurrenceLabel(
-                            row.recurrence
-                          )
-                        )}
-                      </td>
-
-                      <td style="padding:14px 12px;">
-                        ${escapeHtml(
-                          row.processTitle ?? "—"
-                        )}
-                      </td>
-
-                      <td style="padding:14px 12px;">
-                        ${
-                          row.notionUrl
-                            ? `
-                              <a
-                                href="${escapeHtml(row.notionUrl)}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style="
-                                  color:#4F46E5;
-                                  text-decoration:none;
-                                  font-weight:600;
-                                "
-                              >
-                                Abrir ↗
-                              </a>
-                            `
-                            : "—"
-                        }
-                      </td>
-
-                      <td style="padding:14px 12px;">
-                        ${escapeHtml(
-                          row.verticalName ?? "—"
-                        )}
-                      </td>
-
-                      <td style="padding:14px 12px;">
-                        ${escapeHtml(
-                          row.teamName ?? "—"
-                        )}
-                      </td>
-
-                    </tr>
-                  `)
-                  .join("")}
-
-              </tbody>
-
-            </table>
+            </div>
           `
           : `
             <div
