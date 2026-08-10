@@ -777,13 +777,39 @@ export async function portalRoutes(app: FastifyInstance) {
             a.name.localeCompare(b.name)
           )
           .map(item => `
-          <div
-            style="
-              padding:14px 0;
-              border-bottom:1px solid #E5E7EB;
-            "
-          >
-            <div style="font-weight:600;">
+      <div
+        onclick="window.location.href='/portal/collaborators/${encodeURIComponent(item.id)}'"
+        style="
+          padding:14px 6px;
+          border-bottom:1px solid #E5E7EB;
+          cursor:pointer;
+          transition:background .15s ease;
+        "
+        onmouseover="
+          this.style.background='#F8FAFC';
+        "
+        onmouseout="
+          this.style.background='transparent';
+        "
+      >
+
+        <div
+          style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+          "
+        >
+
+          <div>
+
+            <div
+              style="
+                font-weight:600;
+                color:#1F2937;
+              "
+            >
               ${item.name}
             </div>
 
@@ -797,8 +823,22 @@ export async function portalRoutes(app: FastifyInstance) {
               ${item.count}
               atividade${item.count === 1 ? "" : "s"}
             </div>
+
           </div>
-        `)
+
+          <span
+            style="
+              color:#94A3B8;
+              font-size:20px;
+            "
+          >
+            ›
+          </span>
+
+        </div>
+
+      </div>
+    `)
           .join("");
       }
 
@@ -808,6 +848,7 @@ export async function portalRoutes(app: FastifyInstance) {
 
         const processes =
           new Map<string, {
+            id: string;
             name: string;
             count: number;
           }>();
@@ -830,6 +871,7 @@ export async function portalRoutes(app: FastifyInstance) {
             processes.set(
               row.processId,
               {
+                id: row.processId,
                 name: row.processTitle,
                 count: 1,
               }
@@ -842,13 +884,39 @@ export async function portalRoutes(app: FastifyInstance) {
             a.name.localeCompare(b.name)
           )
           .map(item => `
-          <div
-            style="
-              padding:14px 0;
-              border-bottom:1px solid #E5E7EB;
-            "
-          >
-            <div style="font-weight:600;">
+      <div
+        onclick="window.location.href='/portal/processes/${encodeURIComponent(item.id)}'"
+        style="
+          padding:14px 6px;
+          border-bottom:1px solid #E5E7EB;
+          cursor:pointer;
+          transition:background .15s ease;
+        "
+        onmouseover="
+          this.style.background='#F8FAFC';
+        "
+        onmouseout="
+          this.style.background='transparent';
+        "
+      >
+
+        <div
+          style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+          "
+        >
+
+          <div>
+
+            <div
+              style="
+                font-weight:600;
+                color:#1F2937;
+              "
+            >
               ${item.name}
             </div>
 
@@ -862,8 +930,22 @@ export async function portalRoutes(app: FastifyInstance) {
               ${item.count}
               atividade${item.count === 1 ? "" : "s"}
             </div>
+
           </div>
-        `)
+
+          <span
+            style="
+              color:#94A3B8;
+              font-size:20px;
+            "
+          >
+            ›
+          </span>
+
+        </div>
+
+      </div>
+    `)
           .join("");
       }
 
@@ -872,35 +954,77 @@ export async function portalRoutes(app: FastifyInstance) {
         title = "🏢 Verticais";
 
         const verticals =
-          new Map<string, number>();
+          new Map<string, {
+            id: string;
+            name: string;
+            count: number;
+          }>();
 
         for (const row of report.rows) {
 
-          if (!row.verticalName) {
+          if (
+            !row.verticalId ||
+            !row.verticalName
+          ) {
             continue;
           }
 
-          verticals.set(
-            row.verticalName,
-            (verticals.get(
-              row.verticalName
-            ) ?? 0) + 1
-          );
+          const current =
+            verticals.get(row.verticalId);
+
+          if (current) {
+            current.count++;
+          } else {
+            verticals.set(
+              row.verticalId,
+              {
+                id: row.verticalId,
+                name: row.verticalName,
+                count: 1,
+              }
+            );
+          }
         }
 
-        body = [...verticals.entries()]
-          .sort(([a], [b]) =>
-            a.localeCompare(b)
+        body = [...verticals.values()]
+          .sort((a, b) =>
+            a.name.localeCompare(b.name)
           )
-          .map(([name, count]) => `
-          <div
-            style="
-              padding:14px 0;
-              border-bottom:1px solid #E5E7EB;
-            "
-          >
-            <div style="font-weight:600;">
-              ${name}
+          .map(item => `
+      <div
+        onclick="window.location.href='/portal/teams/${encodeURIComponent(item.id)}'"
+        style="
+          padding:14px 6px;
+          border-bottom:1px solid #E5E7EB;
+          cursor:pointer;
+          transition:background .15s ease;
+        "
+        onmouseover="
+          this.style.background='#F8FAFC';
+        "
+        onmouseout="
+          this.style.background='transparent';
+        "
+      >
+
+        <div
+          style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+          "
+        >
+
+          <div>
+
+            <div
+              style="
+                font-weight:600;
+                color:#1F2937;
+              "
+            >
+              ${item.name}
             </div>
 
             <div
@@ -910,11 +1034,25 @@ export async function portalRoutes(app: FastifyInstance) {
                 margin-top:4px;
               "
             >
-              ${count}
-              atividade${count === 1 ? "" : "s"}
+              ${item.count}
+              atividade${item.count === 1 ? "" : "s"}
             </div>
+
           </div>
-        `)
+
+          <span
+            style="
+              color:#94A3B8;
+              font-size:20px;
+            "
+          >
+            ›
+          </span>
+
+        </div>
+
+      </div>
+    `)
           .join("");
       }
 
