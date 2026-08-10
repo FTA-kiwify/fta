@@ -59,6 +59,14 @@ import {
   canAccessTask,
 } from "../services/portal/portalAccessService";
 import { accessDeniedPage } from "../portal/pages/accessDenied";
+import {
+  getReportData,
+  type ReportFilters,
+} from "../services/portal/reportService";
+
+import {
+  reportsPage,
+} from "../portal/pages/reports";
 
 function getTopbarUser(request: any) {
 
@@ -561,7 +569,93 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
+app.get(
+  "/portal/reports",
+  async (request, reply) => {
 
+    const portalUser =
+      getPortalUser(request);
+
+    if (!portalUser) {
+      return reply.redirect(
+        "/portal/login"
+      );
+    }
+
+    const query =
+      request.query as {
+        teamId?: string;
+        collaboratorId?: string;
+        processId?: string;
+      };
+
+    const filters: ReportFilters = {
+      teamId:
+        query.teamId?.trim() || undefined,
+
+      collaboratorId:
+        query.collaboratorId?.trim() ||
+        undefined,
+
+      processId:
+        query.processId?.trim() || undefined,
+    };
+
+    try {
+
+      const report =
+        await getReportData(
+          portalUser.slackUserId,
+          filters
+        );
+
+      return reply
+        .type("text/html")
+        .send(
+          portalLayout({
+            title: "Relatórios",
+            sidebar: sidebar("reports"),
+            topbar: topbar({
+              title: "Relatórios",
+              user: getTopbarUser(request),
+            }),
+            body: reportsPage(report),
+          })
+        );
+
+    } catch (error) {
+
+      if (
+        error instanceof Error &&
+        error.message ===
+          "REPORT_ACCESS_DENIED"
+      ) {
+        return reply
+          .code(403)
+          .type("text/html")
+          .send(
+            portalLayout({
+              title: "Acesso não permitido",
+              sidebar: sidebar("reports"),
+              topbar: topbar({
+                title: "Relatórios",
+                user: getTopbarUser(request),
+              }),
+              body: accessDeniedPage({
+                message:
+                  "Você não tem acesso aos dados selecionados.",
+                backHref:
+                  "/portal/reports",
+              }),
+            })
+          );
+      }
+
+      throw error;
+    }
+
+  }
+);
 
   app.get("/portal/tasks/:id", async (request, reply) => {
 
