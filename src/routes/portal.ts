@@ -706,38 +706,34 @@ export async function portalRoutes(app: FastifyInstance) {
 
       if (type === "activities") {
 
-        title = "📋 Atividades";
+        const tasks = await prisma.task.findMany({
+          where: {
+            id: {
+              in: report.rows.map(row => row.id),
+            },
+          },
 
-        body = report.rows
-          .map(row => `
-          <div
-            onclick="openPortalModal('/portal/tasks/${encodeURIComponent(row.id)}/modal')"
-            style="
-              padding:14px 0;
-              border-bottom:1px solid #E5E7EB;
-              cursor:pointer;
-            "
-          >
-            <div
-              style="
-                font-weight:600;
-                margin-bottom:5px;
-              "
-            >
-              ${row.title}
-            </div>
+          select: {
+            id: true,
+            title: true,
+            deadlineTime: true,
+            urgency: true,
+          },
 
-            <div
-              style="
-                font-size:13px;
-                color:#6B7280;
-              "
-            >
-              👤 ${row.responsibleName}
-            </div>
-          </div>
-        `)
-          .join("");
+          orderBy: {
+            title: "asc",
+          },
+        });
+
+        return reply
+          .type("text/html")
+          .send(
+            dashboardTasksModal({
+              title: "📋 Atividades",
+              tasks,
+              completed: false,
+            })
+          );
       }
 
       else if (type === "collaborators") {
