@@ -30,286 +30,197 @@ function recurrenceLabel(
   return labels[recurrence] ?? recurrence;
 }
 
+/*
+ * Card de resumo.
+ *
+ * Segue a mesma lógica dos cards do restante
+ * do Portal: o próprio card executa uma ação,
+ * sem navegar para uma página nova.
+ */
 function reportCard({
   title,
   value,
   subtitle,
   icon,
-  href,
+  onclick,
 }: {
   title: string;
   value: number | string;
   subtitle: string;
   icon: string;
-  href?: string;
+  onclick?: string;
 }) {
-
-  const content = `
+  return `
     <div
-      class="card"
-      style="
-        padding:20px 22px;
-        min-height:105px;
-        height:100%;
-        box-sizing:border-box;
-        transition:
-          transform .15s ease,
-          box-shadow .15s ease;
-        ${href ? "cursor:pointer;" : ""}
-      "
+      class="stat-card"
+      ${onclick ? `onclick="${onclick}"` : ""}
+      style="${onclick ? "cursor:pointer;" : ""}"
       ${
-        href
+        onclick
           ? `
             onmouseover="
               this.style.transform='translateY(-2px)';
-              this.style.boxShadow='0 10px 25px rgba(15,23,42,.10)';
             "
             onmouseout="
               this.style.transform='translateY(0)';
-              this.style.boxShadow='';
             "
           `
           : ""
       }
     >
-      <div
-        style="
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:16px;
-        "
-      >
-        <div>
-          <div
-            style="
-              font-size:13px;
-              color:#6B7280;
-              margin-bottom:8px;
-            "
-          >
-            ${escapeHtml(title)}
-          </div>
 
-          <div
-            style="
-              font-size:28px;
-              font-weight:700;
-              line-height:1;
-              margin-bottom:8px;
-            "
-          >
-            ${escapeHtml(String(value))}
-          </div>
+      <div>
 
-          <div
-            style="
-              font-size:12px;
-              color:#94A3B8;
-            "
-          >
-            ${escapeHtml(subtitle)}
-          </div>
+        <div class="stat-title">
+          ${escapeHtml(title)}
         </div>
 
-        <div
-          style="
-            width:44px;
-            height:44px;
-            border-radius:12px;
-            background:#F1F5F9;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:22px;
-            flex-shrink:0;
-          "
-        >
-          ${icon}
+        <div class="stat-value">
+          ${escapeHtml(String(value))}
         </div>
+
+        <div class="stat-subtitle">
+          ${escapeHtml(subtitle)}
+        </div>
+
       </div>
+
+      <div
+        class="stat-icon"
+        style="background:#F1F5F9;"
+      >
+        ${icon}
+      </div>
+
     </div>
-  `;
-
-  if (!href) {
-    return content;
-  }
-
-  return `
-    <a
-      href="${escapeHtml(href)}"
-      style="
-        display:block;
-        color:inherit;
-        text-decoration:none;
-      "
-    >
-      ${content}
-    </a>
   `;
 }
 
-function activityCard(
+/*
+ * Linha de atividade do relatório.
+ *
+ * Não navega para /portal/tasks/:id.
+ *
+ * Ao clicar, abre o mesmo modal de tarefa
+ * utilizado no Dashboard, Colaborador etc.
+ */
+function activityRow(
   row: ReportData["rows"][number]
 ) {
   return `
-    <a
-      href="/portal/tasks/${encodeURIComponent(row.id)}"
+    <div
+      onclick="openPortalModal('/portal/tasks/${encodeURIComponent(row.id)}/modal')"
       style="
-        display:block;
-        color:inherit;
-        text-decoration:none;
+        display:grid;
+        grid-template-columns:
+          minmax(260px,2fr)
+          minmax(170px,1fr)
+          minmax(130px,.8fr)
+          minmax(200px,1.3fr)
+          minmax(130px,.8fr)
+          minmax(130px,.8fr)
+          28px;
+        gap:18px;
+        align-items:center;
+        padding:15px 12px;
+        border-bottom:1px solid #E5E7EB;
+        cursor:pointer;
+        transition:background .15s ease;
+      "
+      onmouseover="
+        this.style.background='#F8FAFC';
+      "
+      onmouseout="
+        this.style.background='transparent';
       "
     >
+
       <div
         style="
-          border:1px solid #E5E7EB;
-          border-radius:12px;
-          padding:16px 18px;
-          background:#FFFFFF;
-          min-height:125px;
-          height:100%;
-          box-sizing:border-box;
-          cursor:pointer;
-          transition:
-            transform .15s ease,
-            box-shadow .15s ease,
-            border-color .15s ease;
-        "
-        onmouseover="
-          this.style.transform='translateY(-2px)';
-          this.style.boxShadow='0 8px 22px rgba(15,23,42,.08)';
-          this.style.borderColor='#CBD5E1';
-        "
-        onmouseout="
-          this.style.transform='translateY(0)';
-          this.style.boxShadow='';
-          this.style.borderColor='#E5E7EB';
+          font-weight:600;
+          color:#1F2937;
+          min-width:0;
         "
       >
-
-        <div
-          style="
-            display:flex;
-            justify-content:space-between;
-            gap:16px;
-            align-items:flex-start;
-          "
-        >
-
-          <div
-            style="
-              min-width:0;
-              flex:1;
-            "
-          >
-
-            <div
-              style="
-                font-size:14px;
-                font-weight:700;
-                color:#1F2937;
-                margin-bottom:10px;
-              "
-            >
-              ${escapeHtml(row.title)}
-            </div>
-
-            <div
-              style="
-                font-size:12px;
-                color:#64748B;
-                line-height:1.7;
-              "
-            >
-              👤 ${escapeHtml(row.responsibleName)}
-
-              <br>
-
-              🔁 ${escapeHtml(
-                recurrenceLabel(row.recurrence)
-              )}
-
-              ${
-                row.processTitle
-                  ? `
-                    <br>
-                    📚 ${escapeHtml(row.processTitle)}
-                  `
-                  : ""
-              }
-            </div>
-
-          </div>
-
-          <div
-            style="
-              color:#94A3B8;
-              font-size:20px;
-              line-height:1;
-              flex-shrink:0;
-            "
-          >
-            ›
-          </div>
-
-        </div>
-
-        <div
-          style="
-            display:flex;
-            gap:8px;
-            flex-wrap:wrap;
-            margin-top:13px;
-          "
-        >
-
-          ${
-            row.verticalName
-              ? `
-                <span
-                  style="
-                    background:#F1F5F9;
-                    border-radius:999px;
-                    padding:4px 9px;
-                    font-size:11px;
-                    color:#475569;
-                  "
-                >
-                  ${escapeHtml(row.verticalName)}
-                </span>
-              `
-              : ""
-          }
-
-          ${
-            row.teamName
-              ? `
-                <span
-                  style="
-                    background:#F1F5F9;
-                    border-radius:999px;
-                    padding:4px 9px;
-                    font-size:11px;
-                    color:#475569;
-                  "
-                >
-                  ${escapeHtml(row.teamName)}
-                </span>
-              `
-              : ""
-          }
-
-        </div>
-
+        ${escapeHtml(row.title)}
       </div>
-    </a>
+
+      <div
+        style="
+          color:#475569;
+          font-size:14px;
+        "
+      >
+        ${escapeHtml(row.responsibleName)}
+      </div>
+
+      <div
+        style="
+          color:#475569;
+          font-size:14px;
+        "
+      >
+        ${escapeHtml(
+          recurrenceLabel(row.recurrence)
+        )}
+      </div>
+
+      <div
+        style="
+          color:#475569;
+          font-size:14px;
+        "
+      >
+        ${escapeHtml(
+          row.processTitle ?? "—"
+        )}
+      </div>
+
+      <div
+        style="
+          color:#475569;
+          font-size:14px;
+        "
+      >
+        ${escapeHtml(
+          row.verticalName ?? "—"
+        )}
+      </div>
+
+      <div
+        style="
+          color:#475569;
+          font-size:14px;
+        "
+      >
+        ${escapeHtml(
+          row.teamName ?? "—"
+        )}
+      </div>
+
+      <div
+        style="
+          color:#94A3B8;
+          font-size:20px;
+          text-align:right;
+        "
+      >
+        ›
+      </div>
+
+    </div>
   `;
 }
 
 export function reportsPage(
   data: ReportData
 ) {
+
+  /*
+   * =========================
+   * CONTADORES
+   * =========================
+   */
 
   const collaboratorCount =
     new Set(
@@ -333,8 +244,11 @@ export function reportsPage(
     ).size;
 
   /*
+   * =========================
    * URL DO EXCEL
+   * =========================
    */
+
   const exportParams =
     new URLSearchParams();
 
@@ -367,32 +281,42 @@ export function reportsPage(
     }`;
 
   /*
-   * LINKS DOS CARDS
+   * =========================
+   * QUERY DOS MODAIS
+   * =========================
+   *
+   * Mantém exatamente os mesmos filtros
+   * utilizados no relatório.
    */
 
-  const activitiesHref =
-    "#report-activities";
+  const reportParams =
+    new URLSearchParams();
 
-  const collaboratorsHref =
-    data.filters.collaboratorId
-      ? `/portal/collaborators/${encodeURIComponent(
-          data.filters.collaboratorId
-        )}`
-      : "#report-activities";
+  if (data.filters.verticalId) {
+    reportParams.set(
+      "verticalId",
+      data.filters.verticalId
+    );
+  }
 
-  const processesHref =
-    data.filters.processId
-      ? `/portal/processes/${encodeURIComponent(
-          data.filters.processId
-        )}`
-      : "#report-activities";
+  if (data.filters.collaboratorId) {
+    reportParams.set(
+      "collaboratorId",
+      data.filters.collaboratorId
+    );
+  }
 
-  const verticalsHref =
-    data.filters.verticalId
-      ? `/portal/teams/${encodeURIComponent(
-          data.filters.verticalId
-        )}`
-      : "/portal/teams";
+  if (data.filters.processId) {
+    reportParams.set(
+      "processId",
+      data.filters.processId
+    );
+  }
+
+  const reportQuery =
+    reportParams.toString()
+      ? `?${reportParams.toString()}`
+      : "";
 
   return `
 
@@ -449,7 +373,6 @@ export function reportsPage(
         </a>
 
       </div>
-
 
       <form
         method="GET"
@@ -513,7 +436,6 @@ export function reportsPage(
 
         </label>
 
-
         <!-- COLABORADOR -->
 
         <label>
@@ -567,7 +489,6 @@ export function reportsPage(
 
         </label>
 
-
         <!-- PROCESSO -->
 
         <label>
@@ -617,7 +538,6 @@ export function reportsPage(
 
         </label>
 
-
         <button
           type="submit"
           class="btn-primary"
@@ -653,7 +573,8 @@ export function reportsPage(
         value: data.rows.length,
         subtitle: "No relatório",
         icon: "📋",
-        href: activitiesHref,
+        onclick:
+          `openPortalModal('/portal/reports/activities/modal${reportQuery}')`,
       })}
 
       ${reportCard({
@@ -661,7 +582,8 @@ export function reportsPage(
         value: collaboratorCount,
         subtitle: "Com atividades",
         icon: "👥",
-        href: collaboratorsHref,
+        onclick:
+          `openPortalModal('/portal/reports/collaborators/modal${reportQuery}')`,
       })}
 
       ${reportCard({
@@ -669,7 +591,8 @@ export function reportsPage(
         value: processCount,
         subtitle: "Vinculados",
         icon: "📚",
-        href: processesHref,
+        onclick:
+          `openPortalModal('/portal/reports/processes/modal${reportQuery}')`,
       })}
 
       ${reportCard({
@@ -677,7 +600,8 @@ export function reportsPage(
         value: verticalCount,
         subtitle: `Time ${data.team ?? ""}`,
         icon: "🏢",
-        href: verticalsHref,
+        onclick:
+          `openPortalModal('/portal/reports/verticals/modal${reportQuery}')`,
       })}
 
     </div>
@@ -731,7 +655,6 @@ export function reportsPage(
 
         </div>
 
-
         ${
           data.rows.length
             ? `
@@ -759,27 +682,79 @@ export function reportsPage(
 
       </div>
 
-
       ${
         data.rows.length
           ? `
             <div
               style="
-                display:grid;
-                grid-template-columns:
-                  repeat(
-                    auto-fill,
-                    minmax(360px,1fr)
-                  );
-                gap:14px;
+                width:100%;
+                overflow-x:auto;
               "
             >
 
-              ${data.rows
-                .map(row =>
-                  activityCard(row)
-                )
-                .join("")}
+              <div
+                style="
+                  min-width:1050px;
+                "
+              >
+
+                <!-- CABEÇALHO -->
+
+                <div
+                  style="
+                    display:grid;
+                    grid-template-columns:
+                      minmax(260px,2fr)
+                      minmax(170px,1fr)
+                      minmax(130px,.8fr)
+                      minmax(200px,1.3fr)
+                      minmax(130px,.8fr)
+                      minmax(130px,.8fr)
+                      28px;
+                    gap:18px;
+                    padding:10px 12px;
+                    border-bottom:1px solid #D1D5DB;
+                    color:#64748B;
+                    font-size:12px;
+                    font-weight:700;
+                  "
+                >
+
+                  <div>Atividade</div>
+
+                  <div>
+                    Responsável
+                  </div>
+
+                  <div>
+                    Recorrência
+                  </div>
+
+                  <div>
+                    Processo
+                  </div>
+
+                  <div>
+                    Vertical
+                  </div>
+
+                  <div>
+                    Time
+                  </div>
+
+                  <div></div>
+
+                </div>
+
+                <!-- LINHAS -->
+
+                ${data.rows
+                  .map(row =>
+                    activityRow(row)
+                  )
+                  .join("")}
+
+              </div>
 
             </div>
           `

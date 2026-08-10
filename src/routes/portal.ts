@@ -659,6 +659,310 @@ export async function portalRoutes(app: FastifyInstance) {
   );
 
   app.get(
+    "/portal/reports/:type/modal",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const { type } =
+        request.params as {
+          type: string;
+        };
+
+      const query =
+        request.query as {
+          verticalId?: string;
+          collaboratorId?: string;
+          processId?: string;
+        };
+
+      const filters: ReportFilters = {
+        verticalId:
+          query.verticalId?.trim() || undefined,
+
+        collaboratorId:
+          query.collaboratorId?.trim() ||
+          undefined,
+
+        processId:
+          query.processId?.trim() || undefined,
+      };
+
+      const report =
+        await getReportData(
+          portalUser.slackUserId,
+          filters
+        );
+
+      let title = "";
+      let body = "";
+
+      if (type === "activities") {
+
+        title = "📋 Atividades";
+
+        body = report.rows
+          .map(row => `
+          <div
+            onclick="openPortalModal('/portal/tasks/${encodeURIComponent(row.id)}/modal')"
+            style="
+              padding:14px 0;
+              border-bottom:1px solid #E5E7EB;
+              cursor:pointer;
+            "
+          >
+            <div
+              style="
+                font-weight:600;
+                margin-bottom:5px;
+              "
+            >
+              ${row.title}
+            </div>
+
+            <div
+              style="
+                font-size:13px;
+                color:#6B7280;
+              "
+            >
+              👤 ${row.responsibleName}
+            </div>
+          </div>
+        `)
+          .join("");
+      }
+
+      else if (type === "collaborators") {
+
+        title = "👥 Colaboradores";
+
+        const collaborators =
+          new Map<string, {
+            id: string;
+            name: string;
+            count: number;
+          }>();
+
+        for (const row of report.rows) {
+
+          const current =
+            collaborators.get(
+              row.responsibleId
+            );
+
+          if (current) {
+            current.count++;
+          } else {
+            collaborators.set(
+              row.responsibleId,
+              {
+                id: row.responsibleId,
+                name: row.responsibleName,
+                count: 1,
+              }
+            );
+          }
+        }
+
+        body = [...collaborators.values()]
+          .sort((a, b) =>
+            a.name.localeCompare(b.name)
+          )
+          .map(item => `
+          <div
+            style="
+              padding:14px 0;
+              border-bottom:1px solid #E5E7EB;
+            "
+          >
+            <div style="font-weight:600;">
+              ${item.name}
+            </div>
+
+            <div
+              style="
+                font-size:13px;
+                color:#6B7280;
+                margin-top:4px;
+              "
+            >
+              ${item.count}
+              atividade${item.count === 1 ? "" : "s"}
+            </div>
+          </div>
+        `)
+          .join("");
+      }
+
+      else if (type === "processes") {
+
+        title = "📚 Processos";
+
+        const processes =
+          new Map<string, {
+            name: string;
+            count: number;
+          }>();
+
+        for (const row of report.rows) {
+
+          if (
+            !row.processId ||
+            !row.processTitle
+          ) {
+            continue;
+          }
+
+          const current =
+            processes.get(row.processId);
+
+          if (current) {
+            current.count++;
+          } else {
+            processes.set(
+              row.processId,
+              {
+                name: row.processTitle,
+                count: 1,
+              }
+            );
+          }
+        }
+
+        body = [...processes.values()]
+          .sort((a, b) =>
+            a.name.localeCompare(b.name)
+          )
+          .map(item => `
+          <div
+            style="
+              padding:14px 0;
+              border-bottom:1px solid #E5E7EB;
+            "
+          >
+            <div style="font-weight:600;">
+              ${item.name}
+            </div>
+
+            <div
+              style="
+                font-size:13px;
+                color:#6B7280;
+                margin-top:4px;
+              "
+            >
+              ${item.count}
+              atividade${item.count === 1 ? "" : "s"}
+            </div>
+          </div>
+        `)
+          .join("");
+      }
+
+      else if (type === "verticals") {
+
+        title = "🏢 Verticais";
+
+        const verticals =
+          new Map<string, number>();
+
+        for (const row of report.rows) {
+
+          if (!row.verticalName) {
+            continue;
+          }
+
+          verticals.set(
+            row.verticalName,
+            (verticals.get(
+              row.verticalName
+            ) ?? 0) + 1
+          );
+        }
+
+        body = [...verticals.entries()]
+          .sort(([a], [b]) =>
+            a.localeCompare(b)
+          )
+          .map(([name, count]) => `
+          <div
+            style="
+              padding:14px 0;
+              border-bottom:1px solid #E5E7EB;
+            "
+          >
+            <div style="font-weight:600;">
+              ${name}
+            </div>
+
+            <div
+              style="
+                font-size:13px;
+                color:#6B7280;
+                margin-top:4px;
+              "
+            >
+              ${count}
+              atividade${count === 1 ? "" : "s"}
+            </div>
+          </div>
+        `)
+          .join("");
+      }
+
+      else {
+        return reply
+          .code(404)
+          .send("Relatório não encontrado.");
+      }
+
+      return reply
+        .type("text/html")
+        .send(`
+        <div
+          style="
+            width:min(560px,90vw);
+            max-height:75vh;
+            overflow-y:auto;
+            padding:26px;
+          "
+        >
+
+          <h2
+            style="
+              margin:0 0 20px 0;
+            "
+          >
+            ${title}
+          </h2>
+
+          ${body ||
+          `
+              <p
+                style="
+                  color:#6B7280;
+                "
+              >
+                Nenhum item encontrado.
+              </p>
+            `
+          }
+
+        </div>
+      `);
+
+    }
+  );
+
+  app.get(
     "/portal/reports/export",
     async (request, reply) => {
 
