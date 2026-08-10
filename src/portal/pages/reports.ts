@@ -575,7 +575,7 @@ export function reportsPage(
                 subtitle: "No relatório",
                 icon: "📋",
                 onclick:
-                    `openPortalModal('/portal/reports/activities/modal${reportQuery}')`,
+                    `openPortalModal('/portal/reports/activities/modal${reportQuery}', '480px')`,
             })}
 
       ${reportCard({
@@ -584,7 +584,7 @@ export function reportsPage(
                 subtitle: "Com atividades",
                 icon: "👥",
                 onclick:
-                    `openPortalModal('/portal/reports/collaborators/modal${reportQuery}')`,
+                    `openPortalModal('/portal/reports/collaborators/modal${reportQuery}', '480px')`,
             })}
 
       ${reportCard({
@@ -593,7 +593,7 @@ export function reportsPage(
                 subtitle: "Vinculados",
                 icon: "📚",
                 onclick:
-                    `openPortalModal('/portal/reports/processes/modal${reportQuery}')`,
+                    `openPortalModal('/portal/reports/processes/modal${reportQuery}', '480px')`,
             })}
 
       ${reportCard({
@@ -602,7 +602,7 @@ export function reportsPage(
                 subtitle: `Time ${data.team ?? ""}`,
                 icon: "🏢",
                 onclick:
-                    `openPortalModal('/portal/reports/verticals/modal${reportQuery}')`,
+                    `openPortalModal('/portal/reports/verticals/modal${reportQuery}', '480px')`,
             })}
 
     </div>
