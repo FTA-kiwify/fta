@@ -538,12 +538,18 @@ window.portalToggleCarbonCopy = function(
       "portal-task-carbon-copies-search"
     );
 
+  const dropdown =
+    document.getElementById(
+      "portal-cc-options"
+    );
+
   if (search) {
     search.value = "";
-    search.focus();
   }
 
-  window.portalFilterCarbonCopies();
+  if (dropdown) {
+    dropdown.style.display = "none";
+  }
 };
 
 
