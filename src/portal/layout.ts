@@ -25,6 +25,12 @@ export function portalLayout(args: PortalLayoutArgs) {
 
 <title>${args.title}</title>
 
+<link
+  rel="icon"
+  type="image/webp"
+  href="/public/logo.webp"
+/>
+
 <style>
 
 ${portalCss()}
