@@ -79,6 +79,7 @@ import { syncCalendarEventForTask } from "../services/googleCalendar";
 import { notifyTaskCreated } from "../services/notifyTaskCreated";
 import { publishHome } from "../services/publishHome";
 import { completeTaskFlow } from "../services/completeTaskFlow";
+import { rescheduleTasksModal } from "../portal/components/rescheduleTasksModal";
 
 function getTopbarUser(request: any) {
 
@@ -1458,6 +1459,26 @@ export async function portalRoutes(app: FastifyInstance) {
         );
     }
   );
+  app.get(
+  "/portal/tasks/reschedule/modal",
+  async (request, reply) => {
+
+    const portalUser =
+      getPortalUser(request);
+
+    if (!portalUser) {
+      return reply
+        .code(401)
+        .send("Não autenticado.");
+    }
+
+    return reply
+      .type("text/html")
+      .send(
+        rescheduleTasksModal()
+      );
+  }
+);
   app.post(
     "/portal/tasks/create",
     async (request, reply) => {

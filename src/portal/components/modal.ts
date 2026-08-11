@@ -294,34 +294,93 @@ window.portalUpdateCompleteSelection = function () {
     )
   );
 
-  const button = document.getElementById(
+  const completeButton = document.getElementById(
     "portal-complete-selected-button"
   );
 
-  if (!button) return;
+  const rescheduleButton = document.getElementById(
+    "portal-reschedule-selected-button"
+  );
 
   const count = selected.length;
 
-  button.disabled = count === 0;
+  if (completeButton) {
 
-  button.style.opacity =
-    count === 0 ? ".5" : "1";
+    completeButton.disabled = count === 0;
 
-  button.style.cursor =
-    count === 0
-      ? "not-allowed"
-      : "pointer";
+    completeButton.style.opacity =
+      count === 0 ? ".5" : "1";
 
-  if (count === 0) {
-    button.textContent =
-      "✓ Concluir selecionadas";
+    completeButton.style.cursor =
+      count === 0
+        ? "not-allowed"
+        : "pointer";
+
+    completeButton.textContent =
+      count === 0
+        ? "✓ Concluir selecionadas"
+        : count === 1
+          ? "✓ Concluir 1 tarefa"
+          : "✓ Concluir " + count + " tarefas";
+  }
+
+  if (rescheduleButton) {
+
+    rescheduleButton.disabled = count === 0;
+
+    rescheduleButton.style.opacity =
+      count === 0 ? ".5" : "1";
+
+    rescheduleButton.style.cursor =
+      count === 0
+        ? "not-allowed"
+        : "pointer";
+
+    rescheduleButton.textContent =
+      count === 0
+        ? "📅 Reprogramar selecionadas"
+        : count === 1
+          ? "📅 Reprogramar 1 tarefa"
+          : "📅 Reprogramar " + count + " tarefas";
+  }
+};
+window.portalOpenRescheduleSelected = async function () {
+
+  const selected = Array.from(
+    document.querySelectorAll(
+      ".portal-task-complete-checkbox:checked"
+    )
+  );
+
+  const taskIds = selected
+    .map(function (checkbox) {
+      return checkbox.value;
+    })
+    .filter(Boolean);
+
+  if (!taskIds.length) {
     return;
   }
 
-  button.textContent =
-    count === 1
-      ? "✓ Concluir 1 tarefa"
-      : "✓ Concluir " + count + " tarefas";
+  window.portalRescheduleTaskIds = taskIds;
+
+  await openPortalModal(
+    "/portal/tasks/reschedule/modal",
+    "520px"
+  );
+
+  const subtitle = document.getElementById(
+    "portal-reschedule-subtitle"
+  );
+
+  if (subtitle) {
+    subtitle.textContent =
+      taskIds.length === 1
+        ? "Defina o novo prazo da tarefa selecionada."
+        : "Defina o novo prazo das " +
+          taskIds.length +
+          " tarefas selecionadas.";
+  }
 };
 
 

@@ -262,14 +262,34 @@ ${onDemandTasks.length
             : ""
           }
           <div
+  <div
   style="
+    margin-top:18px;
+    padding-top:18px;
+    border-top:1px solid #E5E7EB;
     display:flex;
     justify-content:flex-end;
-    padding-top:20px;
-    margin-top:10px;
-    border-top:1px solid #E5E7EB;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
   "
 >
+
+  <button
+    id="portal-reschedule-selected-button"
+    type="button"
+    class="btn-secondary"
+    disabled
+    onclick="portalOpenRescheduleSelected()"
+    style="
+      opacity:.5;
+      cursor:not-allowed;
+      min-width:210px;
+    "
+  >
+    📅 Reprogramar selecionadas
+  </button>
+
   <button
     id="portal-complete-selected-button"
     type="button"
@@ -284,6 +304,7 @@ ${onDemandTasks.length
   >
     ✓ Concluir selecionadas
   </button>
+
 </div>
 
               `,
