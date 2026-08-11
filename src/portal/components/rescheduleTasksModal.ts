@@ -1,4 +1,50 @@
-export function rescheduleTasksModal() {
+type RescheduleTasksModalArgs = {
+  id: string;
+  title: string;
+  deadline: Date | null;
+  deadlineTime: string | null;
+};
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function formatDateInput(
+  date: Date | null
+) {
+
+  if (!date) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-CA",
+    {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }
+  ).format(date);
+}
+
+export function rescheduleTasksModal(
+  args: RescheduleTasksModalArgs
+) {
+
+  const deadline =
+    formatDateInput(args.deadline);
+
+  const deadlineTime =
+    args.deadlineTime?.trim() ?? "";
+
+  const title =
+    escapeHtml(args.title);
 
   return `
     <div
@@ -19,18 +65,17 @@ export function rescheduleTasksModal() {
               font-size:26px;
             "
           >
-            📅 Reprogramar tarefas
+            📅 Reprogramar tarefa
           </h2>
 
           <p
-            id="portal-reschedule-subtitle"
             style="
               margin:6px 0 0;
               font-size:15px;
               color:#6B7280;
             "
           >
-            Defina o novo prazo das tarefas selecionadas.
+            Altere a data ou o horário do prazo.
           </p>
 
         </div>
@@ -52,16 +97,60 @@ export function rescheduleTasksModal() {
       </div>
 
 
+      <div
+        style="
+          margin-bottom:24px;
+          padding:14px 16px;
+          border:1px solid #E5E7EB;
+          border-radius:12px;
+          background:#F9FAFB;
+        "
+      >
+
+        <div
+          style="
+            font-size:12px;
+            font-weight:600;
+            color:#6B7280;
+            margin-bottom:5px;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+          "
+        >
+          Tarefa
+        </div>
+
+        <div
+          style="
+            font-size:15px;
+            font-weight:600;
+            color:#111827;
+          "
+        >
+          ${title}
+        </div>
+
+      </div>
+
+
+      <input
+        id="portal-reschedule-task-id"
+        type="hidden"
+        value="${escapeHtml(args.id)}"
+      />
+
+
       <div class="portal-form-group">
 
         <label class="portal-label">
-          Nova data
+          Data
         </label>
 
         <input
           id="portal-reschedule-date"
           class="portal-input"
           type="date"
+          value="${deadline}"
         />
 
       </div>
@@ -70,7 +159,7 @@ export function rescheduleTasksModal() {
       <div class="portal-form-group">
 
         <label class="portal-label">
-          Novo horário
+          Horário
           <span
             style="
               font-weight:400;
@@ -85,24 +174,9 @@ export function rescheduleTasksModal() {
           id="portal-reschedule-time"
           class="portal-input"
           type="time"
+          value="${escapeHtml(deadlineTime)}"
         />
 
-      </div>
-
-
-      <div
-        style="
-          padding:14px 16px;
-          border-radius:12px;
-          background:#F9FAFB;
-          border:1px solid #E5E7EB;
-          color:#6B7280;
-          font-size:14px;
-          line-height:1.5;
-        "
-      >
-        A nova data e o novo horário serão aplicados
-        a todas as tarefas selecionadas.
       </div>
 
 
@@ -123,6 +197,7 @@ export function rescheduleTasksModal() {
         </button>
 
         <button
+          id="portal-reschedule-submit"
           type="button"
           class="btn-primary"
           onclick="portalConfirmRescheduleTasks()"

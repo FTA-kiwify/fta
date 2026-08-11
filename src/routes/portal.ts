@@ -1472,10 +1472,41 @@ export async function portalRoutes(app: FastifyInstance) {
         .send("Não autenticado.");
     }
 
+    const { taskId } =
+      request.query as {
+        taskId?: string;
+      };
+
+    if (!taskId) {
+      return reply
+        .code(400)
+        .send("Tarefa não informada.");
+    }
+
+    const allowed =
+      await canAccessTask(
+        portalUser.slackUserId,
+        taskId
+      );
+
+    if (!allowed) {
+      return reply
+        .code(403)
+        .send("Acesso não permitido.");
+    }
+
+    const task =
+      await getTaskDetails(taskId);
+
     return reply
       .type("text/html")
       .send(
-        rescheduleTasksModal()
+        rescheduleTasksModal({
+          id: task.id,
+          title: task.title,
+          deadline: task.deadline,
+          deadlineTime: task.deadlineTime,
+        })
       );
   }
 );

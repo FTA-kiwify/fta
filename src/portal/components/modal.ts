@@ -326,23 +326,24 @@ window.portalUpdateCompleteSelection = function () {
 
   if (rescheduleButton) {
 
-    rescheduleButton.disabled = count === 0;
+  const canReschedule = count === 1;
 
-    rescheduleButton.style.opacity =
-      count === 0 ? ".5" : "1";
+  rescheduleButton.disabled =
+    !canReschedule;
 
-    rescheduleButton.style.cursor =
-      count === 0
-        ? "not-allowed"
-        : "pointer";
+  rescheduleButton.style.opacity =
+    canReschedule ? "1" : ".5";
 
-    rescheduleButton.textContent =
-      count === 0
-        ? "📅 Reprogramar selecionadas"
-        : count === 1
-          ? "📅 Reprogramar 1 tarefa"
-          : "📅 Reprogramar " + count + " tarefas";
-  }
+  rescheduleButton.style.cursor =
+    canReschedule
+      ? "pointer"
+      : "not-allowed";
+
+  rescheduleButton.textContent =
+    count > 1
+      ? "📅 Reprogramar apenas 1 tarefa"
+      : "📅 Reprogramar selecionada";
+}
 };
 window.portalOpenRescheduleSelected = async function () {
 
@@ -358,29 +359,17 @@ window.portalOpenRescheduleSelected = async function () {
     })
     .filter(Boolean);
 
-  if (!taskIds.length) {
+  if (taskIds.length !== 1) {
     return;
   }
 
-  window.portalRescheduleTaskIds = taskIds;
+  const taskId = taskIds[0];
 
   await openPortalModal(
-    "/portal/tasks/reschedule/modal",
+    "/portal/tasks/reschedule/modal?taskId=" +
+      encodeURIComponent(taskId),
     "520px"
   );
-
-  const subtitle = document.getElementById(
-    "portal-reschedule-subtitle"
-  );
-
-  if (subtitle) {
-    subtitle.textContent =
-      taskIds.length === 1
-        ? "Defina o novo prazo da tarefa selecionada."
-        : "Defina o novo prazo das " +
-          taskIds.length +
-          " tarefas selecionadas.";
-  }
 };
 
 
