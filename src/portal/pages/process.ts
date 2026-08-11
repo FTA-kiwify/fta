@@ -187,7 +187,7 @@ export function processPage(
 
           title: task.title,
 
-          responsible: task.responsible,
+          responsible: task.responsibleName,
 
           urgency: task.urgency,
 

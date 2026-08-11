@@ -4,6 +4,7 @@ import { getSlackUserName } from "../slackUserLookup";
 export type CollaboratorTask = {
     id: string;
     title: string;
+    responsibleName: string;
     term: Date | null;
     deadlineTime: string | null;
     urgency: "light" | "asap" | "turbo";
@@ -112,6 +113,24 @@ export async function getTeamDetails(
         },
     });
 
+    const responsibleNames = new Map<string, string>();
+
+    await Promise.all(
+        [...new Set(tasks.map(task => task.responsible))]
+            .map(async slackUserId => {
+                responsibleNames.set(
+                    slackUserId,
+                    await getSlackUserName(slackUserId)
+                );
+            })
+    );
+
+    const getResponsibleName = (
+        slackUserId: string
+    ) =>
+        responsibleNames.get(slackUserId) ??
+        slackUserId;
+
     const today = new Date();
 
     today.setHours(0, 0, 0, 0);
@@ -165,6 +184,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -178,6 +199,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -191,6 +214,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -204,6 +229,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -217,6 +244,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -230,6 +259,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -243,6 +274,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -256,6 +289,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -275,6 +310,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -289,6 +326,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -303,6 +342,8 @@ export async function getTeamDetails(
                 .map(task => ({
                     id: task.id,
                     title: task.title,
+                    responsibleName:
+                        getResponsibleName(task.responsible),
                     term: task.term,
                     deadlineTime: task.deadlineTime,
                     urgency: task.urgency,
@@ -376,6 +417,8 @@ export async function getTeamDetails(
         tasks: tasks.map(task => ({
             id: task.id,
             title: task.title,
+            responsibleName:
+                getResponsibleName(task.responsible),
             term: task.term,
             deadlineTime: task.deadlineTime,
             urgency: task.urgency,

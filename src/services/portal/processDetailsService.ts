@@ -1,39 +1,60 @@
 import { prisma } from "../../lib/prisma";
+import { getSlackUserName } from "../slackUserLookup";
 
 export async function getProcessDetails(
-    processId: string
+  processId: string
 ) {
 
-    return prisma.process.findUnique({
+  const process =
+    await prisma.process.findUnique({
 
-        where: {
-            id: processId,
-        },
+      where: {
+        id: processId,
+      },
 
-        include: {
+      include: {
 
-            team: true,
+        team: true,
 
-            tasks: {
+        tasks: {
 
-                where: {
-                    calendarPrivate: false,
-                    status: "pending",
-                },
+          where: {
+            calendarPrivate: false,
+            status: "pending",
+          },
 
-                orderBy: [
-                    {
-                        status: "asc",
-                    },
-                    {
-                        term: "asc",
-                    },
-                ],
-
+          orderBy: [
+            {
+              status: "asc",
             },
+            {
+              term: "asc",
+            },
+          ],
 
         },
+
+      },
 
     });
 
+  if (!process) {
+    return null;
+  }
+
+  const tasks = await Promise.all(
+    process.tasks.map(async task => ({
+      ...task,
+
+      responsibleName:
+        await getSlackUserName(
+          task.responsible
+        ),
+    }))
+  );
+
+  return {
+    ...process,
+    tasks,
+  };
 }
