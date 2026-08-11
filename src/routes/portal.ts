@@ -86,6 +86,7 @@ import { notifyTaskRescheduledGroup } from "../services/notifyTaskRescheduledGro
 import { updateTaskService } from "../services/updateTaskService";
 import { notifyTaskEdited } from "../services/notifyTaskEdited";
 import { handleTaskResponsibleReassign } from "../services/handleTaskResponsibleReassign";
+import { getSlackUserName } from "../services/slackUserLookup";
 
 function getTopbarUser(request: any) {
 
@@ -1849,13 +1850,9 @@ export async function portalRoutes(app: FastifyInstance) {
        */
 
       const task =
-        await prisma.task.findFirst({
+        await prisma.task.findUnique({
           where: {
             id,
-            delegation: portalUser.slackUserId,
-            status: {
-              notIn: ["done", "cancelled"],
-            },
           },
 
           select: {
@@ -1865,6 +1862,8 @@ export async function portalRoutes(app: FastifyInstance) {
             processId: true,
             notionProcessUrl: true,
             responsible: true,
+            delegation: true,
+            status: true,
             term: true,
             deadlineTime: true,
             recurrence: true,
@@ -1885,9 +1884,66 @@ export async function portalRoutes(app: FastifyInstance) {
 
       if (!task) {
         return reply
-          .code(403)
+          .code(404)
           .send(
-            "Apenas quem criou a tarefa pode editá-la."
+            "Tarefa não encontrada."
+          );
+      }
+
+      if (
+        task.delegation !==
+        portalUser.slackUserId
+      ) {
+
+        const delegatedByName =
+          task.delegation
+            ? await getSlackUserName(
+              task.delegation
+            )
+            : "outro usuário";
+
+        return reply
+          .code(403)
+          .send(`
+      <div
+        style="
+          padding:28px;
+          font-family:Inter,Arial,sans-serif;
+        "
+      >
+        <h2
+          style="
+            margin:0 0 10px;
+            font-size:22px;
+            color:#111827;
+          "
+        >
+          🔒 Edição não permitida
+        </h2>
+
+        <p
+          style="
+            margin:0;
+            color:#6B7280;
+            line-height:1.6;
+          "
+        >
+          Esta tarefa foi delegada por
+          <strong>${delegatedByName}</strong>.
+          Apenas quem criou a tarefa pode editá-la.
+        </p>
+      </div>
+    `);
+      }
+
+      if (
+        task.status === "done" ||
+        task.status === "cancelled"
+      ) {
+        return reply
+          .code(400)
+          .send(
+            "Esta tarefa já foi finalizada e não pode mais ser editada."
           );
       }
 

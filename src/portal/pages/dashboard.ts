@@ -183,7 +183,10 @@ export function dashboardPage(data: DashboardData) {
               upcomingTask({
                 id: task.id,
                 title: task.title,
-                responsible: task.responsibleName,
+                responsible:
+                  task.delegatedByName === "Você"
+                    ? "Criada por você"
+                    : `Delegada por ${task.delegatedByName}`,
                 urgency: task.urgency,
                 deadlineTime: task.deadlineTime,
                 selectable: true,
@@ -208,7 +211,10 @@ export function dashboardPage(data: DashboardData) {
                   upcomingTask({
                     id: task.id,
                     title: task.title,
-                    responsible: task.responsibleName,
+                    responsible:
+                      task.delegatedByName === "Você"
+                        ? "Criada por você"
+                        : `Delegada por ${task.delegatedByName}`,
                     urgency: task.urgency,
                     deadlineTime: task.deadlineTime,
                     selectable: true,
@@ -231,7 +237,10 @@ export function dashboardPage(data: DashboardData) {
                   upcomingTask({
                     id: task.id,
                     title: task.title,
-                    responsible: task.responsibleName,
+                    responsible:
+                      task.delegatedByName === "Você"
+                        ? "Criada por você"
+                        : `Delegada por ${task.delegatedByName}`,
                     urgency: task.urgency,
                     deadlineTime: task.deadlineTime,
                     selectable: true,
@@ -252,7 +261,10 @@ ${onDemandTasks.length
                   upcomingTask({
                     id: task.id,
                     title: task.title,
-                    responsible: task.responsibleName,
+                    responsible:
+                      task.delegatedByName === "Você"
+                        ? "Criada por você"
+                        : `Delegada por ${task.delegatedByName}`,
                     deadlineTime: task.deadlineTime,
                     selectable: true,
                   })
