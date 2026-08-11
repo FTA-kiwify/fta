@@ -83,6 +83,9 @@ import { rescheduleTasksModal } from "../portal/components/rescheduleTasksModal"
 import { rescheduleTaskService } from "../services/rescheduleTaskService";
 import { updateTaskOpenMessage } from "../services/updateTaskOpenMessage";
 import { notifyTaskRescheduledGroup } from "../services/notifyTaskRescheduledGroup";
+import { updateTaskService } from "../services/updateTaskService";
+import { notifyTaskEdited } from "../services/notifyTaskEdited";
+import { handleTaskResponsibleReassign } from "../services/handleTaskResponsibleReassign";
 
 function getTopbarUser(request: any) {
 
@@ -1819,6 +1822,142 @@ export async function portalRoutes(app: FastifyInstance) {
     }
   );
   app.get(
+    "/portal/tasks/:id/edit/modal",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const { id } =
+        request.params as {
+          id: string;
+        };
+
+      /*
+       * ==========================================
+       * BUSCA + PERMISSÃO
+       *
+       * Mesma regra do Slack:
+       * somente quem delegou/criou pode editar.
+       * ==========================================
+       */
+
+      const task =
+        await prisma.task.findFirst({
+          where: {
+            id,
+            delegation: portalUser.slackUserId,
+            status: {
+              notIn: ["done", "cancelled"],
+            },
+          },
+
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            processId: true,
+            notionProcessUrl: true,
+            responsible: true,
+            term: true,
+            deadlineTime: true,
+            recurrence: true,
+            urgency: true,
+            reminderMode: true,
+            turboPreviousDay: true,
+            turboStartTime: true,
+            calendarPrivate: true,
+            taskType: true,
+
+            carbonCopies: {
+              select: {
+                slackUserId: true,
+              },
+            },
+          },
+        });
+
+      if (!task) {
+        return reply
+          .code(403)
+          .send(
+            "Apenas quem criou a tarefa pode editá-la."
+          );
+      }
+
+      /*
+       * Mesmas opções usadas na criação.
+       */
+
+      const options =
+        await getPortalCreateTaskOptions(
+          portalUser.slackUserId
+        );
+
+      return reply
+        .type("text/html")
+        .send(
+          createTaskModal(
+            options,
+            {
+              mode: "edit",
+
+              task: {
+                id: task.id,
+                title: task.title,
+                description: task.description,
+                processId: task.processId,
+                responsible: task.responsible,
+
+                term: task.term
+                  ? task.term
+                    .toISOString()
+                    .slice(0, 10)
+                  : null,
+
+                deadlineTime:
+                  task.deadlineTime,
+
+                recurrence:
+                  task.recurrence
+                    ? String(task.recurrence)
+                    : null,
+
+                urgency:
+                  task.urgency,
+
+                reminderMode:
+                  task.reminderMode,
+
+                turboPreviousDay:
+                  task.turboPreviousDay,
+
+                turboStartTime:
+                  task.turboStartTime,
+
+                calendarPrivate:
+                  task.calendarPrivate,
+
+                taskType:
+                  task.taskType,
+
+                carbonCopies:
+                  task.carbonCopies.map(
+                    cc => cc.slackUserId
+                  ),
+              },
+            }
+          )
+        );
+    }
+  );
+  app.get(
     "/portal/tasks/reschedule/modal",
     async (request, reply) => {
 
@@ -2224,6 +2363,564 @@ export async function portalRoutes(app: FastifyInstance) {
       return reply.send({
         ok: true,
         taskId: task.id,
+      });
+    }
+  );
+  app.post(
+    "/portal/tasks/:id/update",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send({
+            error: "Não autenticado.",
+          });
+      }
+
+      const { id: taskId } =
+        request.params as {
+          id: string;
+        };
+
+      const body = request.body as {
+        title?: string;
+        description?: string | null;
+        processId?: string | null;
+        responsible?: string;
+        taskType?: string;
+        term?: string | null;
+        deadlineTime?: string | null;
+        recurrence?: string | null;
+        urgency?: string;
+        reminderMode?: string;
+        turboPreviousDay?: boolean;
+        turboStartTime?: string | null;
+        carbonCopies?: string[];
+        calendarPrivate?: boolean;
+      };
+
+      /*
+       * ==========================================
+       * VALIDAÇÕES
+       * ==========================================
+       */
+
+      const title =
+        body.title?.trim() ?? "";
+
+      const responsible =
+        body.responsible?.trim() ?? "";
+
+      if (!title) {
+        return reply
+          .code(400)
+          .send({
+            error: "Informe o título da tarefa.",
+          });
+      }
+
+      if (!responsible) {
+        return reply
+          .code(400)
+          .send({
+            error: "Selecione o responsável.",
+          });
+      }
+
+      /*
+       * ==========================================
+       * PERMISSÃO
+       *
+       * Igual ao Slack:
+       * somente quem delegou/criou pode editar.
+       * ==========================================
+       */
+
+      const currentTask =
+        await prisma.task.findUnique({
+          where: {
+            id: taskId,
+          },
+
+          select: {
+            id: true,
+            delegation: true,
+            responsible: true,
+            status: true,
+          },
+        });
+
+      if (!currentTask) {
+        return reply
+          .code(404)
+          .send({
+            error: "Tarefa não encontrada.",
+          });
+      }
+
+      if (
+        currentTask.delegation !==
+        portalUser.slackUserId
+      ) {
+        return reply
+          .code(403)
+          .send({
+            error:
+              "Apenas quem criou a tarefa pode editá-la.",
+          });
+      }
+
+      if (
+        currentTask.status === "done" ||
+        currentTask.status === "cancelled"
+      ) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "Não é possível editar uma tarefa finalizada.",
+          });
+      }
+
+      /*
+       * ==========================================
+       * DATA
+       * ==========================================
+       */
+
+      if (body.term) {
+
+        const todayIso =
+          new Intl.DateTimeFormat(
+            "en-CA",
+            {
+              timeZone:
+                "America/Sao_Paulo",
+
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }
+          ).format(new Date());
+
+        if (body.term < todayIso) {
+          return reply
+            .code(400)
+            .send({
+              error:
+                "Não é permitido salvar atividade com data passada.",
+            });
+        }
+      }
+
+      /*
+       * ==========================================
+       * PROCESSO / NOTION
+       * ==========================================
+       */
+
+      const processId =
+        body.processId?.trim() || null;
+
+      let notionProcessUrl:
+        string | null = null;
+
+      if (processId) {
+
+        const process =
+          await prisma.process.findUnique({
+            where: {
+              id: processId,
+            },
+
+            select: {
+              notionPageUrl: true,
+            },
+          });
+
+        notionProcessUrl =
+          process?.notionPageUrl ?? null;
+      }
+
+      /*
+       * ==========================================
+       * UPDATE
+       *
+       * Mesmo service utilizado pelo Slack.
+       * Ele também valida novamente a permissão.
+       * ==========================================
+       */
+
+      let updated;
+
+      try {
+
+        updated =
+          await updateTaskService({
+            taskId,
+
+            delegationSlackId:
+              portalUser.slackUserId,
+
+            title,
+
+            description:
+              body.description?.trim()
+                ? body.description.trim()
+                : null,
+
+            processId,
+
+            notionProcessUrl,
+
+            termIso:
+              body.term || null,
+
+            deadlineTime:
+              body.deadlineTime || null,
+
+            responsibleSlackId:
+              responsible,
+
+            carbonCopiesSlackIds:
+              body.carbonCopies ?? [],
+
+            recurrence:
+              body.recurrence || null,
+
+            urgency:
+              body.urgency || "light",
+
+            reminderMode:
+              body.reminderMode || "until",
+
+            turboPreviousDay:
+              body.turboPreviousDay ?? false,
+
+            turboStartTime:
+              body.turboStartTime || null,
+
+            calendarPrivate:
+              body.calendarPrivate ?? false,
+          });
+
+      } catch (error) {
+
+        request.log.error(
+          {
+            error,
+            taskId,
+          },
+          "[PORTAL_EDIT_TASK] update failed"
+        );
+
+        return reply
+          .code(400)
+          .send({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Não foi possível editar a tarefa.",
+          });
+      }
+
+      /*
+       * ==========================================
+       * AUDITORIA
+       * ==========================================
+       */
+
+      await prisma.taskAuditLog.create({
+        data: {
+          taskId,
+
+          action:
+            "TASK_EDITED",
+
+          actorSlackId:
+            portalUser.slackUserId,
+
+          beforeJson:
+            updated.before as any,
+
+          afterJson:
+            updated.after as any,
+        },
+      });
+
+      /*
+       * ==========================================
+       * EMAILS + CALENDAR
+       * ==========================================
+       */
+
+      try {
+
+        await syncTaskParticipantEmails({
+          slack,
+
+          taskId,
+
+          delegationSlackId:
+            portalUser.slackUserId,
+
+          responsibleSlackId:
+            updated.after.responsible,
+
+          carbonCopiesSlackIds:
+            updated.after.carbonCopies ?? [],
+        });
+
+        await syncCalendarEventForTask(
+          taskId
+        );
+
+      } catch (error) {
+
+        request.log.error(
+          {
+            error,
+            taskId,
+          },
+          "[PORTAL_EDIT_TASK] email/calendar sync failed"
+        );
+      }
+
+      /*
+       * ==========================================
+       * MENSAGEM ABERTA NO SLACK
+       *
+       * Se trocou responsável, fazemos o fluxo
+       * especial de reatribuição.
+       * ==========================================
+       */
+
+      try {
+
+        const beforeResponsible =
+          updated.before.responsible;
+
+        const afterResponsible =
+          updated.after.responsible;
+
+        if (
+          beforeResponsible &&
+          afterResponsible &&
+          beforeResponsible !==
+          afterResponsible
+        ) {
+
+          await handleTaskResponsibleReassign({
+            slack,
+            taskId,
+            editedBySlackId:
+              portalUser.slackUserId,
+          });
+
+        } else {
+
+          await updateTaskOpenMessage(
+            slack,
+            taskId
+          );
+        }
+
+      } catch (error) {
+
+        request.log.error(
+          {
+            error,
+            taskId,
+          },
+          "[PORTAL_EDIT_TASK] open message update failed"
+        );
+      }
+
+      /*
+       * ==========================================
+       * NOTIFICAÇÃO DA EDIÇÃO
+       *
+       * Mesmo notify usado pelo Slack.
+       * ==========================================
+       */
+
+      const allCc =
+        Array.from(
+          new Set([
+            ...(updated.before.carbonCopies ?? []),
+            ...(updated.after.carbonCopies ?? []),
+          ])
+        );
+
+      try {
+
+        await notifyTaskEdited({
+          slack,
+
+          taskId,
+
+          editedBy:
+            portalUser.slackUserId,
+
+          responsible:
+            updated.after.responsible,
+
+          carbonCopies:
+            allCc,
+
+          oldTitle:
+            updated.before.title,
+
+          newTitle:
+            updated.after.title,
+
+          oldTerm:
+            updated.before.term,
+
+          newTerm:
+            updated.after.term,
+
+          oldDeadlineTime:
+            updated.before.deadlineTime,
+
+          newDeadlineTime:
+            updated.after.deadlineTime,
+
+          oldResponsible:
+            updated.before.responsible,
+
+          newResponsible:
+            updated.after.responsible,
+
+          oldRecurrence:
+            updated.before.recurrence,
+
+          newRecurrence:
+            updated.after.recurrence,
+
+          oldUrgency:
+            updated.before.urgency,
+
+          newUrgency:
+            updated.after.urgency,
+
+          oldReminderMode:
+            updated.before.reminderMode,
+
+          newReminderMode:
+            updated.after.reminderMode,
+
+          oldTurboPreviousDay:
+            updated.before.turboPreviousDay,
+
+          newTurboPreviousDay:
+            updated.after.turboPreviousDay,
+
+          oldTurboStartTime:
+            updated.before.turboStartTime,
+
+          newTurboStartTime:
+            updated.after.turboStartTime,
+
+          oldCalendarPrivate:
+            updated.before.calendarPrivate,
+
+          newCalendarPrivate:
+            updated.after.calendarPrivate,
+
+          oldCarbonCopies:
+            updated.before.carbonCopies,
+
+          newCarbonCopies:
+            updated.after.carbonCopies,
+        });
+
+      } catch (error) {
+
+        request.log.error(
+          {
+            error,
+            taskId,
+          },
+          "[PORTAL_EDIT_TASK] notification failed"
+        );
+      }
+
+      /*
+       * ==========================================
+       * ATUALIZA HOME DO SLACK
+       *
+       * Inclui participantes antigos e novos.
+       * ==========================================
+       */
+
+      const affected =
+        new Set<string>();
+
+      affected.add(
+        portalUser.slackUserId
+      );
+
+      affected.add(
+        updated.before.responsible
+      );
+
+      affected.add(
+        updated.after.responsible
+      );
+
+      if (updated.before.delegation) {
+        affected.add(
+          updated.before.delegation
+        );
+      }
+
+      if (updated.after.delegation) {
+        affected.add(
+          updated.after.delegation
+        );
+      }
+
+      for (
+        const userId of
+        updated.before.carbonCopies ?? []
+      ) {
+        affected.add(userId);
+      }
+
+      for (
+        const userId of
+        updated.after.carbonCopies ?? []
+      ) {
+        affected.add(userId);
+      }
+
+      await Promise.allSettled(
+        Array
+          .from(affected)
+          .filter(Boolean)
+          .map(
+            userId =>
+              publishHome(
+                slack,
+                userId
+              )
+          )
+      );
+
+      /*
+       * ==========================================
+       * RESPOSTA
+       * ==========================================
+       */
+
+      return reply.send({
+        ok: true,
+        taskId,
       });
     }
   );

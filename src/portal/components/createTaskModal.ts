@@ -13,9 +13,52 @@ function escapeHtml(
         .replace(/'/g, "&#039;");
 }
 
+type CreateTaskModalConfig = {
+    mode?: "create" | "edit";
+
+    task?: {
+        id: string;
+        title: string;
+        description: string | null;
+        processId: string | null;
+        responsible: string;
+
+        term: string | null;
+        deadlineTime: string | null;
+
+        recurrence: string | null;
+        urgency: string;
+        reminderMode: string;
+
+        turboPreviousDay: boolean;
+        turboStartTime: string | null;
+
+        calendarPrivate: boolean;
+        taskType: string;
+
+        carbonCopies: string[];
+    };
+};
+
 export function createTaskModal(
-    options: PortalCreateTaskOptions
+    options: PortalCreateTaskOptions,
+    config: CreateTaskModalConfig = {}
 ) {
+
+    const isEdit =
+        config.mode === "edit" &&
+        Boolean(config.task);
+
+    const task =
+        config.task ?? null;
+
+    const responsibleInitial =
+        task?.responsible
+            ? options.collaborators.find(
+                collaborator =>
+                    collaborator.id === task.responsible
+            )
+            : null;
 
     return `
     <div
@@ -38,7 +81,7 @@ export function createTaskModal(
               font-size:28px;
             "
           >
-            📝 Criar tarefa
+            ${isEdit ? "✏️ Editar tarefa" : "📝 Criar tarefa"}
           </h2>
 
           <p
@@ -48,7 +91,10 @@ export function createTaskModal(
               color:#6B7280;
             "
           >
-            Crie uma nova atividade no FTA.
+            ${isEdit
+            ? "Edite as informações da atividade."
+            : "Crie uma nova atividade no FTA."
+        }
           </p>
 
         </div>
@@ -89,6 +135,7 @@ export function createTaskModal(
             type="text"
             placeholder="Escreva algo"
             autocomplete="off"
+            value="${escapeHtml(task?.title)}"
           />
 
         </div>
@@ -111,10 +158,10 @@ export function createTaskModal(
           </label>
 
           <textarea
-            id="portal-task-description"
-            class="portal-textarea"
-            placeholder="Escreva algo"
-          ></textarea>
+  id="portal-task-description"
+  class="portal-textarea"
+  placeholder="Escreva algo"
+>${escapeHtml(task?.description)}</textarea>
 
         </div>
 
@@ -147,8 +194,9 @@ export function createTaskModal(
             ${options.processes
             .map(process => `
                 <option
-                  value="${escapeHtml(process.id)}"
-                >
+  value="${escapeHtml(process.id)}"
+  ${task?.processId === process.id ? "selected" : ""}
+>
                   ${escapeHtml(process.name)}
                 </option>
               `)
@@ -182,12 +230,13 @@ export function createTaskModal(
               autocomplete="off"
               onfocus="portalOpenResponsiblePicker()"
               oninput="portalFilterResponsible()"
+              value="${escapeHtml(responsibleInitial?.name)}"
             />
 
             <input
               id="portal-task-responsible"
               type="hidden"
-              value=""
+              value="${escapeHtml(responsibleInitial?.id)}"
             />
 
             <div
@@ -272,11 +321,15 @@ export function createTaskModal(
             onchange="portalHandleTaskTypeChange()"
           >
 
-            <option value="normal">
-              📅 Normal
-            </option>
+            <option
+  value="normal"
+  ${!task || task.taskType === "normal" ? "selected" : ""}
+>
 
-            <option value="on_demand">
+            <option
+  value="on_demand"
+  ${task?.taskType === "on_demand" ? "selected" : ""}
+>
               ⚡ Sob demanda
             </option>
 
@@ -302,6 +355,7 @@ export function createTaskModal(
               id="portal-task-term"
               class="portal-input"
               type="date"
+              value="${escapeHtml(task?.term)}"
             />
 
           </div>
@@ -327,6 +381,7 @@ export function createTaskModal(
               id="portal-task-deadline-time"
               class="portal-input"
               type="time"
+              value="${escapeHtml(task?.deadlineTime)}"
             />
 
           </div>
@@ -393,37 +448,61 @@ export function createTaskModal(
               class="portal-select"
             >
 
-              <option value="none">
-                Sem recorrência
-              </option>
+              <option
+  value="none"
+  ${!task?.recurrence ? "selected" : ""}
+>
+  Sem recorrência
+</option>
 
-              <option value="daily">
-                Diária
-              </option>
+<option
+  value="daily"
+  ${task?.recurrence === "daily" ? "selected" : ""}
+>
+  Diária
+</option>
 
-              <option value="weekly">
-                Semanal
-              </option>
+<option
+  value="weekly"
+  ${task?.recurrence === "weekly" ? "selected" : ""}
+>
+  Semanal
+</option>
 
-              <option value="biweekly">
-                Quinzenal
-              </option>
+<option
+  value="biweekly"
+  ${task?.recurrence === "biweekly" ? "selected" : ""}
+>
+  Quinzenal
+</option>
 
-              <option value="monthly">
-                Mensal
-              </option>
+<option
+  value="monthly"
+  ${task?.recurrence === "monthly" ? "selected" : ""}
+>
+  Mensal
+</option>
 
-              <option value="quarterly">
-                Trimestral
-              </option>
+<option
+  value="quarterly"
+  ${task?.recurrence === "quarterly" ? "selected" : ""}
+>
+  Trimestral
+</option>
 
-              <option value="semiannual">
-                Semestral
-              </option>
+<option
+  value="semiannual"
+  ${task?.recurrence === "semiannual" ? "selected" : ""}
+>
+  Semestral
+</option>
 
-              <option value="annual">
-                Anual
-              </option>
+<option
+  value="annual"
+  ${task?.recurrence === "annual" ? "selected" : ""}
+>
+  Anual
+</option>
 
             </select>
 
@@ -444,17 +523,26 @@ export function createTaskModal(
               onchange="portalHandleUrgencyChange()"
             >
 
-              <option value="light">
-                🟢 Light
-              </option>
+              <option
+  value="light"
+  ${!task || task.urgency === "light" ? "selected" : ""}
+>
+  🟢 Light
+</option>
 
-              <option value="asap">
-                🟡 ASAP
-              </option>
+<option
+  value="asap"
+  ${task?.urgency === "asap" ? "selected" : ""}
+>
+  🟡 ASAP
+</option>
 
-              <option value="turbo">
-                🔴 Turbo
-              </option>
+<option
+  value="turbo"
+  ${task?.urgency === "turbo" ? "selected" : ""}
+>
+  🔴 Turbo
+</option>
 
             </select>
 
@@ -509,6 +597,8 @@ export function createTaskModal(
                   <input
                     id="portal-task-turbo-previous-day"
                     type="checkbox"
+                    ${task?.turboPreviousDay ? "checked" : ""}
+
                   />
 
                   Iniciar lembretes no dia anterior
@@ -528,6 +618,7 @@ export function createTaskModal(
                   id="portal-task-turbo-start-time"
                   class="portal-input"
                   type="time"
+                  value="${escapeHtml(task?.turboStartTime)}"
                 />
 
               </div>
@@ -550,11 +641,17 @@ export function createTaskModal(
               class="portal-select"
             >
 
-              <option value="until">
+              <option
+  value="until"
+  ${!task || task.reminderMode !== "from" ? "selected" : ""}
+>
                 ⏰ Entregar até o prazo
               </option>
 
-              <option value="from">
+              <option
+  value="from"
+  ${task?.reminderMode === "from" ? "selected" : ""}
+>
                 ▶️ Entregar a partir do prazo
               </option>
 
@@ -738,9 +835,10 @@ export function createTaskModal(
             >
 
               <input
-                id="portal-task-calendar-private"
-                type="checkbox"
-              />
+  id="portal-task-calendar-private"
+  type="checkbox"
+  ${task?.calendarPrivate ? "checked" : ""}
+/>
 
               🔒 Atividade privada
 
@@ -773,9 +871,12 @@ export function createTaskModal(
   id="portal-create-task-button"
   type="button"
   class="btn-primary"
-  onclick="portalCreateTask()"
+  onclick="${isEdit
+            ? `portalUpdateTask('${escapeHtml(task?.id)}')`
+            : "portalCreateTask()"
+        }"
 >
-  Criar
+  ${isEdit ? "Salvar alterações" : "Criar"}
 </button>
 
         </div>

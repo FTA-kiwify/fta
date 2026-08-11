@@ -274,6 +274,20 @@ ${onDemandTasks.length
     flex-wrap:wrap;
   "
 >
+  <button
+  id="portal-edit-selected-button"
+  type="button"
+  class="btn-secondary"
+  disabled
+  onclick="portalOpenEditSelected()"
+  style="
+    opacity:.5;
+    cursor:not-allowed;
+    min-width:150px;
+  "
+>
+  ✏️ Editar
+</button>
 
   <button
     id="portal-reschedule-selected-button"
@@ -287,6 +301,7 @@ ${onDemandTasks.length
       min-width:210px;
     "
   >
+  
     📅 Reprogramar selecionadas
   </button>
 
