@@ -286,6 +286,137 @@ window.openDocumentation = function(processId) {
   );
 
 };
+window.portalUpdateCompleteSelection = function () {
+
+  const selected = Array.from(
+    document.querySelectorAll(
+      ".portal-task-complete-checkbox:checked"
+    )
+  );
+
+  const button = document.getElementById(
+    "portal-complete-selected-button"
+  );
+
+  if (!button) return;
+
+  const count = selected.length;
+
+  button.disabled = count === 0;
+
+  button.style.opacity =
+    count === 0 ? ".5" : "1";
+
+  button.style.cursor =
+    count === 0
+      ? "not-allowed"
+      : "pointer";
+
+  if (count === 0) {
+    button.textContent =
+      "✓ Concluir selecionadas";
+    return;
+  }
+
+  button.textContent =
+    count === 1
+      ? "✓ Concluir 1 tarefa"
+      : "✓ Concluir " + count + " tarefas";
+};
+
+
+window.portalCompleteSelectedTasks = async function () {
+
+  const selected = Array.from(
+    document.querySelectorAll(
+      ".portal-task-complete-checkbox:checked"
+    )
+  );
+
+  const taskIds = selected
+    .map(function (checkbox) {
+      return checkbox.value;
+    })
+    .filter(Boolean);
+
+  if (!taskIds.length) {
+    return;
+  }
+
+  const message =
+    taskIds.length === 1
+      ? "Concluir esta tarefa?"
+      : "Concluir as " +
+        taskIds.length +
+        " tarefas selecionadas?";
+
+  if (!confirm(message)) {
+    return;
+  }
+
+  const button = document.getElementById(
+    "portal-complete-selected-button"
+  );
+
+  if (button) {
+    button.disabled = true;
+    button.style.opacity = ".6";
+    button.style.cursor = "wait";
+    button.textContent = "Concluindo...";
+  }
+
+  try {
+
+    const response = await fetch(
+      "/portal/tasks/complete",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          taskIds: taskIds,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        "Não foi possível concluir."
+      );
+    }
+
+    /*
+     * Se algumas foram concluídas e outras
+     * recusadas pelo backend, avisamos.
+     */
+    if (
+      result.unauthorizedIds &&
+      result.unauthorizedIds.length
+    ) {
+      alert(
+        "Algumas tarefas não puderam ser concluídas."
+      );
+    }
+
+    window.location.reload();
+
+  } catch (error) {
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível concluir as tarefas."
+    );
+
+    portalUpdateCompleteSelection();
+  }
+};
 
 document.addEventListener("keydown", function (event) {
   if (event.key === "Escape") {

@@ -261,6 +261,30 @@ ${onDemandTasks.length
             })
             : ""
           }
+          <div
+  style="
+    display:flex;
+    justify-content:flex-end;
+    padding-top:20px;
+    margin-top:10px;
+    border-top:1px solid #E5E7EB;
+  "
+>
+  <button
+    id="portal-complete-selected-button"
+    type="button"
+    class="btn-primary"
+    disabled
+    onclick="portalCompleteSelectedTasks()"
+    style="
+      opacity:.5;
+      cursor:not-allowed;
+      min-width:190px;
+    "
+  >
+    ✓ Concluir selecionadas
+  </button>
+</div>
 
               `,
 
