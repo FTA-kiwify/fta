@@ -186,6 +186,7 @@ export function dashboardPage(data: DashboardData) {
                 responsible: task.responsibleName,
                 urgency: task.urgency,
                 deadlineTime: task.deadlineTime,
+                selectable: true,
               })
             ).join("")
             : `
@@ -210,6 +211,7 @@ export function dashboardPage(data: DashboardData) {
                     responsible: task.responsibleName,
                     urgency: task.urgency,
                     deadlineTime: task.deadlineTime,
+                    selectable: true,
                   })
                 )
                 .join(""),
@@ -232,6 +234,7 @@ export function dashboardPage(data: DashboardData) {
                     responsible: task.responsibleName,
                     urgency: task.urgency,
                     deadlineTime: task.deadlineTime,
+                    selectable: true,
                   })
                 )
                 .join(""),
@@ -251,6 +254,7 @@ ${onDemandTasks.length
                     title: task.title,
                     responsible: task.responsibleName,
                     deadlineTime: task.deadlineTime,
+                    selectable: true,
                   })
                 )
                 .join(""),

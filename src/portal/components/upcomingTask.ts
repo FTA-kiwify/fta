@@ -5,6 +5,10 @@ type UpcomingTaskProps = {
   urgency?: "light" | "asap" | "turbo";
   deadlineTime?: string | null;
   hideResponsible?: boolean;
+
+  // Portal Dashboard:
+  // mostra checkbox para conclusão em lote.
+  selectable?: boolean;
 };
 
 function urgencyBadge(
@@ -65,7 +69,9 @@ function urgencyBadge(
 
 }
 
-export function upcomingTask(task: UpcomingTaskProps) {
+export function upcomingTask(
+  task: UpcomingTaskProps
+) {
 
   return `
     <div
@@ -80,69 +86,112 @@ export function upcomingTask(task: UpcomingTaskProps) {
       onmouseout="this.style.background='transparent'"
     >
 
-      <div style="margin-bottom:10px;">
-
-        ${task.urgency
-      ? urgencyBadge(task.urgency)
-      : ""
-    }
-
-      </div>
-
       <div
         style="
-          font-weight:600;
-          font-size:16px;
-          margin-bottom:${task.hideResponsible ? "6px" : "10px"};
+          display:flex;
+          gap:14px;
+          align-items:flex-start;
         "
       >
-        ${task.title}
-      </div>
 
-      ${task.hideResponsible
-
-      ? (
-        task.deadlineTime
+        ${task.selectable
           ? `
-                  <div
-                    style="
-                      color:#6B7280;
-                      font-size:14px;
-                    "
-                  >
-                    🕒 ${task.deadlineTime}
-                  </div>
-                `
-          : ""
-      )
-
-      : `
               <div
                 style="
-                  display:flex;
-                  justify-content:space-between;
-                  align-items:center;
-                  color:#6B7280;
-                  font-size:14px;
+                  padding-top:2px;
+                  flex-shrink:0;
                 "
+                onclick="event.stopPropagation()"
               >
 
-                <span>
-                  👤 ${task.responsible}
-                </span>
-
-                ${task.deadlineTime
-        ? `
-                      <span>
-                        🕒 ${task.deadlineTime}
-                      </span>
-                    `
-        : ""
-      }
+                <input
+                  type="checkbox"
+                  class="portal-task-complete-checkbox"
+                  value="${task.id}"
+                  onchange="portalUpdateCompleteSelection()"
+                  onclick="event.stopPropagation()"
+                  style="
+                    width:18px;
+                    height:18px;
+                    cursor:pointer;
+                    accent-color:#27C27A;
+                  "
+                />
 
               </div>
             `
-    }
+          : ""
+        }
+
+        <div style="flex:1; min-width:0;">
+
+          <div style="margin-bottom:10px;">
+
+            ${task.urgency
+              ? urgencyBadge(task.urgency)
+              : ""
+            }
+
+          </div>
+
+          <div
+            style="
+              font-weight:600;
+              font-size:16px;
+              margin-bottom:${task.hideResponsible ? "6px" : "10px"};
+            "
+          >
+            ${task.title}
+          </div>
+
+          ${task.hideResponsible
+
+            ? (
+              task.deadlineTime
+                ? `
+                    <div
+                      style="
+                        color:#6B7280;
+                        font-size:14px;
+                      "
+                    >
+                      🕒 ${task.deadlineTime}
+                    </div>
+                  `
+                : ""
+            )
+
+            : `
+                <div
+                  style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    color:#6B7280;
+                    font-size:14px;
+                  "
+                >
+
+                  <span>
+                    👤 ${task.responsible}
+                  </span>
+
+                  ${task.deadlineTime
+                    ? `
+                        <span>
+                          🕒 ${task.deadlineTime}
+                        </span>
+                      `
+                    : ""
+                  }
+
+                </div>
+              `
+          }
+
+        </div>
+
+      </div>
 
     </div>
   `;

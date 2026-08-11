@@ -78,6 +78,7 @@ import { syncTaskParticipantEmails } from "../services/syncTaskParticipantEmails
 import { syncCalendarEventForTask } from "../services/googleCalendar";
 import { notifyTaskCreated } from "../services/notifyTaskCreated";
 import { publishHome } from "../services/publishHome";
+import { completeTaskFlow } from "../services/completeTaskFlow";
 
 function getTopbarUser(request: any) {
 
@@ -1812,6 +1813,76 @@ export async function portalRoutes(app: FastifyInstance) {
       return reply.send({
         ok: true,
         taskId: task.id,
+      });
+    }
+  );
+  app.post(
+    "/portal/tasks/complete",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send({
+            error: "Não autenticado.",
+          });
+      }
+
+      const body = request.body as {
+        taskIds?: string[];
+      };
+
+      const taskIds =
+        Array.from(
+          new Set(
+            (body.taskIds ?? [])
+              .map(String)
+              .filter(Boolean)
+          )
+        );
+
+      if (!taskIds.length) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "Nenhuma tarefa foi selecionada.",
+          });
+      }
+
+      const result =
+        await completeTaskFlow({
+          slack,
+          taskIds,
+          requesterSlackId:
+            portalUser.slackUserId,
+        });
+
+      if (!result.completedIds.length) {
+        return reply
+          .code(403)
+          .send({
+            error:
+              "Você não tem permissão para concluir as tarefas selecionadas.",
+            unauthorizedIds:
+              result.unauthorizedIds,
+          });
+      }
+
+      return reply.send({
+        ok: true,
+
+        completedIds:
+          result.completedIds,
+
+        unauthorizedIds:
+          result.unauthorizedIds,
+
+        nextCreatedIds:
+          result.nextCreatedIds,
       });
     }
   );
