@@ -22,6 +22,10 @@ export type CollaboratorUrgency = {
     name: string;
     tasks: CollaboratorTask[];
 };
+export type CollaboratorTheme = {
+    name: string;
+    tasks: CollaboratorTask[];
+};
 
 export type CollaboratorDetails = {
     slackUserId: string;
@@ -31,6 +35,7 @@ export type CollaboratorDetails = {
     tasks: CollaboratorTask[];
     recurrences: CollaboratorRecurrence[];
     urgencies: CollaboratorUrgency[];
+    themes: CollaboratorTheme[];
     members?: {
         slackUserId: string;
         name: string;
@@ -106,6 +111,14 @@ export async function getTeamDetails(
             },
             status: "pending",
             calendarPrivate: false,
+        },
+
+        include: {
+            process: {
+                select: {
+                    theme: true,
+                },
+            },
         },
 
         orderBy: {
@@ -353,6 +366,47 @@ export async function getTeamDetails(
 
     ].filter(group => group.tasks.length > 0);
 
+    const themeMap = new Map<string, CollaboratorTask[]>();
+
+    for (const task of tasks) {
+
+        const theme =
+            task.process?.theme?.trim() ||
+            "Outros";
+
+        if (!themeMap.has(theme)) {
+            themeMap.set(theme, []);
+        }
+
+        themeMap.get(theme)!.push({
+            id: task.id,
+            title: task.title,
+            responsibleName:
+                getResponsibleName(task.responsible),
+            term: task.term,
+            deadlineTime: task.deadlineTime,
+            urgency: task.urgency,
+            taskType: task.taskType,
+        });
+    }
+
+    const themes: CollaboratorTheme[] =
+        Array.from(themeMap.entries())
+            .map(([name, tasks]) => ({
+                name,
+                tasks,
+            }))
+            .sort((a, b) => {
+
+                if (a.name === "Outros") return 1;
+                if (b.name === "Outros") return -1;
+
+                return a.name.localeCompare(
+                    b.name,
+                    "pt-BR"
+                );
+            });
+
     let members;
 
     if (team.group === null) {
@@ -389,6 +443,7 @@ export async function getTeamDetails(
         todayTasks,
         recurrences,
         urgencies,
+        themes,
         members: await Promise.all(
 
             slackUserIds.map(async slackUserId => ({

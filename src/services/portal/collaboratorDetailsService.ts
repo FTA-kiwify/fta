@@ -22,6 +22,11 @@ export type CollaboratorUrgency = {
   tasks: CollaboratorTask[];
 };
 
+export type CollaboratorTheme = {
+  name: string;
+  tasks: CollaboratorTask[];
+};
+
 export type CollaboratorDetails = {
   isTeam?: boolean;
   slackUserId: string;
@@ -40,6 +45,7 @@ export type CollaboratorDetails = {
 
   recurrences: CollaboratorRecurrence[];
   urgencies: CollaboratorUrgency[];
+  themes: CollaboratorTheme[];
 
   members?: {
     slackUserId: string;
@@ -51,7 +57,7 @@ export async function getCollaboratorDetails(
   slackUserId: string
 ): Promise<CollaboratorDetails> {
 
-    const responsibleName =
+  const responsibleName =
     await getSlackUserName(slackUserId);
 
   const today = new Date();
@@ -72,6 +78,15 @@ export async function getCollaboratorDetails(
       calendarPrivate: false,
     },
 
+    include: {
+      process: {
+        select: {
+          id: true,
+          title: true,
+          theme: true,
+        },
+      },
+    },
 
     orderBy: {
       term: "asc",
@@ -118,7 +133,7 @@ export async function getCollaboratorDetails(
 
   }).length;
 
-  
+
 
   const recurrences: CollaboratorRecurrence[] = [
 
@@ -247,7 +262,7 @@ export async function getCollaboratorDetails(
   );
 
 
-    const urgencies: CollaboratorUrgency[] = [
+  const urgencies: CollaboratorUrgency[] = [
 
     {
       name: "🔴 Turbo",
@@ -296,6 +311,58 @@ export async function getCollaboratorDetails(
 
   ].filter(group => group.tasks.length > 0);
 
+  const themeMap = new Map<
+  string,
+  CollaboratorTask[]
+>();
+
+for (const task of tasks) {
+
+  const themeName =
+    task.process?.theme?.trim() ||
+    "Outros";
+
+  if (!themeMap.has(themeName)) {
+    themeMap.set(
+      themeName,
+      []
+    );
+  }
+
+  themeMap.get(themeName)!.push({
+    id: task.id,
+    title: task.title,
+    term: task.term,
+    deadlineTime: task.deadlineTime,
+    urgency: task.urgency,
+    taskType: task.taskType,
+    responsibleName,
+  });
+}
+
+const themes: CollaboratorTheme[] =
+  Array.from(themeMap.entries())
+    .map(([name, themeTasks]) => ({
+      name,
+      tasks: themeTasks,
+    }))
+    .sort((a, b) => {
+
+      // "Outros" sempre por último.
+      if (a.name === "Outros") {
+        return 1;
+      }
+
+      if (b.name === "Outros") {
+        return -1;
+      }
+
+      return a.name.localeCompare(
+        b.name,
+        "pt-BR"
+      );
+    });
+
   return {
 
     isTeam: false,
@@ -318,6 +385,8 @@ export async function getCollaboratorDetails(
     recurrences,
 
     urgencies,
+    themes,
+
 
     tasks: tasks.map(task => ({
       id: task.id,
