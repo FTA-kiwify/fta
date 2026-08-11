@@ -371,7 +371,93 @@ window.portalOpenRescheduleSelected = async function () {
     "520px"
   );
 };
+window.portalConfirmRescheduleTasks = async function () {
 
+  const taskId =
+    document.getElementById(
+      "portal-reschedule-task-id"
+    )?.value;
+
+  const newDateIso =
+    document.getElementById(
+      "portal-reschedule-date"
+    )?.value;
+
+  const newTime =
+    document.getElementById(
+      "portal-reschedule-time"
+    )?.value || null;
+
+  if (!taskId) {
+    alert("Tarefa não encontrada.");
+    return;
+  }
+
+  if (!newDateIso) {
+    alert("Informe a nova data.");
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "portal-reschedule-submit"
+    );
+
+  if (button) {
+    button.disabled = true;
+    button.style.opacity = ".6";
+    button.style.cursor = "wait";
+    button.textContent = "Reprogramando...";
+  }
+
+  try {
+
+    const response = await fetch(
+      "/portal/tasks/reschedule",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          taskId,
+          newDateIso,
+          newTime,
+        }),
+      }
+    );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        "Não foi possível reprogramar."
+      );
+    }
+
+    closePortalModal();
+
+    window.location.reload();
+
+  } catch (error) {
+
+    alert(
+      error?.message ||
+      "Não foi possível reprogramar a tarefa."
+    );
+
+    if (button) {
+      button.disabled = false;
+      button.style.opacity = "1";
+      button.style.cursor = "pointer";
+      button.textContent = "📅 Reprogramar";
+    }
+  }
+};
 
 window.portalCompleteSelectedTasks = async function () {
 

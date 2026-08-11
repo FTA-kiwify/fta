@@ -80,6 +80,9 @@ import { notifyTaskCreated } from "../services/notifyTaskCreated";
 import { publishHome } from "../services/publishHome";
 import { completeTaskFlow } from "../services/completeTaskFlow";
 import { rescheduleTasksModal } from "../portal/components/rescheduleTasksModal";
+import { rescheduleTaskService } from "../services/rescheduleTaskService";
+import { updateTaskOpenMessage } from "../services/updateTaskOpenMessage";
+import { notifyTaskRescheduledGroup } from "../services/notifyTaskRescheduledGroup";
 
 function getTopbarUser(request: any) {
 
@@ -96,10 +99,366 @@ function getTopbarUser(request: any) {
   };
 
 }
+function formatDateBRFromIso(
+  iso: string
+) {
+  const [year, month, day] =
+    iso.split("-");
 
+  return `${day}/${month}/${year}`;
+}
 export async function portalRoutes(app: FastifyInstance) {
   const slack = new WebClient(
     process.env.SLACK_BOT_TOKEN
+  );
+
+  app.post(
+    "/portal/tasks/reschedule",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send({
+            error: "Não autenticado.",
+          });
+      }
+
+      const body = request.body as {
+        taskId?: string;
+        newDateIso?: string;
+        newTime?: string | null;
+      };
+
+      const taskId =
+        body.taskId?.trim() ?? "";
+
+      const newDateIso =
+        body.newDateIso?.trim() ?? "";
+
+      const newTime =
+        body.newTime?.trim() || null;
+
+      if (!taskId) {
+        return reply
+          .code(400)
+          .send({
+            error: "Tarefa não informada.",
+          });
+      }
+
+      if (!newDateIso) {
+        return reply
+          .code(400)
+          .send({
+            error: "Informe a nova data.",
+          });
+      }
+
+      /*
+       * Não permite data passada.
+       * Mesma regra utilizada na criação
+       * e na reprogramação do Slack.
+       */
+      const todayIso =
+        new Intl.DateTimeFormat(
+          "en-CA",
+          {
+            timeZone:
+              "America/Sao_Paulo",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }
+        ).format(new Date());
+
+      if (newDateIso < todayIso) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "Não é permitido reprogramar para uma data passada.",
+          });
+      }
+
+      /*
+       * Busca antes da alteração.
+       */
+      const before =
+        await prisma.task.findUnique({
+          where: {
+            id: taskId,
+          },
+
+          select: {
+            id: true,
+            title: true,
+            term: true,
+            status: true,
+            taskType: true,
+            responsible: true,
+            delegation: true,
+          },
+        });
+
+      if (!before) {
+        return reply
+          .code(404)
+          .send({
+            error: "Tarefa não encontrada.",
+          });
+      }
+
+      if (
+        before.status === "done" ||
+        before.status === "cancelled"
+      ) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "Esta tarefa não pode ser reprogramada.",
+          });
+      }
+
+      if (before.taskType === "on_demand") {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "Tarefas sob demanda não possuem prazo para reprogramar.",
+          });
+      }
+
+      /*
+       * Responsável OU delegador.
+       *
+       * O próprio rescheduleTaskService
+       * também valida essa permissão.
+       */
+      const canReschedule =
+        before.responsible ===
+        portalUser.slackUserId ||
+        before.delegation ===
+        portalUser.slackUserId;
+
+      if (!canReschedule) {
+        return reply
+          .code(403)
+          .send({
+            error:
+              "Apenas o responsável ou quem delegou a tarefa pode reprogramá-la.",
+          });
+      }
+
+      /*
+       * MESMO SERVICE USADO PELO SLACK.
+       */
+      await rescheduleTaskService({
+        taskId,
+        requesterSlackId:
+          portalUser.slackUserId,
+        newDateIso,
+        newTime,
+      });
+
+      /*
+       * A partir daqui a tarefa já foi
+       * reprogramada.
+       *
+       * Os efeitos externos não devem
+       * impedir o sucesso da operação.
+       */
+      void (async () => {
+
+        try {
+          await syncCalendarEventForTask(
+            taskId
+          );
+        } catch (error) {
+          request.log.error(
+            {
+              error,
+              taskId,
+            },
+            "[PORTAL_RESCHEDULE] calendar sync failed"
+          );
+        }
+
+        try {
+          await updateTaskOpenMessage(
+            slack,
+            taskId
+          );
+        } catch (error) {
+          request.log.error(
+            {
+              error,
+              taskId,
+            },
+            "[PORTAL_RESCHEDULE] updateTaskOpenMessage failed"
+          );
+        }
+
+        const after =
+          await prisma.task.findUnique({
+            where: {
+              id: taskId,
+            },
+
+            select: {
+              id: true,
+              title: true,
+              responsible: true,
+              delegation: true,
+              slackOpenChannelId: true,
+              slackOpenMessageTs: true,
+
+              carbonCopies: {
+                select: {
+                  slackUserId: true,
+                },
+              },
+            },
+          });
+
+        if (!after) {
+          return;
+        }
+
+        const br =
+          formatDateBRFromIso(
+            newDateIso
+          );
+
+        const newDateBr =
+          newTime
+            ? `${br} às ${newTime}`
+            : br;
+
+        /*
+         * Notificação do grupo.
+         */
+        const dmPromise =
+          notifyTaskRescheduledGroup({
+            slack,
+
+            responsibleSlackId:
+              after.responsible,
+
+            delegationSlackId:
+              after.delegation ?? null,
+
+            carbonCopiesSlackIds:
+              after.carbonCopies.map(
+                cc => cc.slackUserId
+              ),
+
+            taskTitle:
+              after.title,
+
+            newDateBr,
+          });
+
+        /*
+         * Mensagem na thread original.
+         */
+        const threadPromise =
+          (async () => {
+
+            if (
+              !after.slackOpenChannelId ||
+              !after.slackOpenMessageTs
+            ) {
+              return;
+            }
+
+            const fromIso =
+              before.term
+                ? before.term
+                  .toISOString()
+                  .slice(0, 10)
+                : null;
+
+            const oldBr =
+              fromIso
+                ? formatDateBRFromIso(
+                  fromIso
+                )
+                : null;
+
+            const text =
+              oldBr
+                ? `📅 Prazo reprogramado por <@${portalUser.slackUserId}>: *${after.title}* de *${oldBr}* para *${newDateBr}*.`
+                : `📅 Prazo reprogramado por <@${portalUser.slackUserId}>: *${after.title}* para *${newDateBr}*.`;
+
+            await slack.chat.postMessage({
+              channel:
+                after.slackOpenChannelId,
+
+              thread_ts:
+                after.slackOpenMessageTs,
+
+              text,
+            });
+          })();
+
+        /*
+         * Atualiza as Homes de todos
+         * os participantes.
+         */
+        await Promise.allSettled([
+          dmPromise,
+          threadPromise,
+
+          publishHome(
+            slack,
+            after.responsible
+          ),
+
+          ...(after.delegation
+            ? [
+              publishHome(
+                slack,
+                after.delegation
+              ),
+            ]
+            : []),
+
+          ...Array.from(
+            new Set(
+              after.carbonCopies.map(
+                cc => cc.slackUserId
+              )
+            )
+          ).map(uid =>
+            publishHome(
+              slack,
+              uid
+            )
+          ),
+        ]);
+
+      })().catch(error => {
+
+        request.log.error(
+          {
+            error,
+            taskId,
+          },
+          "[PORTAL_RESCHEDULE] side-effects failed"
+        );
+
+      });
+
+      return reply.send({
+        ok: true,
+        taskId,
+      });
+    }
   );
 
   app.addHook(
@@ -1460,56 +1819,56 @@ export async function portalRoutes(app: FastifyInstance) {
     }
   );
   app.get(
-  "/portal/tasks/reschedule/modal",
-  async (request, reply) => {
+    "/portal/tasks/reschedule/modal",
+    async (request, reply) => {
 
-    const portalUser =
-      getPortalUser(request);
+      const portalUser =
+        getPortalUser(request);
 
-    if (!portalUser) {
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const { taskId } =
+        request.query as {
+          taskId?: string;
+        };
+
+      if (!taskId) {
+        return reply
+          .code(400)
+          .send("Tarefa não informada.");
+      }
+
+      const allowed =
+        await canAccessTask(
+          portalUser.slackUserId,
+          taskId
+        );
+
+      if (!allowed) {
+        return reply
+          .code(403)
+          .send("Acesso não permitido.");
+      }
+
+      const task =
+        await getTaskDetails(taskId);
+
       return reply
-        .code(401)
-        .send("Não autenticado.");
+        .type("text/html")
+        .send(
+          rescheduleTasksModal({
+            id: task.id,
+            title: task.title,
+            deadline: task.deadline,
+            deadlineTime: task.deadlineTime,
+          })
+        );
     }
-
-    const { taskId } =
-      request.query as {
-        taskId?: string;
-      };
-
-    if (!taskId) {
-      return reply
-        .code(400)
-        .send("Tarefa não informada.");
-    }
-
-    const allowed =
-      await canAccessTask(
-        portalUser.slackUserId,
-        taskId
-      );
-
-    if (!allowed) {
-      return reply
-        .code(403)
-        .send("Acesso não permitido.");
-    }
-
-    const task =
-      await getTaskDetails(taskId);
-
-    return reply
-      .type("text/html")
-      .send(
-        rescheduleTasksModal({
-          id: task.id,
-          title: task.title,
-          deadline: task.deadline,
-          deadlineTime: task.deadlineTime,
-        })
-      );
-  }
-);
+  );
   app.post(
     "/portal/tasks/create",
     async (request, reply) => {
