@@ -53,21 +53,38 @@ export function modalContainer() {
         document.body.style.overflow = "hidden";
 
         try {
-          const response = await fetch(url);
+  const response = await fetch(url);
 
-          if (!response.ok) {
-            throw new Error("Não foi possível carregar os detalhes.");
-          }
+  const responseText =
+    await response.text();
 
-          content.innerHTML = await response.text();
-        } catch (error) {
-          content.innerHTML = \`
-            <div style="padding:32px;">
-              <h2 style="margin-bottom:12px;">Erro</h2>
-              <p>Não foi possível carregar os detalhes.</p>
-            </div>
-          \`;
-        }
+  if (!response.ok) {
+
+    if (responseText.trim()) {
+      content.innerHTML =
+        responseText;
+
+      return;
+    }
+
+    throw new Error(
+      "Não foi possível carregar os detalhes."
+    );
+  }
+
+  content.innerHTML =
+    responseText;
+
+} catch (error) {
+
+  content.innerHTML =
+    '<div style="padding:32px;">' +
+      '<h2 style="margin-bottom:12px;">Erro</h2>' +
+      '<p style="color:#6B7280;">' +
+        'Não foi possível carregar os detalhes.' +
+      '</p>' +
+    '</div>';
+}
       }
 
       function closePortalModal(event) {
