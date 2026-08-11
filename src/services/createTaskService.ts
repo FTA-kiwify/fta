@@ -110,6 +110,8 @@ export async function createTaskService(raw: unknown) {
       processId: data.processId ?? null,
 
       notionProcessUrl: data.notionProcessUrl ?? null,
+      dependsOnId: data.dependsOnId ?? null,
+
 
       delegation: data.delegation,
       delegationEmail,
@@ -159,6 +161,8 @@ export async function createTaskService(raw: unknown) {
       delegation: task.delegation,
       processId: task.processId,
       notionProcessUrl: task.notionProcessUrl,
+      dependsOnId: task.dependsOnId,
+
 
 
       term: task.term,

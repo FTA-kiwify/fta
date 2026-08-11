@@ -18,38 +18,39 @@ export function createTaskModal(
 ) {
 
   return `
-    <div style="padding:32px;">
+    <div
+      style="
+        width:720px;
+        max-width:100%;
+        padding:32px;
+      "
+    >
 
-      <div
-        style="
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:20px;
-          margin-bottom:28px;
-        "
-      >
+      <!-- HEADER -->
+
+      <div class="portal-modal-header">
 
         <div>
+
           <h2
             style="
               margin:0;
-              font-size:24px;
-              color:#111827;
+              font-size:28px;
             "
           >
-            ➕ Criar tarefa
+            📝 Criar tarefa
           </h2>
 
           <p
             style="
               margin:6px 0 0;
+              font-size:15px;
               color:#6B7280;
-              font-size:14px;
             "
           >
-            Preencha os dados da nova atividade.
+            Crie uma nova atividade no FTA.
           </p>
+
         </div>
 
         <button
@@ -59,16 +60,15 @@ export function createTaskModal(
             border:none;
             background:none;
             font-size:28px;
-            line-height:1;
             cursor:pointer;
             color:#6B7280;
-            padding:4px;
           "
         >
           ✕
         </button>
 
       </div>
+
 
       <form
         id="portal-create-task-form"
@@ -79,16 +79,16 @@ export function createTaskModal(
 
         <div class="portal-form-group">
 
-          <label class="portal-form-label">
+          <label class="portal-label">
             Título
           </label>
 
           <input
             id="portal-task-title"
-            class="portal-form-input"
+            class="portal-input"
             type="text"
-            placeholder="Ex.: Atualizar ALM"
-            required
+            placeholder="Escreva algo"
+            autocomplete="off"
           />
 
         </div>
@@ -98,19 +98,22 @@ export function createTaskModal(
 
         <div class="portal-form-group">
 
-          <label class="portal-form-label">
+          <label class="portal-label">
             Descrição
+            <span
+              style="
+                font-weight:400;
+                color:#6B7280;
+              "
+            >
+              (opcional)
+            </span>
           </label>
 
           <textarea
             id="portal-task-description"
-            class="portal-form-input"
-            rows="4"
-            placeholder="Descreva a atividade..."
-            style="
-              resize:vertical;
-              min-height:100px;
-            "
+            class="portal-textarea"
+            placeholder="Escreva algo"
           ></textarea>
 
         </div>
@@ -120,17 +123,25 @@ export function createTaskModal(
 
         <div class="portal-form-group">
 
-          <label class="portal-form-label">
+          <label class="portal-label">
             Processo
+            <span
+              style="
+                font-weight:400;
+                color:#6B7280;
+              "
+            >
+              (opcional)
+            </span>
           </label>
 
           <select
             id="portal-task-process"
-            class="portal-form-input"
+            class="portal-select"
           >
 
             <option value="">
-              Nenhum processo
+              Selecione um processo
             </option>
 
             ${options.processes
@@ -152,18 +163,17 @@ export function createTaskModal(
 
         <div class="portal-form-group">
 
-          <label class="portal-form-label">
+          <label class="portal-label">
             Responsável
           </label>
 
           <select
             id="portal-task-responsible"
-            class="portal-form-input"
-            required
+            class="portal-select"
           >
 
             <option value="">
-              Selecione o responsável
+              Selecione um usuário
             </option>
 
             ${options.collaborators
@@ -181,17 +191,17 @@ export function createTaskModal(
         </div>
 
 
-        <!-- TIPO DA TAREFA -->
+        <!-- TIPO -->
 
         <div class="portal-form-group">
 
-          <label class="portal-form-label">
+          <label class="portal-label">
             Tipo da tarefa
           </label>
 
           <select
             id="portal-task-type"
-            class="portal-form-input"
+            class="portal-select"
             onchange="portalHandleTaskTypeChange()"
           >
 
@@ -208,71 +218,76 @@ export function createTaskModal(
         </div>
 
 
-        <!-- CAMPOS DE TAREFA NORMAL -->
+        <!-- CAMPOS DA TAREFA NORMAL -->
 
         <div id="portal-normal-task-fields">
 
 
           <!-- PRAZO -->
 
-          <div
-            style="
-              display:grid;
-              grid-template-columns:
-                repeat(2,minmax(0,1fr));
-              gap:16px;
-            "
-          >
+          <div class="portal-form-group">
 
-            <div class="portal-form-group">
+            <label class="portal-label">
+              Prazo (data)
+            </label>
 
-              <label class="portal-form-label">
-                Prazo
-              </label>
-
-              <input
-                id="portal-task-term"
-                class="portal-form-input"
-                type="date"
-              />
-
-            </div>
-
-
-            <!-- HORÁRIO -->
-
-            <div class="portal-form-group">
-
-              <label class="portal-form-label">
-                Horário
-              </label>
-
-              <input
-                id="portal-task-deadline-time"
-                class="portal-form-input"
-                type="time"
-              />
-
-            </div>
+            <input
+              id="portal-task-term"
+              class="portal-input"
+              type="date"
+            />
 
           </div>
 
 
-          <!-- DEPENDE DE -->
+          <!-- HORÁRIO -->
 
           <div class="portal-form-group">
 
-            <label class="portal-form-label">
+            <label class="portal-label">
+              Horário do prazo
+              <span
+                style="
+                  font-weight:400;
+                  color:#6B7280;
+                "
+              >
+                (opcional)
+              </span>
+            </label>
+
+            <input
+              id="portal-task-deadline-time"
+              class="portal-input"
+              type="time"
+            />
+
+          </div>
+
+
+          <!-- DEPENDÊNCIA -->
+
+          <div class="portal-form-group">
+
+            <label class="portal-label">
               Depende de
+              <span
+                style="
+                  font-weight:400;
+                  color:#6B7280;
+                "
+              >
+                (opcional)
+              </span>
             </label>
 
             <select
               id="portal-task-depends-on"
-              class="portal-form-input"
+              class="portal-select"
             >
 
               <option value="">
-                Nenhuma dependência
+                Selecione a tarefa principal
               </option>
 
               ${options.dependencies
@@ -294,13 +309,21 @@ export function createTaskModal(
 
           <div class="portal-form-group">
 
-            <label class="portal-form-label">
+            <label class="portal-label">
               Recorrência
+              <span
+                style="
+                  font-weight:400;
+                  color:#6B7280;
+                "
+              >
+                (opcional)
+              </span>
             </label>
 
             <select
               id="portal-task-recurrence"
-              class="portal-form-input"
+              class="portal-select"
             >
 
               <option value="none">
@@ -344,13 +367,13 @@ export function createTaskModal(
 
           <div class="portal-form-group">
 
-            <label class="portal-form-label">
-              Prioridade
+            <label class="portal-label">
+              Nível de urgência
             </label>
 
             <select
               id="portal-task-urgency"
-              class="portal-form-input"
+              class="portal-select"
               onchange="portalHandleUrgencyChange()"
             >
 
@@ -380,56 +403,63 @@ export function createTaskModal(
 
             <div
               style="
-                background:#FEF2F2;
                 border:1px solid #FECACA;
+                background:#FEF2F2;
                 border-radius:12px;
-                padding:16px;
-                margin-bottom:20px;
+                padding:18px;
+                margin-bottom:22px;
               "
             >
 
               <div
                 style="
-                  font-weight:600;
+                  font-weight:700;
                   color:#991B1B;
-                  margin-bottom:14px;
+                  margin-bottom:16px;
                 "
               >
                 🔴 Configurações Turbo
               </div>
 
 
-              <label
+              <div
                 style="
-                  display:flex;
-                  align-items:center;
-                  gap:10px;
-                  margin-bottom:16px;
-                  cursor:pointer;
+                  margin-bottom:18px;
                 "
               >
 
-                <input
-                  id="portal-task-turbo-previous-day"
-                  type="checkbox"
-                />
+                <label
+                  style="
+                    display:flex;
+                    align-items:center;
+                    gap:10px;
+                    cursor:pointer;
+                    font-size:14px;
+                    color:#374151;
+                  "
+                >
 
-                <span>
+                  <input
+                    id="portal-task-turbo-previous-day"
+                    type="checkbox"
+                  />
+
                   Iniciar lembretes no dia anterior
-                </span>
 
-              </label>
+                </label>
+
+              </div>
 
 
-              <div class="portal-form-group">
+              <div>
 
-                <label class="portal-form-label">
+                <label class="portal-label">
                   Horário inicial dos lembretes
                 </label>
 
                 <input
                   id="portal-task-turbo-start-time"
-                  class="portal-form-input"
+                  class="portal-input"
                   type="time"
                 />
 
@@ -440,17 +470,17 @@ export function createTaskModal(
           </div>
 
 
-          <!-- MODO DE LEMBRETE -->
+          <!-- FOLLOW-UP -->
 
           <div class="portal-form-group">
 
-            <label class="portal-form-label">
-              Regra do prazo
+            <label class="portal-label">
+              Tipo de follow-up
             </label>
 
             <select
               id="portal-task-reminder-mode"
-              class="portal-form-input"
+              class="portal-select"
             >
 
               <option value="until">
@@ -468,19 +498,29 @@ export function createTaskModal(
         </div>
 
 
-        <!-- PESSOAS EM CÓPIA -->
+        <!-- CC -->
 
         <div class="portal-form-group">
 
-          <label class="portal-form-label">
+          <label class="portal-label">
             Pessoas em cópia
+            <span
+              style="
+                font-weight:400;
+                color:#6B7280;
+              "
+            >
+              (opcional)
+            </span>
           </label>
 
           <select
             id="portal-task-carbon-copies"
-            class="portal-form-input"
+            class="portal-select"
             multiple
-            style="min-height:110px;"
+            style="
+              min-height:130px;
+            "
           >
 
             ${options.collaborators
@@ -497,9 +537,9 @@ export function createTaskModal(
 
           <div
             style="
-              margin-top:6px;
-              font-size:12px;
+              margin-top:7px;
               color:#9CA3AF;
+              font-size:12px;
             "
           >
             Use Ctrl/Cmd para selecionar mais de uma pessoa.
@@ -508,69 +548,61 @@ export function createTaskModal(
         </div>
 
 
-        <!-- CALENDÁRIO PRIVADO -->
+        <!-- PRIVACIDADE -->
 
-        <div
-          style="
-            padding:16px;
-            background:#F9FAFB;
-            border:1px solid #E5E7EB;
-            border-radius:12px;
-            margin-top:8px;
-          "
-        >
+        <div class="portal-form-group">
 
-          <label
+          <label class="portal-label">
+            Privacidade
+            <span
+              style="
+                font-weight:400;
+                color:#6B7280;
+              "
+            >
+              (opcional)
+            </span>
+          </label>
+
+          <div
             style="
-              display:flex;
-              align-items:flex-start;
-              gap:10px;
-              cursor:pointer;
+              border:1px solid #E5E7EB;
+              border-radius:12px;
+              padding:16px;
+              background:#F9FAFB;
             "
           >
 
-            <input
-              id="portal-task-calendar-private"
-              type="checkbox"
-              style="margin-top:3px;"
-            />
+            <label
+              style="
+                display:flex;
+                align-items:center;
+                gap:10px;
+                cursor:pointer;
+                font-size:14px;
+                color:#374151;
+              "
+            >
 
-            <div>
+              <input
+                id="portal-task-calendar-private"
+                type="checkbox"
+              />
 
-              <div
-                style="
-                  font-weight:600;
-                  color:#374151;
-                "
-              >
-                🔒 Evento privado no calendário
-              </div>
+              🔒 Atividade privada
 
-              <div
-                style="
-                  margin-top:3px;
-                  font-size:13px;
-                  color:#6B7280;
-                "
-              >
-                O evento será criado como privado no Google Calendar.
-              </div>
+            </label>
 
-            </div>
-
-          </label>
+          </div>
 
         </div>
 
 
-        <!-- AÇÕES -->
+        <!-- FOOTER -->
 
         <div
+          class="portal-modal-footer"
           style="
-            display:flex;
-            justify-content:flex-end;
-            gap:12px;
-            margin-top:30px;
             padding-top:22px;
             border-top:1px solid #E5E7EB;
           "
@@ -578,16 +610,8 @@ export function createTaskModal(
 
           <button
             type="button"
+            class="btn-secondary"
             onclick="closePortalModal()"
-            style="
-              border:1px solid #D1D5DB;
-              background:#FFFFFF;
-              color:#374151;
-              padding:11px 18px;
-              border-radius:10px;
-              cursor:pointer;
-              font-weight:600;
-            "
           >
             Cancelar
           </button>
@@ -595,19 +619,14 @@ export function createTaskModal(
           <button
             id="portal-create-task-submit"
             type="button"
+            class="btn-primary"
             disabled
-            title="A criação será conectada à lógica existente na próxima etapa."
             style="
-              border:none;
-              background:#9CA3AF;
-              color:#FFFFFF;
-              padding:11px 20px;
-              border-radius:10px;
+              opacity:.55;
               cursor:not-allowed;
-              font-weight:600;
             "
           >
-            Criar tarefa
+            Criar
           </button>
 
         </div>

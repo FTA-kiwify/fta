@@ -1,6 +1,10 @@
+import { WebClient } from "@slack/web-api";
 import { prisma } from "../../lib/prisma";
-import { resolveManySlackNames } from "../slackUserLookup";
 import { getPortalAccess } from "./portalAccessService";
+
+const slack = new WebClient(
+  process.env.SLACK_BOT_TOKEN
+);
 
 export type PortalCreateTaskOption = {
   id: string;
@@ -43,46 +47,77 @@ export async function getPortalCreateTaskOptions(
    * COLABORADORES
    * =====================================================
    *
-   * Todos os membros do departamento permitido.
+   * No Slack, o modal usa users_select / multi_users_select.
+   * Portanto, a população é o workspace do Slack.
+   *
+   * No Portal fazemos a mesma coisa através de users.list().
    */
 
-  const collaboratorIds =
-    Array.from(
-      new Set(
-        access.memberSlackUserIds
-      )
-    );
+  const collaborators: PortalCreateTaskOption[] = [];
 
-  /*
-   * Garante que o próprio usuário também
-   * apareça caso exista alguma inconsistência
-   * de membership.
-   */
-  if (
-    !collaboratorIds.includes(
-      viewerSlackUserId
+  let cursor: string | undefined;
+
+  do {
+
+    const response = await slack.users.list({
+      limit: 200,
+      ...(cursor ? { cursor } : {}),
+    });
+
+    for (const member of response.members ?? []) {
+
+      /*
+       * Ignora:
+       * - usuários sem ID;
+       * - bots;
+       * - usuários deletados/desativados.
+       */
+
+      if (!member.id) {
+        continue;
+      }
+
+      if (member.deleted) {
+        continue;
+      }
+
+      if (member.is_bot) {
+        continue;
+      }
+
+      /*
+       * O Slack normalmente também possui o Slackbot.
+       */
+      if (member.id === "USLACKBOT") {
+        continue;
+      }
+
+      const name =
+        member.profile?.display_name?.trim() ||
+        member.profile?.real_name?.trim() ||
+        member.real_name?.trim() ||
+        member.name?.trim() ||
+        member.id;
+
+      collaborators.push({
+        id: member.id,
+        name,
+      });
+    }
+
+    cursor =
+      response.response_metadata
+        ?.next_cursor
+        ?.trim() || undefined;
+
+  } while (cursor);
+
+  collaborators.sort((a, b) =>
+    a.name.localeCompare(
+      b.name,
+      "pt-BR"
     )
-  ) {
-    collaboratorIds.push(
-      viewerSlackUserId
-    );
-  }
-
-  const collaboratorNames =
-    await resolveManySlackNames(
-      collaboratorIds
-    );
-
-  const collaborators =
-    collaboratorIds
-      .map(id => ({
-        id,
-        name:
-          collaboratorNames[id] ?? id,
-      }))
-      .sort((a, b) =>
-        a.name.localeCompare(b.name)
-      );
+  );
 
   /*
    * =====================================================
