@@ -1,23 +1,23 @@
 import type {
-  PortalCreateTaskOptions,
+    PortalCreateTaskOptions,
 } from "../../services/portal/createTaskOptionsService";
 
 function escapeHtml(
-  value: string | null | undefined
+    value: string | null | undefined
 ) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 export function createTaskModal(
-  options: PortalCreateTaskOptions
+    options: PortalCreateTaskOptions
 ) {
 
-  return `
+    return `
     <div
       style="
         width:720px;
@@ -145,14 +145,14 @@ export function createTaskModal(
             </option>
 
             ${options.processes
-              .map(process => `
+            .map(process => `
                 <option
                   value="${escapeHtml(process.id)}"
                 >
                   ${escapeHtml(process.name)}
                 </option>
               `)
-              .join("")}
+            .join("")}
 
           </select>
 
@@ -167,26 +167,93 @@ export function createTaskModal(
             Responsável
           </label>
 
-          <select
-            id="portal-task-responsible"
-            class="portal-select"
+          <div
+            id="portal-responsible-picker"
+            style="
+              position:relative;
+            "
           >
 
-            <option value="">
-              Selecione um usuário
-            </option>
+            <input
+              id="portal-task-responsible-search"
+              class="portal-input"
+              type="text"
+              placeholder="Pesquisar usuário..."
+              autocomplete="off"
+              onfocus="portalOpenResponsiblePicker()"
+              oninput="portalFilterResponsible()"
+            />
 
-            ${options.collaborators
-              .map(collaborator => `
-                <option
-                  value="${escapeHtml(collaborator.id)}"
-                >
-                  ${escapeHtml(collaborator.name)}
-                </option>
-              `)
-              .join("")}
+            <input
+              id="portal-task-responsible"
+              type="hidden"
+              value=""
+            />
 
-          </select>
+            <div
+              id="portal-responsible-options"
+              style="
+                display:none;
+                position:absolute;
+                left:0;
+                right:0;
+                top:calc(100% + 6px);
+                z-index:100;
+                max-height:260px;
+                overflow-y:auto;
+                background:#FFFFFF;
+                border:1px solid #E5E7EB;
+                border-radius:12px;
+                box-shadow:0 12px 30px rgba(15,23,42,.14);
+                padding:6px;
+              "
+            >
+
+              ${options.collaborators
+            .map(collaborator => `
+                  <button
+                    type="button"
+                    class="portal-responsible-option"
+                    data-user-id="${escapeHtml(collaborator.id)}"
+                    data-user-name="${escapeHtml(collaborator.name)}"
+                    onclick="portalSelectResponsible(
+                      '${escapeHtml(collaborator.id)}',
+                      '${escapeHtml(collaborator.name)}'
+                    )"
+                    style="
+                      width:100%;
+                      border:none;
+                      background:transparent;
+                      text-align:left;
+                      padding:10px 12px;
+                      border-radius:8px;
+                      cursor:pointer;
+                      font-size:14px;
+                      color:#1F2937;
+                    "
+                    onmouseover="this.style.background='#F3F4F6'"
+                    onmouseout="this.style.background='transparent'"
+                  >
+                    ${escapeHtml(collaborator.name)}
+                  </button>
+                `)
+            .join("")}
+
+              <div
+                id="portal-responsible-empty"
+                style="
+                  display:none;
+                  padding:14px 12px;
+                  color:#6B7280;
+                  font-size:14px;
+                "
+              >
+                Nenhum usuário encontrado.
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
@@ -291,14 +358,14 @@ export function createTaskModal(
               </option>
 
               ${options.dependencies
-                .map(task => `
+            .map(task => `
                   <option
                     value="${escapeHtml(task.id)}"
                   >
                     ${escapeHtml(task.name)}
                   </option>
                 `)
-                .join("")}
+            .join("")}
 
             </select>
 
@@ -514,26 +581,113 @@ export function createTaskModal(
             </span>
           </label>
 
-          <select
-            id="portal-task-carbon-copies"
-            class="portal-select"
-            multiple
+          <div
+            id="portal-cc-picker"
             style="
-              min-height:130px;
+              position:relative;
             "
           >
 
-            ${options.collaborators
-              .map(collaborator => `
-                <option
-                  value="${escapeHtml(collaborator.id)}"
-                >
-                  ${escapeHtml(collaborator.name)}
-                </option>
-              `)
-              .join("")}
+            <div
+              id="portal-cc-selected"
+              style="
+                display:flex;
+                flex-wrap:wrap;
+                gap:7px;
+                margin-bottom:8px;
+              "
+            ></div>
 
-          </select>
+            <input
+              id="portal-task-carbon-copies-search"
+              class="portal-input"
+              type="text"
+              placeholder="Pesquisar usuários..."
+              autocomplete="off"
+              onfocus="portalOpenCcPicker()"
+              oninput="portalFilterCarbonCopies()"
+            />
+
+            <div
+              id="portal-cc-options"
+              style="
+                display:none;
+                position:absolute;
+                left:0;
+                right:0;
+                top:calc(100% + 6px);
+                z-index:100;
+                max-height:260px;
+                overflow-y:auto;
+                background:#FFFFFF;
+                border:1px solid #E5E7EB;
+                border-radius:12px;
+                box-shadow:0 12px 30px rgba(15,23,42,.14);
+                padding:6px;
+              "
+            >
+
+              ${options.collaborators
+            .map(collaborator => `
+                  <button
+                    type="button"
+                    class="portal-cc-option"
+                    data-user-id="${escapeHtml(collaborator.id)}"
+                    data-user-name="${escapeHtml(collaborator.name)}"
+                    onclick="portalToggleCarbonCopy(
+                      '${escapeHtml(collaborator.id)}',
+                      '${escapeHtml(collaborator.name)}'
+                    )"
+                    style="
+                      width:100%;
+                      border:none;
+                      background:transparent;
+                      text-align:left;
+                      padding:10px 12px;
+                      border-radius:8px;
+                      cursor:pointer;
+                      font-size:14px;
+                      color:#1F2937;
+                    "
+                    onmouseover="this.style.background='#F3F4F6'"
+                    onmouseout="this.style.background='transparent'"
+                  >
+                    ${escapeHtml(collaborator.name)}
+                  </button>
+                `)
+            .join("")}
+
+              <div
+                id="portal-cc-empty"
+                style="
+                  display:none;
+                  padding:14px 12px;
+                  color:#6B7280;
+                  font-size:14px;
+                "
+              >
+                Nenhum usuário encontrado.
+              </div>
+
+            </div>
+
+            <select
+              id="portal-task-carbon-copies"
+              multiple
+              style="display:none;"
+            >
+              ${options.collaborators
+            .map(collaborator => `
+                  <option
+                    value="${escapeHtml(collaborator.id)}"
+                  >
+                    ${escapeHtml(collaborator.name)}
+                  </option>
+                `)
+            .join("")}
+            </select>
+
+          </div>
 
           <div
             style="
@@ -542,11 +696,10 @@ export function createTaskModal(
               font-size:12px;
             "
           >
-            Use Ctrl/Cmd para selecionar mais de uma pessoa.
+            Pesquise e selecione quantas pessoas quiser.
           </div>
 
         </div>
-
 
         <!-- PRIVACIDADE -->
 

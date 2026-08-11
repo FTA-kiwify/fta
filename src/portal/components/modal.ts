@@ -332,6 +332,345 @@ window.portalHandleUrgencyChange = function() {
       ? "block"
       : "none";
 };
+window.portalNormalizeSearch = function(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+};
+
+
+window.portalOpenResponsiblePicker = function() {
+
+  const dropdown =
+    document.getElementById(
+      "portal-responsible-options"
+    );
+
+  if (!dropdown) return;
+
+  dropdown.style.display = "block";
+
+  window.portalFilterResponsible();
+};
+
+
+window.portalFilterResponsible = function() {
+
+  const input =
+    document.getElementById(
+      "portal-task-responsible-search"
+    );
+
+  const empty =
+    document.getElementById(
+      "portal-responsible-empty"
+    );
+
+  if (!input) return;
+
+  const search =
+    window.portalNormalizeSearch(
+      input.value
+    );
+
+  const options =
+    document.querySelectorAll(
+      ".portal-responsible-option"
+    );
+
+  let visible = 0;
+
+  options.forEach(option => {
+
+    const name =
+      window.portalNormalizeSearch(
+        option.dataset.userName
+      );
+
+    const show =
+      !search ||
+      name.includes(search);
+
+    option.style.display =
+      show ? "block" : "none";
+
+    if (show) visible++;
+  });
+
+  if (empty) {
+    empty.style.display =
+      visible === 0
+        ? "block"
+        : "none";
+  }
+};
+
+
+window.portalSelectResponsible = function(
+  userId,
+  userName
+) {
+
+  const hidden =
+    document.getElementById(
+      "portal-task-responsible"
+    );
+
+  const input =
+    document.getElementById(
+      "portal-task-responsible-search"
+    );
+
+  const dropdown =
+    document.getElementById(
+      "portal-responsible-options"
+    );
+
+  if (hidden) {
+    hidden.value = userId;
+  }
+
+  if (input) {
+    input.value = userName;
+  }
+
+  if (dropdown) {
+    dropdown.style.display = "none";
+  }
+};
+
+
+window.portalOpenCcPicker = function() {
+
+  const dropdown =
+    document.getElementById(
+      "portal-cc-options"
+    );
+
+  if (!dropdown) return;
+
+  dropdown.style.display = "block";
+
+  window.portalFilterCarbonCopies();
+};
+
+
+window.portalFilterCarbonCopies = function() {
+
+  const input =
+    document.getElementById(
+      "portal-task-carbon-copies-search"
+    );
+
+  const empty =
+    document.getElementById(
+      "portal-cc-empty"
+    );
+
+  if (!input) return;
+
+  const search =
+    window.portalNormalizeSearch(
+      input.value
+    );
+
+  const options =
+    document.querySelectorAll(
+      ".portal-cc-option"
+    );
+
+  let visible = 0;
+
+  options.forEach(option => {
+
+    const name =
+      window.portalNormalizeSearch(
+        option.dataset.userName
+      );
+
+    const show =
+      !search ||
+      name.includes(search);
+
+    option.style.display =
+      show ? "block" : "none";
+
+    if (show) visible++;
+  });
+
+  if (empty) {
+    empty.style.display =
+      visible === 0
+        ? "block"
+        : "none";
+  }
+};
+
+
+window.portalToggleCarbonCopy = function(
+  userId,
+  userName
+) {
+
+  const select =
+    document.getElementById(
+      "portal-task-carbon-copies"
+    );
+
+  if (!select) return;
+
+  const option =
+    Array.from(select.options)
+      .find(option =>
+        option.value === userId
+      );
+
+  if (!option) return;
+
+  option.selected = !option.selected;
+
+  window.portalRenderCarbonCopies();
+
+  const search =
+    document.getElementById(
+      "portal-task-carbon-copies-search"
+    );
+
+  if (search) {
+    search.value = "";
+    search.focus();
+  }
+
+  window.portalFilterCarbonCopies();
+};
+
+
+window.portalRemoveCarbonCopy = function(
+  userId
+) {
+
+  const select =
+    document.getElementById(
+      "portal-task-carbon-copies"
+    );
+
+  if (!select) return;
+
+  const option =
+    Array.from(select.options)
+      .find(option =>
+        option.value === userId
+      );
+
+  if (option) {
+    option.selected = false;
+  }
+
+  window.portalRenderCarbonCopies();
+};
+
+
+window.portalRenderCarbonCopies = function() {
+
+  const select =
+    document.getElementById(
+      "portal-task-carbon-copies"
+    );
+
+  const container =
+    document.getElementById(
+      "portal-cc-selected"
+    );
+
+  if (!select || !container) return;
+
+  const selected =
+    Array.from(select.options)
+      .filter(option =>
+        option.selected
+      );
+
+  container.innerHTML =
+    selected
+      .map(option => \`
+        <span
+          style="
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:6px 9px;
+            border-radius:999px;
+            background:#ECFDF5;
+            color:#166534;
+            font-size:13px;
+            font-weight:600;
+          "
+        >
+          \${option.text}
+
+          <button
+            type="button"
+            onclick="portalRemoveCarbonCopy('\${option.value}')"
+            style="
+              border:none;
+              background:none;
+              padding:0;
+              color:#166534;
+              cursor:pointer;
+              font-size:15px;
+              line-height:1;
+            "
+          >
+            ×
+          </button>
+        </span>
+      \`)
+      .join("");
+};
+document.addEventListener("click", function(event) {
+
+  const responsiblePicker =
+    document.getElementById(
+      "portal-responsible-picker"
+    );
+
+  const responsibleDropdown =
+    document.getElementById(
+      "portal-responsible-options"
+    );
+
+  if (
+    responsiblePicker &&
+    responsibleDropdown &&
+    !responsiblePicker.contains(event.target)
+  ) {
+    responsibleDropdown.style.display =
+      "none";
+  }
+
+
+  const ccPicker =
+    document.getElementById(
+      "portal-cc-picker"
+    );
+
+  const ccDropdown =
+    document.getElementById(
+      "portal-cc-options"
+    );
+
+  if (
+    ccPicker &&
+    ccDropdown &&
+    !ccPicker.contains(event.target)
+  ) {
+    ccDropdown.style.display =
+      "none";
+  }
+
+});
 </script>
   `;
 }
