@@ -705,57 +705,55 @@ document.addEventListener("click", function(event) {
   }
 
 });
-document.addEventListener("click", function(event) {
+document.addEventListener(
+  "click",
+  function(event) {
 
-  const target = event.target;
+    const target = event.target;
 
-  if (!(target instanceof Element)) {
-    return;
-  }
+    if (!(target instanceof Element)) {
+      return;
+    }
 
-  const responsibleSearch =
-    document.getElementById(
-      "portal-task-responsible-search"
-    );
+    const responsiblePicker =
+      document.getElementById(
+        "portal-responsible-picker"
+      );
 
-  const responsibleDropdown =
-    document.getElementById(
-      "portal-responsible-options"
-    );
+    const responsibleDropdown =
+      document.getElementById(
+        "portal-responsible-options"
+      );
 
-  const ccSearch =
-    document.getElementById(
-      "portal-task-carbon-copies-search"
-    );
+    const ccPicker =
+      document.getElementById(
+        "portal-cc-picker"
+      );
 
-  const ccDropdown =
-    document.getElementById(
-      "portal-cc-options"
-    );
+    const ccDropdown =
+      document.getElementById(
+        "portal-cc-options"
+      );
 
-  const clickedResponsible =
-    responsibleSearch?.contains(target) ||
-    responsibleDropdown?.contains(target);
+    if (
+      responsibleDropdown &&
+      responsiblePicker &&
+      !responsiblePicker.contains(target)
+    ) {
+      responsibleDropdown.style.display = "none";
+    }
 
-  const clickedCc =
-    ccSearch?.contains(target) ||
-    ccDropdown?.contains(target);
+    if (
+      ccDropdown &&
+      ccPicker &&
+      !ccPicker.contains(target)
+    ) {
+      ccDropdown.style.display = "none";
+    }
 
-  if (
-    responsibleDropdown &&
-    !clickedResponsible
-  ) {
-    responsibleDropdown.style.display = "none";
-  }
-
-  if (
-    ccDropdown &&
-    !clickedCc
-  ) {
-    ccDropdown.style.display = "none";
-  }
-
-});
+  },
+  true
+);
 </script>
   `;
 }
