@@ -72,6 +72,12 @@ import { createTaskModal } from "../portal/components/createTaskModal";
 import {
   getPortalCreateTaskOptions,
 } from "../services/portal/createTaskOptionsService";
+import { WebClient } from "@slack/web-api";
+import { createTaskService } from "../services/createTaskService";
+import { syncTaskParticipantEmails } from "../services/syncTaskParticipantEmails";
+import { syncCalendarEventForTask } from "../services/googleCalendar";
+import { notifyTaskCreated } from "../services/notifyTaskCreated";
+import { publishHome } from "../services/publishHome";
 
 function getTopbarUser(request: any) {
 
@@ -90,6 +96,9 @@ function getTopbarUser(request: any) {
 }
 
 export async function portalRoutes(app: FastifyInstance) {
+  const slack = new WebClient(
+    process.env.SLACK_BOT_TOKEN
+  );
 
   app.addHook(
     "preHandler",
@@ -1424,30 +1433,388 @@ export async function portalRoutes(app: FastifyInstance) {
     }
   );
   app.get(
-  "/portal/tasks/create/modal",
-  async (request, reply) => {
+    "/portal/tasks/create/modal",
+    async (request, reply) => {
 
-    const portalUser =
-      getPortalUser(request);
+      const portalUser =
+        getPortalUser(request);
 
-    if (!portalUser) {
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const options =
+        await getPortalCreateTaskOptions(
+          portalUser.slackUserId
+        );
+
       return reply
-        .code(401)
-        .send("Não autenticado.");
+        .type("text/html")
+        .send(
+          createTaskModal(options)
+        );
     }
+  );
+  app.post(
+    "/portal/tasks/create",
+    async (request, reply) => {
 
-    const options =
-      await getPortalCreateTaskOptions(
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send({
+            error: "Não autenticado.",
+          });
+      }
+
+      const body = request.body as {
+        title?: string;
+        description?: string | null;
+        processId?: string | null;
+        responsible?: string;
+        taskType?: string;
+        term?: string | null;
+        deadlineTime?: string | null;
+        dependsOnId?: string | null;
+        recurrence?: string | null;
+        urgency?: string;
+        turboPreviousDay?: boolean;
+        turboStartTime?: string | null;
+        reminderMode?: string;
+        carbonCopies?: string[];
+        calendarPrivate?: boolean;
+      };
+
+      /*
+       * ==========================================
+       * VALIDAÇÕES BÁSICAS
+       * ==========================================
+       */
+
+      const title =
+        body.title?.trim() ?? "";
+
+      const responsible =
+        body.responsible?.trim() ?? "";
+
+      if (!title) {
+        return reply
+          .code(400)
+          .send({
+            error: "Informe o título da tarefa.",
+          });
+      }
+
+      if (!responsible) {
+        return reply
+          .code(400)
+          .send({
+            error: "Selecione o responsável.",
+          });
+      }
+
+      /*
+       * ==========================================
+       * PROCESSO / NOTION
+       * ==========================================
+       */
+
+      const processId =
+        body.processId?.trim() || null;
+
+      let notionProcessUrl:
+        string | null = null;
+
+      if (processId) {
+
+        const process =
+          await prisma.process.findUnique({
+            where: {
+              id: processId,
+            },
+
+            select: {
+              notionPageUrl: true,
+            },
+          });
+
+        notionProcessUrl =
+          process?.notionPageUrl ?? null;
+      }
+
+      /*
+       * ==========================================
+       * DATA
+       *
+       * Mesmo padrão usado pelo Slack:
+       * YYYY-MM-DD -> 03:00 UTC
+       * ==========================================
+       */
+
+      const term =
+        body.term
+          ? new Date(
+            `${body.term}T03:00:00.000Z`
+          )
+          : null;
+
+      /*
+       * Não permitimos criação no passado.
+       */
+
+      if (body.term) {
+
+        const todayIso =
+          new Intl.DateTimeFormat(
+            "en-CA",
+            {
+              timeZone:
+                "America/Sao_Paulo",
+
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }
+          ).format(new Date());
+
+        if (body.term < todayIso) {
+
+          return reply
+            .code(400)
+            .send({
+              error:
+                "Não é permitido criar atividade com data passada.",
+            });
+        }
+      }
+
+      /*
+       * ==========================================
+       * CRIAÇÃO
+       *
+       * AQUI reutilizamos o MESMO service
+       * usado pelo Slack.
+       * ==========================================
+       */
+
+      const task =
+        await createTaskService({
+          title,
+
+          description:
+            body.description?.trim()
+              ? body.description.trim()
+              : null,
+
+          notionProcessUrl,
+
+          delegation:
+            portalUser.slackUserId,
+
+          responsible,
+
+          term,
+
+          deadlineTime:
+            body.deadlineTime || null,
+
+          recurrence:
+            body.recurrence || null,
+
+          dependsOnId:
+            body.dependsOnId || null,
+
+          urgency:
+            body.urgency || "light",
+
+          taskType:
+            body.taskType || "normal",
+
+          reminderMode:
+            body.reminderMode || "until",
+
+          turboPreviousDay:
+            body.turboPreviousDay ?? false,
+
+          turboStartTime:
+            body.turboStartTime || null,
+
+          processId,
+
+          carbonCopies:
+            body.carbonCopies ?? [],
+
+          calendarPrivate:
+            body.calendarPrivate ?? false,
+        });
+
+      /*
+       * ==========================================
+       * MESMOS SIDE EFFECTS DO SLACK
+       * ==========================================
+       */
+
+      try {
+
+        await syncTaskParticipantEmails({
+          slack,
+
+          taskId: task.id,
+
+          delegationSlackId:
+            portalUser.slackUserId,
+
+          responsibleSlackId:
+            task.responsible,
+
+          carbonCopiesSlackIds:
+            (task as any)
+              .carbonCopies
+              ?.map(
+                (copy: any) =>
+                  copy.slackUserId
+              ) ?? [],
+        });
+
+        await syncCalendarEventForTask(
+          task.id
+        );
+
+      } catch (error) {
+
+        request.log.error(
+          {
+            error,
+            taskId: task.id,
+          },
+          "[PORTAL_CREATE_TASK] email/calendar sync failed"
+        );
+      }
+
+      /*
+       * ==========================================
+       * NOTIFICAÇÃO
+       *
+       * Igual ao Slack:
+       * se depender de uma tarefa ainda aberta,
+       * a notificação fica adiada.
+       * ==========================================
+       */
+
+      let deferNotifyCreated = false;
+
+      if (body.dependsOnId) {
+
+        const dependency =
+          await prisma.task.findUnique({
+            where: {
+              id: body.dependsOnId,
+            },
+
+            select: {
+              status: true,
+            },
+          });
+
+        deferNotifyCreated =
+          dependency?.status !== "done";
+      }
+
+      if (!deferNotifyCreated) {
+
+        await notifyTaskCreated({
+          slack,
+
+          taskId: task.id,
+
+          createdBy:
+            portalUser.slackUserId,
+
+          taskTitle:
+            task.title,
+
+          responsible:
+            task.responsible,
+
+          carbonCopies:
+            (task as any)
+              .carbonCopies
+              ?.map(
+                (copy: any) =>
+                  copy.slackUserId
+              ) ?? [],
+
+          term:
+            task.term,
+
+          deadlineTime:
+            (task as any)
+              .deadlineTime ?? null,
+        });
+      }
+
+      /*
+       * ==========================================
+       * ATUALIZA HOME DO SLACK
+       * ==========================================
+       */
+
+      const affected =
+        new Set<string>();
+
+      affected.add(
         portalUser.slackUserId
       );
 
-    return reply
-      .type("text/html")
-      .send(
-        createTaskModal(options)
+      affected.add(
+        task.responsible
       );
-  }
-);
+
+      if (task.delegation) {
+        affected.add(
+          task.delegation
+        );
+      }
+
+      for (
+        const copy of
+        (task as any)
+          .carbonCopies ?? []
+      ) {
+        affected.add(
+          copy.slackUserId
+        );
+      }
+
+      await Promise.allSettled(
+        Array
+          .from(affected)
+          .map(
+            userId =>
+              publishHome(
+                slack,
+                userId
+              )
+          )
+      );
+
+      /*
+       * ==========================================
+       * RESPOSTA PARA O PORTAL
+       * ==========================================
+       */
+
+      return reply.send({
+        ok: true,
+        taskId: task.id,
+      });
+    }
+  );
 
   app.get("/portal/tasks/:id", async (request, reply) => {
 

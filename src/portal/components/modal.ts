@@ -754,6 +754,190 @@ document.addEventListener(
   },
   true
 );
+window.portalCreateTask = async function () {
+
+  const getValue = (id) =>
+    document.getElementById(id)?.value ?? "";
+
+  const getCheckedValues = (id) => {
+    const el = document.getElementById(id);
+
+    if (!el) return [];
+
+    return Array.from(
+      el.querySelectorAll(
+        'input[type="checkbox"]:checked'
+      )
+    ).map(input => input.value);
+  };
+
+  const title =
+    getValue("portal-task-title").trim();
+
+  const description =
+    getValue("portal-task-description").trim();
+
+  const processId =
+    getValue("portal-task-process") || null;
+
+  const responsible =
+    getValue("portal-task-responsible");
+
+  const taskType =
+    getValue("portal-task-type") || "normal";
+
+  const term =
+    taskType === "on_demand"
+      ? null
+      : getValue("portal-task-term") || null;
+
+  const deadlineTime =
+    taskType === "on_demand"
+      ? null
+      : getValue("portal-task-deadline-time") || null;
+
+  const dependsOnId =
+    taskType === "on_demand"
+      ? null
+      : getValue("portal-task-depends-on") || null;
+
+  const recurrence =
+    taskType === "on_demand"
+      ? null
+      : getValue("portal-task-recurrence") || null;
+
+  const urgency =
+    taskType === "on_demand"
+      ? "light"
+      : getValue("portal-task-urgency") || "light";
+
+  const reminderMode =
+    taskType === "on_demand"
+      ? "until"
+      : getValue("portal-task-reminder-mode") || "until";
+
+  const turboPreviousDayEl =
+    document.getElementById(
+      "portal-task-turbo-previous-day"
+    );
+
+  const turboPreviousDay =
+    taskType !== "on_demand" &&
+    urgency === "turbo"
+      ? Boolean(turboPreviousDayEl?.checked)
+      : false;
+
+  const turboStartTime =
+    taskType !== "on_demand" &&
+    urgency === "turbo"
+      ? getValue("portal-task-turbo-start-time") || null
+      : null;
+
+  const carbonCopies =
+    getCheckedValues(
+      "portal-task-carbon-copies"
+    );
+
+  const calendarPrivateEl =
+    document.getElementById(
+      "portal-task-calendar-private"
+    );
+
+  const calendarPrivate =
+    Boolean(calendarPrivateEl?.checked);
+
+  if (!title) {
+    alert("Informe o título da tarefa.");
+    return;
+  }
+
+  if (!responsible) {
+    alert("Selecione o responsável.");
+    return;
+  }
+
+  if (
+    taskType !== "on_demand" &&
+    !term
+  ) {
+    alert("Informe o prazo da tarefa.");
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "portal-create-task-button"
+    );
+
+  const originalText =
+    button?.innerHTML;
+
+  if (button) {
+    button.disabled = true;
+    button.innerHTML = "Criando...";
+  }
+
+  try {
+
+    const response = await fetch(
+      "/portal/tasks/create",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          title,
+          description:
+            description || null,
+          processId,
+          responsible,
+          taskType,
+          term,
+          deadlineTime,
+          dependsOnId,
+          recurrence,
+          urgency,
+          reminderMode,
+          turboPreviousDay,
+          turboStartTime,
+          carbonCopies,
+          calendarPrivate,
+        }),
+      }
+    );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+        "Não foi possível criar a tarefa."
+      );
+    }
+
+    closePortalModal();
+
+    window.location.reload();
+
+  } catch (error) {
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível criar a tarefa."
+    );
+
+    if (button) {
+      button.disabled = false;
+      button.innerHTML =
+        originalText || "➕ Criar tarefa";
+    }
+  }
+};
 </script>
   `;
 }

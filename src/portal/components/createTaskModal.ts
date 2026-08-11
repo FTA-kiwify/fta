@@ -770,17 +770,13 @@ export function createTaskModal(
           </button>
 
           <button
-            id="portal-create-task-submit"
-            type="button"
-            class="btn-primary"
-            disabled
-            style="
-              opacity:.55;
-              cursor:not-allowed;
-            "
-          >
-            Criar
-          </button>
+  id="portal-create-task-button"
+  type="button"
+  class="btn-primary"
+  onclick="portalCreateTask()"
+>
+  Criar
+</button>
 
         </div>
 
