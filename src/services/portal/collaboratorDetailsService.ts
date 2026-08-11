@@ -8,6 +8,7 @@ export type CollaboratorTask = {
   deadlineTime: string | null;
   urgency: "light" | "asap" | "turbo";
   taskType: "normal" | "on_demand";
+  responsibleName?: string;
 };
 
 
@@ -49,6 +50,9 @@ export type CollaboratorDetails = {
 export async function getCollaboratorDetails(
   slackUserId: string
 ): Promise<CollaboratorDetails> {
+
+    const responsibleName =
+    await getSlackUserName(slackUserId);
 
   const today = new Date();
 
@@ -129,6 +133,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -143,6 +148,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -157,6 +163,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -171,6 +178,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -185,6 +193,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -199,6 +208,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -213,6 +223,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -227,6 +238,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -248,6 +260,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -262,6 +275,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -276,6 +290,7 @@ export async function getCollaboratorDetails(
           deadlineTime: task.deadlineTime,
           urgency: task.urgency,
           taskType: task.taskType,
+          responsibleName,
         })),
     },
 
@@ -287,9 +302,7 @@ export async function getCollaboratorDetails(
 
     slackUserId,
 
-    name: await getSlackUserName(
-      slackUserId
-    ),
+    name: responsibleName,
 
     totalTasks: tasks.length,
 
@@ -313,6 +326,7 @@ export async function getCollaboratorDetails(
       deadlineTime: task.deadlineTime,
       urgency: task.urgency,
       taskType: task.taskType,
+      responsibleName,
     })),
 
   };

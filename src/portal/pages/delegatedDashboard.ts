@@ -118,6 +118,8 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
       value: data.pendingTasks,
       subtitle: "Pendentes",
       icon: "📋",
+      onclick:
+        "openPortalModal('/portal/delegated/tasks/pending/modal')",
 
     })}
 
@@ -127,6 +129,8 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
       subtitle: "Para hoje",
       icon: "📅",
       color: "#F59E0B",
+      onclick:
+        "openPortalModal('/portal/delegated/tasks/today/modal')",
     })}
 
       ${statCard({
@@ -135,6 +139,8 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
       subtitle: "Prioridade máxima",
       icon: "🔥",
       color: "#B91C1C",
+      onclick:
+        "openPortalModal('/portal/delegated/tasks/turbo/modal')",
     })}
 
       ${statCard({
@@ -143,6 +149,8 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
       subtitle: "Finalizadas hoje",
       icon: "✅",
       color: "#22C55E",
+      onclick:
+        "openPortalModal('/portal/delegated/tasks/completed/modal')",
     })}
 
     </div>

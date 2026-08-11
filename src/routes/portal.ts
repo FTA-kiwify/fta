@@ -22,6 +22,7 @@ import { getTeamDetails } from "../services/portal/teamDetailsService";
 
 import { getTaskDetails } from "../services/portal/taskDetailsService";
 import { getDashboardTaskList } from "../services/portal/dashboardTaskListService";
+import { getDelegatedTaskList } from "../services/portal/delegatedTaskListService";
 import { dashboardTasksModal } from "../portal/components/dashboardTasksModal";
 import { getCollaboratorTaskList } from "../services/portal/collaboratorTaskListService";
 
@@ -3443,6 +3444,64 @@ export async function portalRoutes(app: FastifyInstance) {
       .send(taskModal(task));
 
   });
+  app.get(
+    "/portal/delegated/tasks/:filter/modal",
+    async (request, reply) => {
+
+      const { filter } =
+        request.params as {
+          filter: string;
+        };
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send(
+            "Não autenticado."
+          );
+      }
+
+      const tasks =
+        await getDelegatedTaskList(
+          portalUser.slackUserId,
+          filter
+        );
+
+      const titles:
+        Record<string, string> = {
+
+        pending:
+          "📋 Tarefas delegadas",
+
+        today:
+          "📅 Vencem hoje",
+
+        turbo:
+          "🔥 Tarefas Turbo",
+
+        completed:
+          "✅ Concluídas hoje",
+      };
+
+      return reply
+        .type("text/html")
+        .send(
+          dashboardTasksModal({
+            title:
+              titles[filter] ??
+              "Tarefas delegadas",
+
+            tasks,
+
+            completed:
+              filter === "completed",
+          })
+        );
+    }
+  );
   app.get(
     "/portal/dashboard/tasks/:filter/modal",
     async (request, reply) => {

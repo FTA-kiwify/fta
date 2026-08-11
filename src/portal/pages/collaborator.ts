@@ -117,7 +117,7 @@ export function collaboratorPage(
                       title: task.title,
                       urgency: task.urgency,
                       deadlineTime: task.deadlineTime,
-                      hideResponsible: true,
+                      responsible: `Responsável: ${task.responsibleName}`,
                     })
                   ).join("")
                 : `
@@ -139,7 +139,7 @@ export function collaboratorPage(
                           title: task.title,
                           urgency: task.urgency,
                           deadlineTime: task.deadlineTime,
-                          hideResponsible: true,
+                          responsible: `Responsável: ${task.responsibleName}`,
                         })
                       )
                       .join(""),
@@ -159,7 +159,7 @@ export function collaboratorPage(
                           title: task.title,
                           urgency: task.urgency,
                           deadlineTime: task.deadlineTime,
-                          hideResponsible: true,
+                          responsible: `Responsável: ${task.responsibleName}`,
                         })
                       )
                       .join(""),
