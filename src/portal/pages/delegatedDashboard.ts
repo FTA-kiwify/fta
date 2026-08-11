@@ -302,19 +302,20 @@ ${onDemandTasks.length
   </button>
 
   <button
-    id="portal-complete-selected-button"
-    type="button"
-    class="btn-primary"
-    disabled
-    onclick="portalCompleteSelectedTasks()"
-    style="
-      opacity:.5;
-      cursor:not-allowed;
-      min-width:190px;
-    "
-  >
-    ✓ Concluir selecionadas
-  </button>
+  id="portal-cancel-selected-button"
+  type="button"
+  class="btn-primary"
+  disabled
+  onclick="portalCancelSelectedTasks()"
+  style="
+    opacity:.5;
+    cursor:not-allowed;
+    min-width:190px;
+    background:#DC2626;
+  "
+>
+  ✕ Cancelar selecionadas
+</button>
 
 </div>
 

@@ -77,7 +77,10 @@ import {
 import { WebClient } from "@slack/web-api";
 import { createTaskService } from "../services/createTaskService";
 import { syncTaskParticipantEmails } from "../services/syncTaskParticipantEmails";
-import { syncCalendarEventForTask } from "../services/googleCalendar";
+import {
+  syncCalendarEventForTask,
+  deleteCalendarEventForTask,
+} from "../services/googleCalendar";
 import { notifyTaskCreated } from "../services/notifyTaskCreated";
 import { publishHome } from "../services/publishHome";
 import { completeTaskFlow } from "../services/completeTaskFlow";
@@ -89,6 +92,8 @@ import { updateTaskService } from "../services/updateTaskService";
 import { notifyTaskEdited } from "../services/notifyTaskEdited";
 import { handleTaskResponsibleReassign } from "../services/handleTaskResponsibleReassign";
 import { getSlackUserName } from "../services/slackUserLookup";
+import { notifyTaskCanceledGroup } from "../services/notifyTaskCanceledGroup";
+import { markTaskOpenMessageAsCanceled } from "../services/markTaskOpenMessageAsCanceled";
 
 function getTopbarUser(request: any) {
 
@@ -524,7 +529,7 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
-    app.get(
+  app.get(
     "/portal/delegated",
     async (request, reply) => {
 
@@ -3021,6 +3026,267 @@ export async function portalRoutes(app: FastifyInstance) {
       return reply.send({
         ok: true,
         taskId,
+      });
+    }
+  );
+
+  app.post(
+    "/portal/tasks/cancel",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send({
+            error: "Não autenticado.",
+          });
+      }
+
+      const body =
+        request.body as {
+          taskIds?: string[];
+        };
+
+      const taskIds =
+        Array.from(
+          new Set(
+            (body.taskIds ?? [])
+              .map(id => String(id).trim())
+              .filter(Boolean)
+          )
+        );
+
+      if (!taskIds.length) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "Nenhuma tarefa selecionada.",
+          });
+      }
+
+      /*
+       * ==========================================
+       * MESMA REGRA DO SLACK
+       *
+       * Apenas quem delegou pode cancelar.
+       * ==========================================
+       */
+
+      const tasksToCancel =
+        await prisma.task.findMany({
+          where: {
+            id: {
+              in: taskIds,
+            },
+
+            delegation:
+              portalUser.slackUserId,
+
+            status: {
+              notIn: [
+                "done",
+                "cancelled",
+              ],
+            },
+          },
+
+          select: {
+            id: true,
+            title: true,
+            responsible: true,
+            delegation: true,
+
+            carbonCopies: {
+              select: {
+                slackUserId: true,
+              },
+            },
+          },
+        });
+
+      /*
+       * Se alguma das selecionadas não puder
+       * ser cancelada, não fazemos cancelamento
+       * parcial.
+       */
+
+      if (
+        tasksToCancel.length !==
+        taskIds.length
+      ) {
+        return reply
+          .code(403)
+          .send({
+            error:
+              "Apenas tarefas delegadas por você e ainda abertas podem ser canceladas.",
+          });
+      }
+
+      /*
+       * ==========================================
+       * NOTIFICAÇÃO
+       * ==========================================
+       */
+
+      await Promise.allSettled(
+        tasksToCancel.map(task =>
+          notifyTaskCanceledGroup({
+            slack,
+
+            canceledBySlackId:
+              portalUser.slackUserId,
+
+            responsibleSlackId:
+              task.responsible,
+
+            carbonCopiesSlackIds:
+              task.carbonCopies.map(
+                copy =>
+                  copy.slackUserId
+              ),
+
+            taskTitle:
+              task.title,
+          })
+        )
+      );
+
+      /*
+       * ==========================================
+       * MENSAGEM ABERTA DO SLACK
+       * ==========================================
+       */
+
+      await Promise.allSettled(
+        tasksToCancel.map(task =>
+          markTaskOpenMessageAsCanceled({
+            slack,
+
+            taskId:
+              task.id,
+
+            taskTitle:
+              task.title,
+
+            canceledBySlackId:
+              portalUser.slackUserId,
+          })
+        )
+      );
+
+      /*
+       * ==========================================
+       * GOOGLE CALENDAR
+       * ==========================================
+       */
+
+      await Promise.allSettled(
+        tasksToCancel.map(task =>
+          deleteCalendarEventForTask(
+            task.id
+          )
+        )
+      );
+
+      /*
+       * ==========================================
+       * AUDITORIA
+       * ==========================================
+       */
+
+      await Promise.all(
+        tasksToCancel.map(task =>
+          prisma.taskAuditLog.create({
+            data: {
+              taskId:
+                task.id,
+
+              action:
+                "TASK_CANCELLED",
+
+              actorSlackId:
+                portalUser.slackUserId,
+            },
+          })
+        )
+      );
+
+      /*
+       * ==========================================
+       * CANCELA
+       * ==========================================
+       */
+
+      await prisma.task.updateMany({
+        where: {
+          id: {
+            in:
+              tasksToCancel.map(
+                task => task.id
+              ),
+          },
+
+          delegation:
+            portalUser.slackUserId,
+        },
+
+        data: {
+          status:
+            "cancelled",
+        },
+      });
+
+      /*
+       * ==========================================
+       * ATUALIZA HOME DO SLACK
+       * ==========================================
+       */
+
+      const affectedUsers =
+        new Set<string>();
+
+      affectedUsers.add(
+        portalUser.slackUserId
+      );
+
+      for (
+        const task of
+        tasksToCancel
+      ) {
+
+        affectedUsers.add(
+          task.responsible
+        );
+
+        for (
+          const copy of
+          task.carbonCopies
+        ) {
+          affectedUsers.add(
+            copy.slackUserId
+          );
+        }
+      }
+
+      await Promise.allSettled(
+        Array
+          .from(affectedUsers)
+          .map(userId =>
+            publishHome(
+              slack,
+              userId
+            )
+          )
+      );
+
+      return reply.send({
+        ok: true,
+        cancelled:
+          tasksToCancel.length,
       });
     }
   );

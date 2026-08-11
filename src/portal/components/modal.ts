@@ -319,6 +319,11 @@ window.portalUpdateCompleteSelection = function () {
     "portal-reschedule-selected-button"
   );
 
+    const cancelButton =
+    document.getElementById(
+      "portal-cancel-selected-button"
+    );
+
   const editButton = document.getElementById(
   "portal-edit-selected-button"
 );
@@ -384,6 +389,31 @@ window.portalUpdateCompleteSelection = function () {
       ? "✏️ Editar apenas 1 tarefa"
       : "✏️ Editar";
 }   
+        if (cancelButton) {
+
+    const canCancel =
+      count > 0;
+
+    cancelButton.disabled =
+      !canCancel;
+
+    cancelButton.style.opacity =
+      canCancel ? "1" : ".5";
+
+    cancelButton.style.cursor =
+      canCancel
+        ? "pointer"
+        : "not-allowed";
+
+    cancelButton.textContent =
+      count === 0
+        ? "✕ Cancelar selecionadas"
+        : count === 1
+          ? "✕ Cancelar 1 tarefa"
+          : "✕ Cancelar " +
+            count +
+            " tarefas";
+  }
 };
 window.portalOpenRescheduleSelected = async function () {
 
@@ -629,6 +659,104 @@ document.addEventListener("keydown", function (event) {
     document.body.style.overflow = "";
   }
 });
+window.portalCancelSelectedTasks =
+  async function () {
+
+    const selected =
+      Array.from(
+        document.querySelectorAll(
+          ".portal-task-complete-checkbox:checked"
+        )
+      );
+
+    const taskIds =
+      selected
+        .map(checkbox =>
+          checkbox.value
+        )
+        .filter(Boolean);
+
+    if (!taskIds.length) {
+      return;
+    }
+
+    const message =
+      taskIds.length === 1
+        ? "Cancelar esta tarefa?"
+        : "Cancelar as " +
+          taskIds.length +
+          " tarefas selecionadas?";
+
+    if (!confirm(message)) {
+      return;
+    }
+
+    const button =
+      document.getElementById(
+        "portal-cancel-selected-button"
+      );
+
+    const originalText =
+      button?.textContent;
+
+    if (button) {
+      button.disabled = true;
+      button.style.opacity = ".6";
+      button.style.cursor = "wait";
+      button.textContent =
+        "Cancelando...";
+    }
+
+    try {
+
+      const response =
+        await fetch(
+          "/portal/tasks/cancel",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                taskIds,
+              }),
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+          "Não foi possível cancelar."
+        );
+      }
+
+      window.location.reload();
+
+    } catch (error) {
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível cancelar."
+      );
+
+      if (button) {
+        button.disabled = false;
+        button.style.opacity = "1";
+        button.style.cursor = "pointer";
+        button.textContent =
+          originalText ||
+          "✕ Cancelar selecionadas";
+      }
+    }
+  };
 
 window.portalHandleTaskTypeChange = function() {
 
