@@ -1609,7 +1609,7 @@ export async function portalRoutes(app: FastifyInstance) {
           description:
             body.description?.trim()
               ? body.description.trim()
-              : null,
+              : undefined,
 
           notionProcessUrl,
 
