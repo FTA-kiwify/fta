@@ -6,12 +6,12 @@ export type UpcomingTask = {
   id: string;
   title: string;
   responsibleSlackId: string;
-  responsibleName: string;
+  delegatedBySlackId: string | null;
+  delegatedByName: string;
   term: Date | null;
   deadlineTime: string | null;
   urgency: "light" | "asap" | "turbo";
   taskType: "normal" | "on_demand";
-
 };
 
 export type CompletedTask = {
@@ -138,6 +138,7 @@ export async function getDashboardData(
         id: true,
         title: true,
         responsible: true,
+        delegation: true,
         term: true,
         deadlineTime: true,
         urgency: true,
@@ -156,48 +157,69 @@ export async function getDashboardData(
     light: 2,
   };
 
-  const upcomingTasks: UpcomingTask[] = upcomingTaskRows
-    .map(task => ({
-      id: task.id,
-      title: task.title,
-      responsibleSlackId: task.responsible,
-      responsibleName: "Você",
-      term: task.term,
-      deadlineTime: task.deadlineTime,
-      urgency: task.urgency,
-      taskType: task.taskType,
-    }))
-    .sort((a, b) => {
+  const upcomingTasks: UpcomingTask[] = await Promise.all(
+    upcomingTaskRows.map(async task => {
 
-      if (a.taskType === "on_demand" && b.taskType !== "on_demand") {
-        return 1;
-      }
+      const isSelfCreated =
+        !task.delegation ||
+        task.delegation === slackUserId;
 
-      if (a.taskType !== "on_demand" && b.taskType === "on_demand") {
-        return -1;
-      }
+      const delegatedByName =
+        isSelfCreated
+          ? "Você"
+          : await getSlackUserName(task.delegation);
 
-      const date =
-        (a.term?.getTime() ?? Number.MAX_SAFE_INTEGER) -
-        (b.term?.getTime() ?? Number.MAX_SAFE_INTEGER);
+      return {
+        id: task.id,
+        title: task.title,
+        responsibleSlackId: task.responsible,
+        delegatedBySlackId: task.delegation ?? null,
+        delegatedByName,
+        term: task.term,
+        deadlineTime: task.deadlineTime,
+        urgency: task.urgency,
+        taskType: task.taskType,
+      };
+    })
+  );
 
-      if (date !== 0) {
-        return date;
-      }
+  upcomingTasks.sort((a, b) => {
 
-      const urgency =
-        urgencyOrder[a.urgency] -
-        urgencyOrder[b.urgency];
+    if (
+      a.taskType === "on_demand" &&
+      b.taskType !== "on_demand"
+    ) {
+      return 1;
+    }
 
-      if (urgency !== 0) {
-        return urgency;
-      }
+    if (
+      a.taskType !== "on_demand" &&
+      b.taskType === "on_demand"
+    ) {
+      return -1;
+    }
 
-      return (a.deadlineTime ?? "").localeCompare(
-        b.deadlineTime ?? ""
-      );
+    const date =
+      (a.term?.getTime() ?? Number.MAX_SAFE_INTEGER) -
+      (b.term?.getTime() ?? Number.MAX_SAFE_INTEGER);
 
-    });
+    if (date !== 0) {
+      return date;
+    }
+
+    const urgency =
+      urgencyOrder[a.urgency] -
+      urgencyOrder[b.urgency];
+
+    if (urgency !== 0) {
+      return urgency;
+    }
+
+    return (a.deadlineTime ?? "").localeCompare(
+      b.deadlineTime ?? ""
+    );
+  });
+
 
   const completedToday = completedTodayLogs.map(log => ({
     id: log.task.id,
