@@ -357,6 +357,9 @@ window.portalOpenResponsiblePicker = function() {
 
 
 window.portalFilterResponsible = function() {
+window.portalCloseUserDropdowns(
+  "portal-responsible-options"
+);
 
   const input =
     document.getElementById(
@@ -458,6 +461,9 @@ window.portalOpenCcPicker = function() {
 
 
 window.portalFilterCarbonCopies = function() {
+window.portalCloseUserDropdowns(
+  "portal-cc-options"
+);
 
   const input =
     document.getElementById(
@@ -552,7 +558,29 @@ window.portalToggleCarbonCopy = function(
   }
 };
 
+window.portalCloseUserDropdowns = function(exceptId) {
 
+  const dropdowns = [
+    "portal-responsible-options",
+    "portal-cc-options",
+  ];
+
+  dropdowns.forEach(function(id) {
+
+    if (id === exceptId) {
+      return;
+    }
+
+    const dropdown =
+      document.getElementById(id);
+
+    if (dropdown) {
+      dropdown.style.display = "none";
+    }
+
+  });
+
+};
 window.portalRemoveCarbonCopy = function(
   userId
 ) {
@@ -674,6 +702,57 @@ document.addEventListener("click", function(event) {
   ) {
     ccDropdown.style.display =
       "none";
+  }
+
+});
+document.addEventListener("click", function(event) {
+
+  const target = event.target;
+
+  if (!(target instanceof Element)) {
+    return;
+  }
+
+  const responsibleSearch =
+    document.getElementById(
+      "portal-task-responsible-search"
+    );
+
+  const responsibleDropdown =
+    document.getElementById(
+      "portal-responsible-options"
+    );
+
+  const ccSearch =
+    document.getElementById(
+      "portal-task-carbon-copies-search"
+    );
+
+  const ccDropdown =
+    document.getElementById(
+      "portal-cc-options"
+    );
+
+  const clickedResponsible =
+    responsibleSearch?.contains(target) ||
+    responsibleDropdown?.contains(target);
+
+  const clickedCc =
+    ccSearch?.contains(target) ||
+    ccDropdown?.contains(target);
+
+  if (
+    responsibleDropdown &&
+    !clickedResponsible
+  ) {
+    responsibleDropdown.style.display = "none";
+  }
+
+  if (
+    ccDropdown &&
+    !clickedCc
+  ) {
+    ccDropdown.style.display = "none";
   }
 
 });
