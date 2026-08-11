@@ -57,50 +57,50 @@ export function collaboratorPage(
     <div class="dashboard-grid">
 
       ${collaborator.isTeam
-        ? statCard({
-            title: "Membros",
-            value: collaborator.members?.length ?? 0,
-            subtitle: "No time",
-            icon: "👥",
-            onclick: `openPortalModal('/portal/teams/${collaborator.slackUserId}/members/modal')`,
-          })
-        : ""
-      }
+      ? statCard({
+        title: "Membros",
+        value: collaborator.members?.length ?? 0,
+        subtitle: "No time",
+        icon: "👥",
+        onclick: `openPortalModal('/portal/teams/${collaborator.slackUserId}/members/modal')`,
+      })
+      : ""
+    }
 
       ${statCard({
-        title: "Tarefas abertas",
-        value: collaborator.totalTasks,
-        subtitle: "Pendentes",
-        icon: "📋",
-        onclick: collaborator.isTeam
-          ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/pending/modal')`
-          : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/pending/modal')`,
-      })}
+      title: "Tarefas abertas",
+      value: collaborator.totalTasks,
+      subtitle: "Pendentes",
+      icon: "📋",
+      onclick: collaborator.isTeam
+        ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/pending/modal')`
+        : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/pending/modal')`,
+    })}
 
       ${statCard({
-        title: "Vencem hoje",
-        value: collaborator.todayTasks,
-        subtitle: "Para hoje",
-        icon: "📅",
-        color: "#F59E0B",
-        onclick: collaborator.isTeam
-          ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/today/modal')`
-          : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/today/modal')`,
-      })}
+      title: "Vencem hoje",
+      value: collaborator.todayTasks,
+      subtitle: "Para hoje",
+      icon: "📅",
+      color: "#F59E0B",
+      onclick: collaborator.isTeam
+        ? `openPortalModal('/portal/teams/${collaborator.slackUserId}/tasks/today/modal')`
+        : `openPortalModal('/portal/collaborators/${collaborator.slackUserId}/tasks/today/modal')`,
+    })}
 
     </div>
 
     <div class="dashboard-grid" style="margin-top:28px;">
 
       ${dashboardSection({
-        title: "📅 Próximas tarefas",
-        body: collaborator.tasks.length === 0
-          ? `
+      title: "📅 Próximas tarefas",
+      body: collaborator.tasks.length === 0
+        ? `
               <p>
                 Nenhuma tarefa pendente.
               </p>
             `
-          : `
+        : `
               <h3
                 style="
                   margin-bottom:14px;
@@ -111,83 +111,83 @@ export function collaboratorPage(
               </h3>
 
               ${todayTasks.length
-                ? todayTasks.map(task =>
-                    upcomingTask({
-                      id: task.id,
-                      title: task.title,
-                      urgency: task.urgency,
-                      deadlineTime: task.deadlineTime,
-                      responsible: `Responsável: ${task.responsibleName}`,
-                    })
-                  ).join("")
-                : `
+          ? todayTasks.map(task =>
+            upcomingTask({
+              id: task.id,
+              title: task.title,
+              urgency: task.urgency,
+              deadlineTime: task.deadlineTime,
+              responsible: `Responsável: ${task.responsibleName}`,
+            })
+          ).join("")
+          : `
                     <p>
                       Nenhuma tarefa para hoje.
                     </p>
                   `
-              }
+        }
 
               ${tomorrowTasks.length
-                ? accordion({
-                    id: "tomorrow-tasks",
-                    title: "Amanhã",
-                    count: tomorrowTasks.length,
-                    body: tomorrowTasks
-                      .map(task =>
-                        upcomingTask({
-                          id: task.id,
-                          title: task.title,
-                          urgency: task.urgency,
-                          deadlineTime: task.deadlineTime,
-                          responsible: `Responsável: ${task.responsibleName}`,
-                        })
-                      )
-                      .join(""),
-                  })
-                : ""
-              }
-
-              ${futureTasks.length
-                ? accordion({
-                    id: "future-tasks",
-                    title: "Futuras",
-                    count: futureTasks.length,
-                    body: futureTasks
-                      .map(task =>
-                        upcomingTask({
-                          id: task.id,
-                          title: task.title,
-                          urgency: task.urgency,
-                          deadlineTime: task.deadlineTime,
-                          responsible: `Responsável: ${task.responsibleName}`,
-                        })
-                      )
-                      .join(""),
-                  })
-                : ""
-              }
-            `,
-      })}
-
-      ${dashboardSection({
-        title: "✅ Concluídas hoje",
-        body: collaborator.completedToday.length
-          ? collaborator.completedToday
+          ? accordion({
+            id: "tomorrow-tasks",
+            title: "Amanhã",
+            count: tomorrowTasks.length,
+            body: tomorrowTasks
               .map(task =>
-                completedTask({
+                upcomingTask({
                   id: task.id,
                   title: task.title,
                   urgency: task.urgency,
-                  completedAt: task.completedAt,
+                  deadlineTime: task.deadlineTime,
+                  responsible: `Responsável: ${task.responsibleName}`,
                 })
               )
-              .join("")
-          : `
+              .join(""),
+          })
+          : ""
+        }
+
+              ${futureTasks.length
+          ? accordion({
+            id: "future-tasks",
+            title: "Futuras",
+            count: futureTasks.length,
+            body: futureTasks
+              .map(task =>
+                upcomingTask({
+                  id: task.id,
+                  title: task.title,
+                  urgency: task.urgency,
+                  deadlineTime: task.deadlineTime,
+                  responsible: `Responsável: ${task.responsibleName}`,
+                })
+              )
+              .join(""),
+          })
+          : ""
+        }
+            `,
+    })}
+
+      ${dashboardSection({
+      title: "✅ Concluídas hoje",
+      body: collaborator.completedToday.length
+        ? collaborator.completedToday
+          .map(task =>
+            completedTask({
+              id: task.id,
+              title: task.title,
+              urgency: task.urgency,
+              completedAt: task.completedAt,
+            })
+          )
+          .join("")
+        : `
               <p>
                 Nenhuma tarefa concluída hoje.
               </p>
             `,
-      })}
+    })}
 
     </div>
 
@@ -201,39 +201,42 @@ export function collaboratorPage(
       </h2>
 
       ${onDemandTasks.length
-        ? onDemandTasks
-            .map(task =>
-              taskRow({
-                id: task.id,
-                title: task.title,
-                deadlineTime: task.deadlineTime,
-              })
-            )
-            .join("")
-        : `
+      ? onDemandTasks
+        .map(task =>
+          taskRow({
+            id: task.id,
+            title: task.title,
+            deadlineTime: task.deadlineTime,
+          })
+        )
+        .join("")
+      : `
             <p>
               Nenhuma tarefa sob demanda.
             </p>
           `
-      }
+    }
 
 
 
     </div>
 
     <div
-      class="card"
-      style="margin-top:28px;"
-    >
+  class="card"
+  style="margin-top:28px;"
+>
 
-      <h2 style="margin-bottom:20px;">
-        🔁 Recorrências
-      </h2>
+  <h2 style="margin-bottom:20px;">
+    🏷️ Temas
+  </h2>
 
-      ${collaborator.recurrences
+  ${collaborator.themes.length
+      ? collaborator.themes
         .map(group =>
           accordion({
-            id: `recurrence-${group.name}`,
+            id: `theme-${group.name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")}`,
             title: group.name,
             count: group.tasks.length,
             body: group.tasks
@@ -249,7 +252,44 @@ export function collaboratorPage(
           })
         )
         .join("")
-      }
+      : `
+        <p>
+          Nenhuma tarefa encontrada por tema.
+        </p>
+      `
+    }
+
+</div>
+
+    <div
+      class="card"
+      style="margin-top:28px;"
+    >
+
+      <h2 style="margin-bottom:20px;">
+        🔁 Recorrências
+      </h2>
+
+      ${collaborator.recurrences
+      .map(group =>
+        accordion({
+          id: `recurrence-${group.name}`,
+          title: group.name,
+          count: group.tasks.length,
+          body: group.tasks
+            .map(task =>
+              taskRow({
+                id: task.id,
+                title: task.title,
+                deadlineTime: task.deadlineTime,
+                urgency: task.urgency,
+              })
+            )
+            .join(""),
+        })
+      )
+      .join("")
+    }
 
     </div>
 
@@ -263,25 +303,25 @@ export function collaboratorPage(
       </h2>
 
       ${collaborator.urgencies
-        .map(group =>
-          accordion({
-            id: `urgency-${group.name}`,
-            title: group.name,
-            count: group.tasks.length,
-            body: group.tasks
-              .map(task =>
-                taskRow({
-                  id: task.id,
-                  title: task.title,
-                  deadlineTime: task.deadlineTime,
-                  urgency: task.urgency,
-                })
-              )
-              .join(""),
-          })
-        )
-        .join("")
-      }
+      .map(group =>
+        accordion({
+          id: `urgency-${group.name}`,
+          title: group.name,
+          count: group.tasks.length,
+          body: group.tasks
+            .map(task =>
+              taskRow({
+                id: task.id,
+                title: task.title,
+                deadlineTime: task.deadlineTime,
+                urgency: task.urgency,
+              })
+            )
+            .join(""),
+        })
+      )
+      .join("")
+    }
 
     </div>
 
