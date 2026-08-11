@@ -5,6 +5,7 @@ import { sidebar } from "../portal/components/sidebar";
 import { topbar } from "../portal/components/topbar";
 
 import { dashboardPage } from "../portal/pages/dashboard";
+import { delegatedDashboardPage } from "../portal/pages/delegatedDashboard";
 import { collaboratorsPage } from "../portal/pages/collaborators";
 import { collaboratorPage } from "../portal/pages/collaborator";
 
@@ -14,6 +15,7 @@ import { taskModal } from "../portal/components/taskModal";
 
 
 import { getDashboardData } from "../services/portal/dashboardService";
+import { getDelegatedDashboardData } from "../services/portal/delegatedDashboardService";
 import { getCollaborators } from "../services/portal/collaboratorService";
 import { getCollaboratorDetails } from "../services/portal/collaboratorDetailsService";
 import { getTeamDetails } from "../services/portal/teamDetailsService";
@@ -521,6 +523,48 @@ export async function portalRoutes(app: FastifyInstance) {
     );
 
   });
+
+    app.get(
+    "/portal/delegated",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply.redirect(
+          "/portal/login"
+        );
+      }
+
+      const dashboard =
+        await getDelegatedDashboardData(
+          portalUser.slackUserId
+        );
+
+      return reply
+        .type("text/html")
+        .send(
+          portalLayout({
+            title: "Delegadas por mim",
+
+            sidebar:
+              sidebar("delegated"),
+
+            topbar: topbar({
+              title: "Delegadas por mim",
+              user:
+                getTopbarUser(request),
+            }),
+
+            body:
+              delegatedDashboardPage(
+                dashboard
+              ),
+          })
+        );
+    }
+  );
 
   app.get("/portal/logout", async (_request, reply) => {
 

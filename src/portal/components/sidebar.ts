@@ -75,6 +75,13 @@ export function sidebar(active: string = "dashboard") {
         </a>
 
         <a
+  href="/portal/delegated"
+  class="${item("delegated")}"
+>
+  📤 Delegadas por mim
+</a>
+
+        <a
           href="/portal/collaborators"
           class="${item("collaborators")}"
         >
