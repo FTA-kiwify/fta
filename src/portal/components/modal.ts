@@ -299,6 +299,39 @@ document.addEventListener("keydown", function (event) {
     document.body.style.overflow = "";
   }
 });
+
+window.portalHandleTaskTypeChange = function() {
+
+  const type =
+    document.getElementById("portal-task-type")?.value;
+
+  const normalFields =
+    document.getElementById("portal-normal-task-fields");
+
+  if (!normalFields) return;
+
+  normalFields.style.display =
+    type === "on_demand"
+      ? "none"
+      : "block";
+};
+
+
+window.portalHandleUrgencyChange = function() {
+
+  const urgency =
+    document.getElementById("portal-task-urgency")?.value;
+
+  const turboFields =
+    document.getElementById("portal-turbo-fields");
+
+  if (!turboFields) return;
+
+  turboFields.style.display =
+    urgency === "turbo"
+      ? "block"
+      : "none";
+};
 </script>
   `;
 }

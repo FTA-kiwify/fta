@@ -68,6 +68,10 @@ import {
   reportsPage,
 } from "../portal/pages/reports";
 import ExcelJS from "exceljs";
+import { createTaskModal } from "../portal/components/createTaskModal";
+import {
+  getPortalCreateTaskOptions,
+} from "../services/portal/createTaskOptionsService";
 
 function getTopbarUser(request: any) {
 
@@ -1419,6 +1423,31 @@ export async function portalRoutes(app: FastifyInstance) {
 
     }
   );
+  app.get(
+  "/portal/tasks/create/modal",
+  async (request, reply) => {
+
+    const portalUser =
+      getPortalUser(request);
+
+    if (!portalUser) {
+      return reply
+        .code(401)
+        .send("Não autenticado.");
+    }
+
+    const options =
+      await getPortalCreateTaskOptions(
+        portalUser.slackUserId
+      );
+
+    return reply
+      .type("text/html")
+      .send(
+        createTaskModal(options)
+      );
+  }
+);
 
   app.get("/portal/tasks/:id", async (request, reply) => {
 
