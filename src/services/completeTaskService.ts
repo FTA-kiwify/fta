@@ -33,6 +33,31 @@ function addDaysUTC(date: Date, days: number): Date {
   d.setUTCDate(d.getUTCDate() + days);
   return d;
 }
+function moveToNextWeekdayUTC(date: Date): Date {
+  const d = new Date(date.getTime());
+
+  while (
+    d.getUTCDay() === 0 ||
+    d.getUTCDay() === 6
+  ) {
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+
+  return d;
+}
+
+function moveToPreviousWeekdayUTC(date: Date): Date {
+  const d = new Date(date.getTime());
+
+  while (
+    d.getUTCDay() === 0 ||
+    d.getUTCDay() === 6
+  ) {
+    d.setUTCDate(d.getUTCDate() - 1);
+  }
+
+  return d;
+}
 
 function nextTermFromRecurrence(base: Date, recurrence: Recurrence): Date {
   switch (recurrence) {
@@ -115,16 +140,35 @@ export async function completeTasksService(args: {
             t.recurrenceAnchor ??
             t.term ??
             toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()))
-          ); const next = nextTermFromRecurrence(base, recurrence);
-      const nextIso = toIsoFromDateUTC(next);
-      const nextSafeDate = toSafeUtcDateFromIso(nextIso);
+          );
+
+      const nextAnchor =
+        nextTermFromRecurrence(
+          base,
+          recurrence
+        );
+
+      const nextTerm =
+        recurrence === "daily"
+          ? moveToNextWeekdayUTC(nextAnchor)
+          : moveToPreviousWeekdayUTC(nextAnchor);
+
+      const nextAnchorSafeDate =
+        toSafeUtcDateFromIso(
+          toIsoFromDateUTC(nextAnchor)
+        );
+
+      const nextTermSafeDate =
+        toSafeUtcDateFromIso(
+          toIsoFromDateUTC(nextTerm)
+        );
 
       await tx.task.update({
         where: { id: t.id },
         data: {
           status: "pending",
-          term: nextSafeDate,
-          recurrenceAnchor: nextSafeDate,
+          term: nextTermSafeDate,
+          recurrenceAnchor: nextAnchorSafeDate,
         },
       });
 

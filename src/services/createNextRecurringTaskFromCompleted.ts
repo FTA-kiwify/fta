@@ -33,7 +33,31 @@ function addDaysUTC(date: Date, days: number): Date {
   d.setUTCDate(d.getUTCDate() + days);
   return d;
 }
+function moveToNextWeekdayUTC(date: Date): Date {
+  const d = new Date(date.getTime());
 
+  while (
+    d.getUTCDay() === 0 ||
+    d.getUTCDay() === 6
+  ) {
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+
+  return d;
+}
+
+function moveToPreviousWeekdayUTC(date: Date): Date {
+  const d = new Date(date.getTime());
+
+  while (
+    d.getUTCDay() === 0 ||
+    d.getUTCDay() === 6
+  ) {
+    d.setUTCDate(d.getUTCDate() - 1);
+  }
+
+  return d;
+}
 function nextTermFromRecurrence(base: Date, recurrence: Recurrence): Date {
   switch (recurrence) {
     case "daily":
@@ -98,10 +122,45 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
         completed.term ??
         toSafeUtcDateFromIso(toIsoFromDateUTC(new Date()))
       );
-  const next = nextTermFromRecurrence(base, recurrence);
+  /*
+ * Data teórica da próxima recorrência.
+ *
+ * IMPORTANTE:
+ * essa data continua sendo a âncora da recorrência,
+ * mesmo quando o prazo precisar ser ajustado
+ * por cair no fim de semana.
+ */
+  const nextAnchor =
+    nextTermFromRecurrence(
+      base,
+      recurrence
+    );
 
-  const nextIso = toIsoFromDateUTC(next);
-  const nextSafeDate = toSafeUtcDateFromIso(nextIso);
+  /*
+   * Data efetiva em que a tarefa ficará disponível.
+   *
+   * Daily:
+   * sábado/domingo -> próximo dia útil.
+   *
+   * Demais recorrências:
+   * sábado/domingo -> dia útil anterior.
+   */
+  const nextTerm =
+    recurrence === "daily"
+      ? moveToNextWeekdayUTC(nextAnchor)
+      : moveToPreviousWeekdayUTC(nextAnchor);
+
+  const nextAnchorIso =
+    toIsoFromDateUTC(nextAnchor);
+
+  const nextTermIso =
+    toIsoFromDateUTC(nextTerm);
+
+  const nextAnchorSafeDate =
+    toSafeUtcDateFromIso(nextAnchorIso);
+
+  const nextTermSafeDate =
+    toSafeUtcDateFromIso(nextTermIso);
 
   // ✅ Anti-duplicação:
   // se já existe uma próxima instância com a mesma recurrenceAnchor, não cria outra.
@@ -109,7 +168,7 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
     where: {
       status: { notIn: ["done", "cancelled"] },
       recurrence: completed.recurrence as any,
-      recurrenceAnchor: nextSafeDate,
+      recurrenceAnchor: nextAnchorSafeDate,
       responsible: completed.responsible,
       title: completed.title,
       processId: completed.processId ?? null,
@@ -151,12 +210,12 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       responsible: completed.responsible,
       responsibleEmail: completed.responsibleEmail ?? null,
 
-      term: nextSafeDate,
+      term: nextTermSafeDate,
       deadlineTime: completed.deadlineTime ?? null,
 
       status: "pending",
       recurrence: completed.recurrence as any,
-      recurrenceAnchor: nextSafeDate,
+      recurrenceAnchor: nextAnchorSafeDate,
 
       urgency: completed.urgency as any,
       reminderMode: (completed as any).reminderMode ?? "until",
