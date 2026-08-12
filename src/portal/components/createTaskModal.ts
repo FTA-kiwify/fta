@@ -775,12 +775,13 @@ export function createTaskModal(
             >
               ${options.collaborators
             .map(collaborator => `
-                  <option
-                    value="${escapeHtml(collaborator.id)}"
-                  >
-                    ${escapeHtml(collaborator.name)}
-                  </option>
-                `)
+      <option
+        value="${escapeHtml(collaborator.id)}"
+        ${task?.carbonCopies?.includes(collaborator.id) ? "selected" : ""}
+      >
+        ${escapeHtml(collaborator.name)}
+      </option>
+    `)
             .join("")}
             </select>
 
