@@ -8,6 +8,49 @@ export function subTeamsPage(
 
     return `
 
+    <div
+      class="card"
+      style="
+        margin-bottom:28px;
+        cursor:pointer;
+      "
+      onclick="openPortalModal('/portal/teams/${departmentId}/members/modal')"
+    >
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:20px;
+        "
+      >
+        <div>
+          <h2 style="margin:0 0 6px 0;">
+            👥 Membros diretos
+          </h2>
+
+          <p
+            style="
+              margin:0;
+              color:#6B7280;
+            "
+          >
+            Pessoas que pertencem diretamente a este departamento,
+            sem uma subárea específica.
+          </p>
+        </div>
+
+        <div
+          style="
+            font-size:24px;
+            color:#9CA3AF;
+          "
+        >
+          ›
+        </div>
+      </div>
+    </div>
+
     <div class="collaborator-list">
 
       ${teams
@@ -21,7 +64,7 @@ export function subTeamsPage(
             )
             .join("")}
 
-        </div>
+    </div>
 
     <div
       class="card"
