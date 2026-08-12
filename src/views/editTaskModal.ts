@@ -437,20 +437,6 @@ export function editTaskModalView(args: {
           ] as KnownBlock[])
           : []
       ),
-      {
-        type: "input",
-        optional: true,
-        block_id: "turbo_start_time_block",
-        element: {
-          type: "timepicker",
-          action_id: "turbo_start_time",
-          initial_time: args.turboStartTime ?? undefined,
-        },
-        label: {
-          type: "plain_text",
-          text: "Horário de início dos follow-ups",
-        },
-      },
 
       // Recorrência
       ...(
