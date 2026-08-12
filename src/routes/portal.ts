@@ -659,6 +659,13 @@ export async function portalRoutes(app: FastifyInstance) {
 
   app.post("/portal/teams", async (request, reply) => {
     try {
+      const portalUser = getPortalUser(request);
+
+      if (!portalUser) {
+        return reply.code(401).send({
+          error: "Não autenticado",
+        });
+      }
 
       const body = request.body as {
         name?: string;
@@ -680,6 +687,14 @@ export async function portalRoutes(app: FastifyInstance) {
         name,
         description: description || undefined,
         group,
+      });
+
+      await prisma.teamMember.create({
+        data: {
+          teamId: team.id,
+          slackUserId: portalUser.slackUserId,
+          email: portalUser.email ?? null,
+        },
       });
 
       return reply.code(201).send({
