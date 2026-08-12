@@ -316,24 +316,26 @@ export function createTaskModal(
           </label>
 
           <select
-            id="portal-task-type"
-            class="portal-select"
-            onchange="portalHandleTaskTypeChange()"
-          >
-
-            <option
-  value="normal"
-  ${!task || task.taskType === "normal" ? "selected" : ""}
+  id="portal-task-type"
+  class="portal-select"
+  onchange="portalHandleTaskTypeChange()"
 >
 
-            <option
-  value="on_demand"
-  ${task?.taskType === "on_demand" ? "selected" : ""}
->
-              ⚡ Sob demanda
-            </option>
+  <option
+    value="normal"
+    ${!task || task.taskType === "normal" ? "selected" : ""}
+  >
+    📅 Normal
+  </option>
 
-          </select>
+  <option
+    value="on_demand"
+    ${task?.taskType === "on_demand" ? "selected" : ""}
+  >
+    ⚡ Sob demanda
+  </option>
+
+</select>
 
         </div>
 

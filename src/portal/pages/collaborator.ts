@@ -127,12 +127,12 @@ export function collaboratorPage(
                   `
         }
 
-              ${tomorrowTasks.length
-          ? accordion({
-            id: "tomorrow-tasks",
-            title: "Amanhã",
-            count: tomorrowTasks.length,
-            body: tomorrowTasks
+              ${accordion({
+          id: "tomorrow-tasks",
+          title: "Amanhã",
+          count: tomorrowTasks.length,
+          body: tomorrowTasks.length
+            ? tomorrowTasks
               .map(task =>
                 upcomingTask({
                   id: task.id,
@@ -142,17 +142,20 @@ export function collaboratorPage(
                   responsible: `Responsável: ${task.responsibleName}`,
                 })
               )
-              .join(""),
-          })
-          : ""
-        }
+              .join("")
+            : `
+        <p style="color:#6B7280;">
+          Nenhuma tarefa para amanhã.
+        </p>
+      `,
+        })}
 
-              ${futureTasks.length
-          ? accordion({
-            id: "future-tasks",
-            title: "Futuras",
-            count: futureTasks.length,
-            body: futureTasks
+              ${accordion({
+          id: "future-tasks",
+          title: "Futuras",
+          count: futureTasks.length,
+          body: futureTasks.length
+            ? futureTasks
               .map(task =>
                 upcomingTask({
                   id: task.id,
@@ -162,10 +165,13 @@ export function collaboratorPage(
                   responsible: `Responsável: ${task.responsibleName}`,
                 })
               )
-              .join(""),
-          })
-          : ""
-        }
+              .join("")
+            : `
+        <p style="color:#6B7280;">
+          Nenhuma tarefa futura.
+        </p>
+      `,
+        })}
             `,
     })}
 

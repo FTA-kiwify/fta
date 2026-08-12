@@ -200,14 +200,13 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
                       `
           }
 
-                ${tomorrowTasks.length
-            ? `
-      <div style="margin-top:16px;">
-        ${accordion({
-              id: "delegated-tomorrow",
-              title: "Amanhã",
-              count: tomorrowTasks.length,
-              body: tomorrowTasks
+                <div style="margin-top:16px;">
+  ${accordion({
+            id: "delegated-tomorrow",
+            title: "Amanhã",
+            count: tomorrowTasks.length,
+            body: tomorrowTasks.length
+              ? tomorrowTasks
                 .map(task =>
                   upcomingTask({
                     id: task.id,
@@ -218,19 +217,21 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
                     selectable: true,
                   })
                 )
-                .join(""),
-            })}
-      </div>
-    `
-            : ""
-          }
+                .join("")
+              : `
+          <p style="color:#6B7280;">
+            Nenhuma tarefa para amanhã.
+          </p>
+        `,
+          })}
+</div>
 
-                ${futureTasks.length
-            ? accordion({
-              id: "delegated-future",
-              title: "Futuras",
-              count: futureTasks.length,
-              body: futureTasks
+                ${accordion({
+            id: "delegated-future",
+            title: "Futuras",
+            count: futureTasks.length,
+            body: futureTasks.length
+              ? futureTasks
                 .map(task =>
                   upcomingTask({
                     id: task.id,
@@ -241,10 +242,13 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
                     selectable: true,
                   })
                 )
-                .join(""),
-            })
-            : ""
-          }
+                .join("")
+              : `
+        <p style="color:#6B7280;">
+          Nenhuma tarefa futura.
+        </p>
+      `,
+          })}
 
 ${onDemandTasks.length
             ? accordion({

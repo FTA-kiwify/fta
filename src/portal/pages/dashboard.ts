@@ -199,14 +199,13 @@ export function dashboardPage(data: DashboardData) {
                       `
           }
 
-                ${tomorrowTasks.length
-            ? `
-      <div style="margin-top:16px;">
-        ${accordion({
-              id: "dashboard-tomorrow",
-              title: "Amanhã",
-              count: tomorrowTasks.length,
-              body: tomorrowTasks
+                <div style="margin-top:16px;">
+  ${accordion({
+            id: "dashboard-tomorrow",
+            title: "Amanhã",
+            count: tomorrowTasks.length,
+            body: tomorrowTasks.length
+              ? tomorrowTasks
                 .map(task =>
                   upcomingTask({
                     id: task.id,
@@ -220,36 +219,41 @@ export function dashboardPage(data: DashboardData) {
                     selectable: true,
                   })
                 )
-                .join(""),
-            })}
-      </div>
-    `
-            : ""
-          }
+                .join("")
+              : `
+          <p style="color:#6B7280;">
+            Nenhuma tarefa para amanhã.
+          </p>
+        `,
+          })}
+</div>
 
-                ${futureTasks.length
-            ? accordion({
-              id: "dashboard-future",
-              title: "Futuras",
-              count: futureTasks.length,
-              body: futureTasks
-                .map(task =>
-                  upcomingTask({
-                    id: task.id,
-                    title: task.title,
-                    responsible:
-                      task.delegatedByName === "Você"
-                        ? "Criada por você"
-                        : `Delegada por ${task.delegatedByName}`,
-                    urgency: task.urgency,
-                    deadlineTime: task.deadlineTime,
-                    selectable: true,
-                  })
-                )
-                .join(""),
-            })
-            : ""
-          }
+                ${accordion({
+  id: "dashboard-future",
+  title: "Futuras",
+  count: futureTasks.length,
+  body: futureTasks.length
+    ? futureTasks
+        .map(task =>
+          upcomingTask({
+            id: task.id,
+            title: task.title,
+            responsible:
+              task.delegatedByName === "Você"
+                ? "Criada por você"
+                : `Delegada por ${task.delegatedByName}`,
+            urgency: task.urgency,
+            deadlineTime: task.deadlineTime,
+            selectable: true,
+          })
+        )
+        .join("")
+    : `
+        <p style="color:#6B7280;">
+          Nenhuma tarefa futura.
+        </p>
+      `,
+})}
 
 ${onDemandTasks.length
             ? accordion({
