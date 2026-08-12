@@ -657,6 +657,48 @@ export async function portalRoutes(app: FastifyInstance) {
 
   });
 
+  app.post("/portal/teams", async (request, reply) => {
+    try {
+
+      const body = request.body as {
+        name?: string;
+        description?: string;
+        group?: string | null;
+      };
+
+      const name = body.name?.trim();
+      const description = body.description?.trim();
+      const group = body.group?.trim() || null;
+
+      if (!name) {
+        return reply.code(400).send({
+          error: "Nome do time é obrigatório.",
+        });
+      }
+
+      const team = await createTeam({
+        name,
+        description: description || undefined,
+        group,
+      });
+
+      return reply.code(201).send({
+        success: true,
+        team,
+      });
+
+    } catch (error) {
+      request.log.error(
+        { error },
+        "Erro ao criar time pelo portal"
+      );
+
+      return reply.code(500).send({
+        error: "Não foi possível criar o time.",
+      });
+    }
+  });
+
   app.get(
     "/portal/teams/create/modal",
     async (_request, reply) => {
