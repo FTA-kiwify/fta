@@ -73,7 +73,11 @@ export function modalContainer() {
   }
 
   content.innerHTML =
-    responseText;
+  responseText;
+
+if (window.portalRenderCarbonCopies) {
+  window.portalRenderCarbonCopies();
+}
 
 } catch (error) {
 
@@ -1291,10 +1295,11 @@ window.portalCreateTask = async function () {
       ? getValue("portal-task-turbo-start-time") || null
       : null;
 
-  const carbonCopies =
-    getCheckedValues(
-      "portal-task-carbon-copies"
-    );
+  const carbonCopies = Array.from(
+  document.getElementById(
+    "portal-task-carbon-copies"
+  )?.selectedOptions ?? []
+).map(option => option.value);
 
   const calendarPrivateEl =
     document.getElementById(
@@ -1474,10 +1479,11 @@ window.portalUpdateTask = async function (taskId) {
       ? getValue("portal-task-turbo-start-time") || null
       : null;
 
-  const carbonCopies =
-    getCheckedValues(
-      "portal-task-carbon-copies"
-    );
+  const carbonCopies = Array.from(
+  document.getElementById(
+    "portal-task-carbon-copies"
+  )?.selectedOptions ?? []
+).map(option => option.value);
 
   const calendarPrivateEl =
     document.getElementById(
