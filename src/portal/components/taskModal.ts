@@ -134,6 +134,7 @@ function auditDate(date: Date) {
     {
       dateStyle: "short",
       timeStyle: "short",
+      timeZone: "America/Sao_Paulo",
     }
   );
 
