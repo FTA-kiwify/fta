@@ -452,7 +452,33 @@ export function taskModal(task: TaskDetails) {
     }
 
 </div>
+${task.taskType === "on_demand"
+      ? `
+      <hr
+        style="
+          border:none;
+          border-top:1px solid #E5E7EB;
+          margin:30px 0;
+        "
+      >
 
+      <div
+        style="
+          display:flex;
+          justify-content:flex-end;
+        "
+      >
+        <button
+          type="button"
+          class="btn-primary"
+          onclick="openPortalModal('/portal/tasks/${task.id}/create-from-template/modal')"
+        >
+          ▶ Criar atividade
+        </button>
+      </div>
+    `
+      : ""
+    }
     </div>
 
   `;

@@ -1929,6 +1929,151 @@ export async function portalRoutes(app: FastifyInstance) {
         );
     }
   );
+    app.get(
+    "/portal/tasks/:id/create-from-template/modal",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const { id } =
+        request.params as {
+          id: string;
+        };
+
+      /*
+       * ==========================================
+       * ACESSO
+       *
+       * Qualquer pessoa que tenha acesso à tarefa
+       * pode criar uma atividade a partir dela.
+       * ==========================================
+       */
+
+      const allowed =
+        await canAccessTask(
+          portalUser.slackUserId,
+          id
+        );
+
+      if (!allowed) {
+        return reply
+          .code(403)
+          .send("Acesso não permitido.");
+      }
+
+      /*
+       * ==========================================
+       * TEMPLATE SOB DEMANDA
+       * ==========================================
+       */
+
+      const template =
+        await prisma.task.findUnique({
+          where: {
+            id,
+          },
+
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            processId: true,
+            responsible: true,
+            calendarPrivate: true,
+            taskType: true,
+
+            carbonCopies: {
+              select: {
+                slackUserId: true,
+              },
+            },
+          },
+        });
+
+      if (!template) {
+        return reply
+          .code(404)
+          .send("Tarefa não encontrada.");
+      }
+
+      if (
+        template.taskType !== "on_demand"
+      ) {
+        return reply
+          .code(400)
+          .send(
+            "Esta tarefa não é uma tarefa sob demanda."
+          );
+      }
+
+      /*
+       * Opções disponíveis para QUEM está
+       * criando a nova atividade.
+       */
+
+      const options =
+        await getPortalCreateTaskOptions(
+          portalUser.slackUserId
+        );
+
+      /*
+       * Abre como CRIAÇÃO.
+       *
+       * A sob demanda funciona apenas como template.
+       * A nova tarefa obrigatoriamente nasce NORMAL.
+       */
+
+      return reply
+        .type("text/html")
+        .send(
+          createTaskModal(
+            options,
+            {
+              mode: "template",
+
+              task: {
+                id: template.id,
+                title: template.title,
+                description:
+                  template.description,
+                processId:
+                  template.processId,
+                responsible:
+                  template.responsible,
+
+                term: null,
+                deadlineTime: null,
+
+                recurrence: null,
+                urgency: "light",
+                reminderMode: "until",
+
+                turboPreviousDay: false,
+                turboStartTime: null,
+
+                calendarPrivate:
+                  template.calendarPrivate,
+
+                taskType: "normal",
+
+                carbonCopies:
+                  template.carbonCopies.map(
+                    copy =>
+                      copy.slackUserId
+                  ),
+              },
+            }
+          )
+        );
+    }
+  );
   app.get(
     "/portal/tasks/:id/edit/modal",
     async (request, reply) => {

@@ -14,7 +14,7 @@ function escapeHtml(
 }
 
 type CreateTaskModalConfig = {
-    mode?: "create" | "edit";
+    mode?: "create" | "edit" | "template";
 
     task?: {
         id: string;
