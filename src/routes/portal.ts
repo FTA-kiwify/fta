@@ -1929,7 +1929,7 @@ export async function portalRoutes(app: FastifyInstance) {
         );
     }
   );
-    app.get(
+  app.get(
     "/portal/tasks/:id/create-from-template/modal",
     async (request, reply) => {
 
@@ -3537,6 +3537,19 @@ export async function portalRoutes(app: FastifyInstance) {
           requesterSlackId:
             portalUser.slackUserId,
         });
+
+      if (
+        result.onDemandIds.length
+      ) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "Tarefas sob demanda não podem ser concluídas.",
+            onDemandIds:
+              result.onDemandIds,
+          });
+      }
 
       if (!result.completedIds.length) {
         return reply

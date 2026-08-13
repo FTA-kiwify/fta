@@ -1411,9 +1411,32 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               title: true,
               responsible: true,
               delegation: true,
+              taskType: true,
               carbonCopies: { select: { slackUserId: true } },
             },
           });
+
+          const onDemandTasks =
+            tasksToConclude.filter(
+              task => task.taskType === "on_demand"
+            );
+
+          if (onDemandTasks.length) {
+            await sendBotDm(
+              slack,
+              userSlackId,
+              "⚡ Tarefas sob demanda não podem ser concluídas."
+            );
+
+            await publishHome(
+              slack,
+              userSlackId
+            );
+
+            return reply
+              .status(200)
+              .send();
+          }
 
           if (!tasksToConclude.length) {
             await sendBotDm(

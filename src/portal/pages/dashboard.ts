@@ -189,7 +189,7 @@ export function dashboardPage(data: DashboardData) {
                     : `Delegada por ${task.delegatedByName}`,
                 urgency: task.urgency,
                 deadlineTime: task.deadlineTime,
-                selectable: task.taskType !== "on_demand",
+                selectable: true,
               })
             ).join("")
             : `
@@ -216,7 +216,7 @@ export function dashboardPage(data: DashboardData) {
                         : `Delegada por ${task.delegatedByName}`,
                     urgency: task.urgency,
                     deadlineTime: task.deadlineTime,
-                    selectable: task.taskType !== "on_demand",
+                    selectable: true,
                   })
                 )
                 .join("")
@@ -244,7 +244,7 @@ export function dashboardPage(data: DashboardData) {
                 : `Delegada por ${task.delegatedByName}`,
             urgency: task.urgency,
             deadlineTime: task.deadlineTime,
-            selectable: task.taskType !== "on_demand",
+            selectable: true,
           })
         )
         .join("")
@@ -270,7 +270,7 @@ ${onDemandTasks.length
                         ? "Criada por você"
                         : `Delegada por ${task.delegatedByName}`,
                     deadlineTime: task.deadlineTime,
-                    selectable: task.taskType !== "on_demand",
+                    selectable: true,
                   })
                 )
                 .join(""),

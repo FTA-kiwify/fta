@@ -54,6 +54,8 @@ export async function completeTaskFlow({
         return {
             completedIds: [],
             unauthorizedIds: [],
+            onDemandIds: [],
+            nextCreatedIds: [],
         };
     }
 
@@ -111,6 +113,19 @@ export async function completeTaskFlow({
      * ==========================================
      */
 
+    const onDemandIds =
+        requestedTasks
+            .filter(
+                task =>
+                    task.taskType === "on_demand"
+            )
+            .map(
+                task => task.id
+            );
+
+    const onDemandIdSet =
+        new Set(onDemandIds);
+
     const tasksToConclude =
         requestedTasks.filter(
             task =>
@@ -134,7 +149,9 @@ export async function completeTaskFlow({
 
     const unauthorizedIds =
         ids.filter(
-            id => !completedIdSet.has(id)
+            id =>
+                !completedIdSet.has(id) &&
+                !onDemandIdSet.has(id)
         );
 
 
@@ -142,6 +159,8 @@ export async function completeTaskFlow({
         return {
             completedIds: [],
             unauthorizedIds,
+            onDemandIds,
+            nextCreatedIds: [],
         };
     }
 
@@ -478,6 +497,7 @@ export async function completeTaskFlow({
     return {
         completedIds,
         unauthorizedIds,
+        onDemandIds,
         nextCreatedIds:
             nextCreated.map(
                 task => task.id

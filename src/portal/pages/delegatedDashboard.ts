@@ -190,7 +190,7 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
                 responsible: `Responsável: ${task.responsibleName}`,
                 urgency: task.urgency,
                 deadlineTime: task.deadlineTime,
-                selectable: task.taskType !== "on_demand",
+                selectable: true,
               })
             ).join("")
             : `
@@ -214,7 +214,7 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
                     responsible: `Responsável: ${task.responsibleName}`,
                     urgency: task.urgency,
                     deadlineTime: task.deadlineTime,
-                    selectable: task.taskType !== "on_demand",
+                    selectable: true,
                   })
                 )
                 .join("")
@@ -239,7 +239,7 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
                     responsible: `Responsável: ${task.responsibleName}`,
                     urgency: task.urgency,
                     deadlineTime: task.deadlineTime,
-                    selectable: task.taskType !== "on_demand",
+                    selectable: true,
                   })
                 )
                 .join("")
@@ -262,7 +262,7 @@ ${onDemandTasks.length
                     title: task.title,
                     responsible: `Responsável: ${task.responsibleName}`,
                     deadlineTime: task.deadlineTime,
-                    selectable: task.taskType !== "on_demand",
+                    selectable: true,
                   })
                 )
                 .join(""),
