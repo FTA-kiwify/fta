@@ -53,7 +53,6 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     "Descrição",
     "E-mail do responsável",
     "ID Slack do responsável",
-    "ID Slack de quem delegou",
     "Prazo",
     "Horário",
     "Urgência",
@@ -75,7 +74,6 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     { key: "description", width: 40 },
     { key: "responsibleEmail", width: 32 },
     { key: "responsibleSlackId", width: 24 },
-    { key: "delegationSlackId", width: 26 },
     { key: "term", width: 16 },
     { key: "deadlineTime", width: 16 },
     { key: "urgency", width: 16 },
@@ -204,37 +202,37 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     };
   }
 
-  // I = Urgência
+  // H = Urgência
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`I${row}`).dataValidation = {
+    tasksSheet.getCell(`H${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$B$2:$B$4"],
     };
   }
 
-  // J = Tipo de prazo
+  // I = Tipo de prazo
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`J${row}`).dataValidation = {
+    tasksSheet.getCell(`I${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$C$2:$C$3"],
     };
   }
 
-  // K = Recorrência
+  // J = Recorrência
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`K${row}`).dataValidation = {
+    tasksSheet.getCell(`J${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$D$2:$D$9"],
     };
   }
 
-  // L = Processo
+  // K = Processo
   if (processes.length > 0) {
     for (let row = firstDataRow; row <= lastDataRow; row++) {
-      tasksSheet.getCell(`L${row}`).dataValidation = {
+      tasksSheet.getCell(`K${row}`).dataValidation = {
         type: "list",
         allowBlank: true,
         formulae: [
@@ -249,18 +247,18 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     }
   }
 
-  // M = Privacidade
+  // L = Privacidade
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`M${row}`).dataValidation = {
+    tasksSheet.getCell(`L${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$E$2:$E$3"],
     };
   }
 
-  // N = Turbo dia anterior
+  // M = Turbo dia anterior
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`N${row}`).dataValidation = {
+    tasksSheet.getCell(`M${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$E$2:$E$3"],
@@ -272,15 +270,15 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
   // =====================================================
 
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`G${row}`).numFmt = "dd/mm/yyyy";
-    tasksSheet.getCell(`H${row}`).numFmt = "hh:mm";
-    tasksSheet.getCell(`O${row}`).numFmt = "hh:mm";
+    tasksSheet.getCell(`F${row}`).numFmt = "dd/mm/yyyy";
+    tasksSheet.getCell(`G${row}`).numFmt = "hh:mm";
+    tasksSheet.getCell(`N${row}`).numFmt = "hh:mm";
   }
 
   tasksSheet.autoFilter = {
-    from: "A1",
-    to: "Q1",
-  };
+  from: "A1",
+  to: "P1",
+};
 
   // =====================================================
   // ABA DE INSTRUÇÕES

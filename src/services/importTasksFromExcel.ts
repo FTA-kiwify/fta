@@ -568,7 +568,6 @@ export async function importTasksFromExcelSlackFile(
     responsibleEmail?: number;
     responsibleSlackId?: number;
 
-    delegationSlackId?: number;
 
     term?: number;
     deadlineTime?: number;
@@ -641,18 +640,6 @@ export async function importTasksFromExcelSlackFile(
           colNumber;
       }
 
-      if (
-        [
-          "id_slack_de_quem_delegou",
-          "id_slack_do_delegador",
-          "id_slack_delegador",
-          "delegation_slack_id",
-          "delegator_slack_id",
-        ].includes(h)
-      ) {
-        cols.delegationSlackId =
-          colNumber;
-      }
 
       if (
         [
@@ -825,7 +812,7 @@ export async function importTasksFromExcelSlackFile(
         "• *Título*\n" +
         "• *E-mail do responsável* **OU** *ID Slack do responsável*\n\n" +
         "Campos opcionais:\n" +
-        "Descrição, ID Slack de quem delegou, Tipo da tarefa, Prazo, Horário, " +
+        "Descrição, Tipo da tarefa, Prazo, Horário, " +
         "Urgência, Recorrência, Tipo de prazo, Nome do Processo, ID Processo, " +
         "Privacidade, Turbo dia anterior, Horário início Turbo, " +
         "E-mail das cópias e ID Slack das cópias.",
@@ -943,40 +930,8 @@ export async function importTasksFromExcelSlackFile(
     // Delegador
     // -------------------------
 
-    let delegationSlackId =
+    const delegationSlackId =
       uploadedBySlackId;
-
-    if (cols.delegationSlackId) {
-
-      const delegationRaw =
-        cellToString(
-          row.getCell(
-            cols.delegationSlackId
-          ).value
-        );
-
-      if (delegationRaw) {
-
-        const parsedDelegation =
-          parseSlackUserId(
-            delegationRaw
-          );
-
-        if (!parsedDelegation) {
-
-          failed.push({
-            row: r,
-            reason:
-              `ID Slack de quem delegou inválido: "${delegationRaw}"`,
-          });
-
-          continue;
-        }
-
-        delegationSlackId =
-          parsedDelegation;
-      }
-    }
 
     // -------------------------
     // Tipo da tarefa
@@ -1204,118 +1159,118 @@ export async function importTasksFromExcelSlackFile(
         )
         : null;
 
-        // -------------------------
-// Regras específicas para AOR
-// -------------------------
+    // -------------------------
+    // Regras específicas para AOR
+    // -------------------------
 
-if (isOnDemand) {
+    if (isOnDemand) {
 
-  if (term) {
-    failed.push({
-      row: r,
-      reason:
-        "AOR não pode possuir prazo.",
-    });
+      if (term) {
+        failed.push({
+          row: r,
+          reason:
+            "AOR não pode possuir prazo.",
+        });
 
-    continue;
-  }
+        continue;
+      }
 
-  if (deadlineTime) {
-    failed.push({
-      row: r,
-      reason:
-        "AOR não pode possuir horário.",
-    });
+      if (deadlineTime) {
+        failed.push({
+          row: r,
+          reason:
+            "AOR não pode possuir horário.",
+        });
 
-    continue;
-  }
+        continue;
+      }
 
-  if (urgencyRaw.trim()) {
-    failed.push({
-      row: r,
-      reason:
-        "AOR não pode possuir urgência.",
-    });
+      if (urgencyRaw.trim()) {
+        failed.push({
+          row: r,
+          reason:
+            "AOR não pode possuir urgência.",
+        });
 
-    continue;
-  }
+        continue;
+      }
 
-  const recurrenceRaw =
-    cols.recurrence
-      ? cellToString(
-          row.getCell(
-            cols.recurrence
-          ).value
-        )
-      : "";
+      const recurrenceRaw =
+        cols.recurrence
+          ? cellToString(
+            row.getCell(
+              cols.recurrence
+            ).value
+          )
+          : "";
 
-  if (recurrenceRaw.trim()) {
-    failed.push({
-      row: r,
-      reason:
-        "AOR não pode possuir recorrência.",
-    });
+      if (recurrenceRaw.trim()) {
+        failed.push({
+          row: r,
+          reason:
+            "AOR não pode possuir recorrência.",
+        });
 
-    continue;
-  }
+        continue;
+      }
 
-  const reminderModeRaw =
-    cols.reminderMode
-      ? cellToString(
-          row.getCell(
-            cols.reminderMode
-          ).value
-        )
-      : "";
+      const reminderModeRaw =
+        cols.reminderMode
+          ? cellToString(
+            row.getCell(
+              cols.reminderMode
+            ).value
+          )
+          : "";
 
-  if (reminderModeRaw.trim()) {
-    failed.push({
-      row: r,
-      reason:
-        "AOR não pode possuir tipo de prazo.",
-    });
+      if (reminderModeRaw.trim()) {
+        failed.push({
+          row: r,
+          reason:
+            "AOR não pode possuir tipo de prazo.",
+        });
 
-    continue;
-  }
+        continue;
+      }
 
-  const turboPreviousDayRaw =
-    cols.turboPreviousDay
-      ? cellToString(
-          row.getCell(
-            cols.turboPreviousDay
-          ).value
-        )
-      : "";
+      const turboPreviousDayRaw =
+        cols.turboPreviousDay
+          ? cellToString(
+            row.getCell(
+              cols.turboPreviousDay
+            ).value
+          )
+          : "";
 
-  if (turboPreviousDayRaw.trim()) {
-    failed.push({
-      row: r,
-      reason:
-        "AOR não pode possuir Turbo dia anterior.",
-    });
+      if (turboPreviousDayRaw.trim()) {
+        failed.push({
+          row: r,
+          reason:
+            "AOR não pode possuir Turbo dia anterior.",
+        });
 
-    continue;
-  }
+        continue;
+      }
 
-  const turboStartTimeRaw =
-    cols.turboStartTime
-      ? cellToString(
-          row.getCell(
-            cols.turboStartTime
-          ).value
-        )
-      : "";
+      const turboStartTimeRaw =
+        cols.turboStartTime
+          ? cellToString(
+            row.getCell(
+              cols.turboStartTime
+            ).value
+          )
+          : "";
 
-  if (turboStartTimeRaw.trim()) {
-    failed.push({
-      row: r,
-      reason:
-        "AOR não pode possuir horário início Turbo.",
-    });
+      if (turboStartTimeRaw.trim()) {
+        failed.push({
+          row: r,
+          reason:
+            "AOR não pode possuir horário início Turbo.",
+        });
 
-    continue;
-  }
-}
+        continue;
+      }
+    }
 
     // -------------------------
     // CCs
