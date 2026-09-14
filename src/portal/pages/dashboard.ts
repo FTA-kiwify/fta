@@ -137,6 +137,9 @@ export function dashboardPage(data: DashboardData) {
 
 </div>
 
+</div>
+
+
 <div class="dashboard-grid">
 
       ${statCard({

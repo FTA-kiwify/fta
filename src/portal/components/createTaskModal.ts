@@ -90,7 +90,10 @@ export function createTaskModal(
               font-size:28px;
             "
           >
-            ${isEdit ? "✏️ Editar tarefa" : "📝 Criar tarefa"}
+            ${isEdit
+      ? (isAor ? "✏️ Editar AOR" : "✏️ Editar tarefa")
+      : (isAor ? "⚡ Criar AOR" : "📝 Criar tarefa")
+    }
           </h2>
 
           <p
@@ -101,8 +104,12 @@ export function createTaskModal(
             "
           >
             ${isEdit
-      ? "Edite as informações da atividade."
-      : "Crie uma nova atividade no FTA."
+      ? (isAor
+        ? "Edite as informações da AOR."
+        : "Edite as informações da atividade.")
+      : (isAor
+        ? "Crie uma nova AOR no FTA."
+        : "Crie uma nova atividade no FTA.")
     }
           </p>
 
@@ -335,7 +342,10 @@ export function createTaskModal(
 
         <!-- CAMPOS DA TAREFA NORMAL -->
 
-        <div id="portal-normal-task-fields">
+        <div
+  id="portal-normal-task-fields"
+  style="${isAor ? "display:none;" : ""}"
+>
 
 
           <!-- PRAZO -->
