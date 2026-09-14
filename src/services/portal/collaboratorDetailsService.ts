@@ -140,7 +140,7 @@ export async function getCollaboratorDetails(
     {
       name: "Diárias",
       tasks: tasks
-        .filter(task => task.recurrence === "daily")
+        .filter(task => task.taskType !== "on_demand" && task.recurrence === "daily")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -155,7 +155,7 @@ export async function getCollaboratorDetails(
     {
       name: "Semanais",
       tasks: tasks
-        .filter(task => task.recurrence === "weekly")
+        .filter(task => task.taskType !== "on_demand" && task.recurrence === "weekly")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -170,7 +170,7 @@ export async function getCollaboratorDetails(
     {
       name: "Quinzenais",
       tasks: tasks
-        .filter(task => task.recurrence === "biweekly")
+        .filter(task => task.taskType !== "on_demand" && task.recurrence === "biweekly")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -185,7 +185,7 @@ export async function getCollaboratorDetails(
     {
       name: "Mensais",
       tasks: tasks
-        .filter(task => task.recurrence === "monthly")
+        .filter(task => task.taskType !== "on_demand" && task.recurrence === "monthly")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -200,7 +200,7 @@ export async function getCollaboratorDetails(
     {
       name: "Trimestrais",
       tasks: tasks
-        .filter(task => task.recurrence === "quarterly")
+        .filter(task => task.taskType !== "on_demand" && task.recurrence === "quarterly")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -215,7 +215,7 @@ export async function getCollaboratorDetails(
     {
       name: "Semestrais",
       tasks: tasks
-        .filter(task => task.recurrence === "semiannual")
+        .filter(task => task.taskType !== "on_demand" && task.recurrence === "semiannual")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -230,7 +230,7 @@ export async function getCollaboratorDetails(
     {
       name: "Anuais",
       tasks: tasks
-        .filter(task => task.recurrence === "annual")
+        .filter(task => task.taskType !== "on_demand" && task.recurrence === "annual")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -245,7 +245,7 @@ export async function getCollaboratorDetails(
     {
       name: "Sem recorrência",
       tasks: tasks
-        .filter(task => task.recurrence === "none")
+        .filter(task => task.taskType !== "on_demand" && task.recurrence === "none")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -267,7 +267,7 @@ export async function getCollaboratorDetails(
     {
       name: "🔴 Turbo",
       tasks: tasks
-        .filter(task => task.urgency === "turbo")
+        .filter(task => task.taskType !== "on_demand" && task.urgency === "turbo")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -282,7 +282,7 @@ export async function getCollaboratorDetails(
     {
       name: "🟡 ASAP",
       tasks: tasks
-        .filter(task => task.urgency === "asap")
+        .filter(task => task.taskType !== "on_demand" && task.urgency === "asap")
         .map(task => ({
           id: task.id,
           title: task.title,
@@ -297,7 +297,7 @@ export async function getCollaboratorDetails(
     {
       name: "🟢 Light",
       tasks: tasks
-        .filter(task => task.urgency === "light")
+        .filter(task => task.taskType !== "on_demand" && task.urgency === "light")
         .map(task => ({
           id: task.id,
           title: task.title,

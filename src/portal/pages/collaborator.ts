@@ -197,35 +197,6 @@ export function collaboratorPage(
 
     </div>
 
-    <div
-      class="card"
-      style="margin-top:28px;"
-    >
-
-      <h2 style="margin-bottom:20px;">
-        📌 AOR
-      </h2>
-
-      ${onDemandTasks.length
-      ? onDemandTasks
-        .map(task =>
-          taskRow({
-            id: task.id,
-            title: task.title,
-            deadlineTime: task.deadlineTime,
-          })
-        )
-        .join("")
-      : `
-            <p>
-              Nenhuma tarefa AOR.
-            </p>
-          `
-    }
-
-
-
-    </div>
 
     <div
   class="card"
@@ -330,6 +301,34 @@ export function collaboratorPage(
     }
 
     </div>
+
+    <div
+  class="card"
+  style="margin-top:28px;"
+>
+
+  <h2 style="margin-bottom:20px;">
+    📌 AOR
+  </h2>
+
+  ${onDemandTasks.length
+      ? onDemandTasks
+        .map(task =>
+          taskRow({
+            id: task.id,
+            title: task.title,
+            deadlineTime: task.deadlineTime,
+          })
+        )
+        .join("")
+      : `
+        <p>
+          Nenhuma tarefa AOR.
+        </p>
+      `
+    }
+
+</div>
 
     ${collaborator.isTeam ? `
 

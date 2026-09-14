@@ -510,16 +510,7 @@ export function homeTasksBlocks(args: {
 
   pushDivider();
 
-  blocks.push(
-    ...groupWithCheckboxes({
-      title: "⚡ AOR",
-      blockIdPrefix: "my_on_demand",
-      options: renderMyOptions(args.onDemandTasks),
-    })
-  );
 
-
-  pushDivider();
 
   // =========================
   // SUAS DEMANDAS (DELEGOU)
@@ -684,7 +675,18 @@ export function homeTasksBlocks(args: {
   }
   pushDivider();
 
+  // =========================
+  // AOR
+  // =========================
+  blocks.push(
+    ...groupWithCheckboxes({
+      title: "⚡ AOR",
+      blockIdPrefix: "my_on_demand",
+      options: renderMyOptions(args.onDemandTasks),
+    })
+  );
 
+  pushDivider();
 
   // =========================
   // BUGS / SUGESTÕES

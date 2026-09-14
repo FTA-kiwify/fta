@@ -193,7 +193,7 @@ export async function getTeamDetails(
 
         {
             name: "Diárias",
-            tasks: tasks.filter(task => task.recurrence === "daily")
+            tasks: tasks.filter(task => task.taskType !== "on_demand" && task.recurrence === "daily")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -208,7 +208,7 @@ export async function getTeamDetails(
 
         {
             name: "Semanais",
-            tasks: tasks.filter(task => task.recurrence === "weekly")
+            tasks: tasks.filter(task => task.taskType !== "on_demand" && task.recurrence === "weekly")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -223,7 +223,7 @@ export async function getTeamDetails(
 
         {
             name: "Quinzenais",
-            tasks: tasks.filter(task => task.recurrence === "biweekly")
+            tasks: tasks.filter(task => task.taskType !== "on_demand" && task.recurrence === "biweekly")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -238,7 +238,7 @@ export async function getTeamDetails(
 
         {
             name: "Mensais",
-            tasks: tasks.filter(task => task.recurrence === "monthly")
+            tasks: tasks.filter(task => task.taskType !== "on_demand" && task.recurrence === "monthly")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -253,7 +253,7 @@ export async function getTeamDetails(
 
         {
             name: "Trimestrais",
-            tasks: tasks.filter(task => task.recurrence === "quarterly")
+            tasks: tasks.filter(task => task.taskType !== "on_demand" && task.recurrence === "quarterly")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -268,7 +268,7 @@ export async function getTeamDetails(
 
         {
             name: "Semestrais",
-            tasks: tasks.filter(task => task.recurrence === "semiannual")
+            tasks: tasks.filter(task => task.taskType !== "on_demand" && task.recurrence === "semiannual")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -283,7 +283,7 @@ export async function getTeamDetails(
 
         {
             name: "Anuais",
-            tasks: tasks.filter(task => task.recurrence === "annual")
+            tasks: tasks.filter(task => task.taskType !== "on_demand" && task.recurrence === "annual")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -298,7 +298,7 @@ export async function getTeamDetails(
 
         {
             name: "Sem recorrência",
-            tasks: tasks.filter(task => task.recurrence === "none")
+            tasks: tasks.filter(task => task.taskType !== "on_demand" && task.recurrence === "none")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -319,7 +319,7 @@ export async function getTeamDetails(
         {
             name: "🔴 Turbo",
             tasks: tasks
-                .filter(task => task.urgency === "turbo")
+                .filter(task => task.taskType !== "on_demand" && task.urgency === "turbo")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -335,7 +335,7 @@ export async function getTeamDetails(
         {
             name: "🟡 ASAP",
             tasks: tasks
-                .filter(task => task.urgency === "asap")
+                .filter(task => task.taskType !== "on_demand" && task.urgency === "asap")
                 .map(task => ({
                     id: task.id,
                     title: task.title,
@@ -351,7 +351,7 @@ export async function getTeamDetails(
         {
             name: "🟢 Light",
             tasks: tasks
-                .filter(task => task.urgency === "light")
+                .filter(task => task.taskType !== "on_demand" && task.urgency === "light")
                 .map(task => ({
                     id: task.id,
                     title: task.title,

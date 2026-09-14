@@ -188,7 +188,9 @@ export function dashboardPage(data: DashboardData) {
 
       body:
 
-        data.upcomingTasks.length === 0
+        todayTasks.length === 0 &&
+          tomorrowTasks.length === 0 &&
+          futureTasks.length === 0
 
           ? `
                 <p>
@@ -284,28 +286,6 @@ export function dashboardPage(data: DashboardData) {
       `,
           })}
 
-${onDemandTasks.length
-            ? accordion({
-              id: "dashboard-on-demand",
-              title: "AOR",
-              count: onDemandTasks.length,
-              body: onDemandTasks
-                .map(task =>
-                  upcomingTask({
-                    id: task.id,
-                    title: task.title,
-                    responsible:
-                      task.delegatedByName === "Você"
-                        ? "Criada por você"
-                        : `Delegada por ${task.delegatedByName}`,
-                    deadlineTime: task.deadlineTime,
-                    selectable: true,
-                  })
-                )
-                .join(""),
-            })
-            : ""
-          }
           <div
   <div
   style="
@@ -401,6 +381,30 @@ ${onDemandTasks.length
     })}
 
     </div>
+
+    ${dashboardSection({
+      title: "📌 AOR",
+      body: onDemandTasks.length
+        ? onDemandTasks
+          .map(task =>
+            upcomingTask({
+              id: task.id,
+              title: task.title,
+              responsible:
+                task.delegatedByName === "Você"
+                  ? "Criada por você"
+                  : `Delegada por ${task.delegatedByName}`,
+              deadlineTime: task.deadlineTime,
+              selectable: true,
+            })
+          )
+          .join("")
+        : `
+        <p>
+          Nenhuma AOR.
+        </p>
+      `,
+    })}
 
   `;
 
