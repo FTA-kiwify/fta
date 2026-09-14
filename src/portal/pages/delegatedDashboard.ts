@@ -376,7 +376,6 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
 
     })}
 
-    </div>
 
     ${dashboardSection({
       title: "📌 AOR",
@@ -398,6 +397,8 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
         </p>
       `,
     })}
+        </div>
+
 
   `;
 

@@ -380,7 +380,6 @@ export function dashboardPage(data: DashboardData) {
 
     })}
 
-    </div>
 
     ${dashboardSection({
       title: "📌 AOR",
@@ -405,6 +404,9 @@ export function dashboardPage(data: DashboardData) {
         </p>
       `,
     })}
+
+    </div>
+
 
   `;
 
