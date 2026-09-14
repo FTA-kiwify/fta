@@ -376,28 +376,37 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
 
     })}
 
+    </div>
 
-    ${dashboardSection({
-      title: "📌 AOR",
-      body: onDemandTasks.length
-        ? onDemandTasks
-          .map(task =>
-            upcomingTask({
-              id: task.id,
-              title: task.title,
-              responsible: `Responsável: ${task.responsibleName}`,
-              deadlineTime: task.deadlineTime,
-              selectable: true,
-            })
-          )
-          .join("")
-        : `
-        <p>
-          Nenhuma AOR.
-        </p>
-      `,
-    })}
-        </div>
+    <div
+      class="card"
+      style="margin-top:28px;"
+    >
+
+      <h2 style="margin-bottom:20px;">
+        📌 AOR
+      </h2>
+
+      ${onDemandTasks.length
+      ? onDemandTasks
+        .map(task =>
+          upcomingTask({
+            id: task.id,
+            title: task.title,
+            responsible: `Responsável: ${task.responsibleName}`,
+            deadlineTime: task.deadlineTime,
+            selectable: true,
+          })
+        )
+        .join("")
+      : `
+            <p>
+              Nenhuma AOR.
+            </p>
+          `
+    }
+
+    </div>
 
 
   `;

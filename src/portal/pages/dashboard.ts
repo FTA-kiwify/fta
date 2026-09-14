@@ -380,32 +380,40 @@ export function dashboardPage(data: DashboardData) {
 
     })}
 
+</div>
 
-    ${dashboardSection({
-      title: "📌 AOR",
-      body: onDemandTasks.length
-        ? onDemandTasks
-          .map(task =>
-            upcomingTask({
-              id: task.id,
-              title: task.title,
-              responsible:
-                task.delegatedByName === "Você"
-                  ? "Criada por você"
-                  : `Delegada por ${task.delegatedByName}`,
-              deadlineTime: task.deadlineTime,
-              selectable: true,
-            })
-          )
-          .join("")
-        : `
+<div
+  class="card"
+  style="margin-top:28px;"
+>
+
+  <h2 style="margin-bottom:20px;">
+    📌 AOR
+  </h2>
+
+  ${onDemandTasks.length
+      ? onDemandTasks
+        .map(task =>
+          upcomingTask({
+            id: task.id,
+            title: task.title,
+            responsible:
+              task.delegatedByName === "Você"
+                ? "Criada por você"
+                : `Delegada por ${task.delegatedByName}`,
+            deadlineTime: task.deadlineTime,
+            selectable: true,
+          })
+        )
+        .join("")
+      : `
         <p>
           Nenhuma AOR.
         </p>
-      `,
-    })}
+      `
+    }
 
-    </div>
+</div>
 
 
   `;
