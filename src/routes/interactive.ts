@@ -2285,7 +2285,10 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               deferNotifyCreated = dep?.status !== "done";
             }
 
-            if (!deferNotifyCreated) {
+            if (
+              taskType !== "on_demand" &&
+              !deferNotifyCreated
+            ) {
               await notifyTaskCreated({
                 slack,
                 taskId: task.id,

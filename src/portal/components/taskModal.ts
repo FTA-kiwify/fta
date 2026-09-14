@@ -228,7 +228,10 @@ export function taskModal(task: TaskDetails) {
               📌 ${task.title}
             </h2>
 
-            ${urgencyBadge(task.urgency)}
+            ${task.taskType === "on_demand"
+      ? ""
+      : urgencyBadge(task.urgency)
+    }
 
           </div>
 
@@ -258,44 +261,44 @@ export function taskModal(task: TaskDetails) {
       >
 
         ${infoCard(
-    "👤 Responsável",
-    task.responsible
-  )}
+      "👤 Responsável",
+      task.responsible
+    )}
 
         ${infoCard(
-    "👨‍💼 Delegado por",
-    task.delegatedBy ?? "-"
-  )}
+      "👨‍💼 Delegado por",
+      task.delegatedBy ?? "-"
+    )}
 
 
   ${infoCard(
-    "📘 Processo",
-    task.notionProcessUrl
-      ? "Abrir no Notion"
-      : "-",
-    task.notionProcessUrl
-      ? `window.open('${task.notionProcessUrl}','_blank')`
-      : undefined
-  )}
+      "📘 Processo",
+      task.notionProcessUrl
+        ? "Abrir no Notion"
+        : "-",
+      task.notionProcessUrl
+        ? `window.open('${task.notionProcessUrl}','_blank')`
+        : undefined
+    )}
 
         ${infoCard(
-    "🔁 Recorrência",
-    recurrenceLabel(task.recurrence)
-  )}
+      "🔁 Recorrência",
+      recurrenceLabel(task.recurrence)
+    )}
   ${infoCard(
-    "🔒 Privacidade",
-    task.calendarPrivate ? "Privada" : "Pública"
-  )}
+      "🔒 Privacidade",
+      task.calendarPrivate ? "Privada" : "Pública"
+    )}
 
         ${infoCard(
-    "📅 Prazo",
-    `${formatDate(task.deadline)}${task.deadlineTime ? ` às ${task.deadlineTime}` : ""}`
-  )}
+      "📅 Prazo",
+      `${formatDate(task.deadline)}${task.deadlineTime ? ` às ${task.deadlineTime}` : ""}`
+    )}
 
         ${infoCard(
-    "📆 Prazo original",
-    formatDate(task.originalDeadline)
-  )}
+      "📆 Prazo original",
+      formatDate(task.originalDeadline)
+    )}
 
       </div>
 

@@ -2611,7 +2611,10 @@ export async function portalRoutes(app: FastifyInstance) {
           dependency?.status !== "done";
       }
 
-      if (!deferNotifyCreated) {
+      if (
+        body.taskType !== "on_demand" &&
+        !deferNotifyCreated
+      ) {
 
         await notifyTaskCreated({
           slack,
