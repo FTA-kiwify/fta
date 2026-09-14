@@ -305,7 +305,7 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     "",
     "4. Tipo da tarefa:",
     "   • normal = tarefa com prazo",
-    "   • on_demand = atividade sob demanda, sem prazo",
+    "   • on_demand = atividade AOR, sem prazo",
     "",
     "5. Para tarefa normal, o Prazo é obrigatório.",
     "",

@@ -87,22 +87,6 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
     { text: { type: "plain_text" as const, text: "🔴 Turbo" }, value: "turbo" },
   ];
 
-  const taskTypeOptions = [
-    {
-      text: {
-        type: "plain_text" as const,
-        text: "📅 Normal",
-      },
-      value: "normal",
-    },
-    {
-      text: {
-        type: "plain_text" as const,
-        text: "⚡ Sob demanda",
-      },
-      value: "on_demand",
-    },
-  ];
 
   const reminderModeOptions = [
     { text: { type: "plain_text" as const, text: "⏰ Entregar até o prazo" }, value: "until" },
@@ -115,7 +99,14 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
     type: "modal",
     callback_id: CREATE_TASK_MODAL_CALLBACK_ID,
 
-    title: { type: "plain_text", text: "Criar tarefa" },
+    private_metadata: JSON.stringify({
+      taskType: taskTypeValue,
+    }),
+
+    title: {
+      type: "plain_text",
+      text: isOnDemand ? "Criar AOR" : "Criar tarefa",
+    },
     submit: { type: "plain_text", text: "Criar" },
     close: { type: "plain_text", text: "Cancelar" },
 
@@ -174,23 +165,6 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
           ...(args?.initialResponsible
             ? { initial_user: args.initialResponsible }
             : {}),
-        },
-      },
-      {
-        type: "input",
-        block_id: TASK_TYPE_BLOCK_ID,
-        dispatch_action: true,
-        label: {
-          type: "plain_text",
-          text: "Tipo da tarefa",
-        },
-        element: {
-          type: "static_select",
-          action_id: TASK_TYPE_ACTION_ID,
-          initial_option:
-            taskTypeOptions.find((o) => o.value === taskTypeValue) ??
-            taskTypeOptions[0],
-          options: taskTypeOptions,
         },
       },
       ...(

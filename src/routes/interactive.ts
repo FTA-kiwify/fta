@@ -6,6 +6,7 @@ import { sendImportTemplateDm } from "../services/sendImportTemplateDm";
 
 import {
   HOME_CREATE_TASK_ACTION_ID,
+  HOME_CREATE_AOR_ACTION_ID,
   HOME_SEND_BATCH_ACTION_ID,
 } from "../views/homeHeaderActions";
 
@@ -691,40 +692,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           },
           "[INTERACTIVE] action"
         );
-        // =========================================================
-        // ✅ CREATE TASK - TASK TYPE DYNAMIC
-        // =========================================================
-        if (
-          payload.view?.callback_id === CREATE_TASK_MODAL_CALLBACK_ID &&
-          actionId === TASK_TYPE_ACTION_ID
-        ) {
-          reply.status(200).send();
 
-          void (async () => {
-            const selectedTaskType =
-              String((action as any)?.selected_option?.value ?? "") || "normal";
-
-            const view = payload.view;
-            if (!view?.id) return;
-
-
-            req.log.info("[CREATE_TASK_MODAL] before task_type update");
-
-
-            await slack.views.update({
-              view_id: view.id,
-              hash: view.hash,
-              view: createTaskModalView({
-                initialTaskType: selectedTaskType,
-              }),
-            });
-            req.log.info("[CREATE_TASK_MODAL] after task_type update");
-          })().catch((e) => {
-            req.log.error({ e }, "[CREATE_TASK_MODAL] task type failed");
-          });
-
-          return;
-        }
         // =========================================================
         // ✅ CREATE TASK - URGENCY DYNAMIC
         // =========================================================
@@ -1425,7 +1393,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             await sendBotDm(
               slack,
               userSlackId,
-              "⚡ Tarefas sob demanda não podem ser concluídas."
+              "⚡ Tarefas AOR não podem ser concluídas."
             );
 
             await publishHome(
@@ -1646,7 +1614,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             await sendBotDm(
               slack,
               userSlackId,
-              "⚠️ Tarefas sob demanda não podem ser reprogramadas."
+              "⚠️ Tarefas AOR não podem ser reprogramadas."
             );
 
             await publishHome(slack, userSlackId);
@@ -2036,13 +2004,26 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
         // =========================================================
         // ✅ Topo (Home Header)
         // =========================================================
-        if (actionId === HOME_CREATE_TASK_ACTION_ID) {
-          if (!userSlackId) return reply.status(200).send();
-          if (!triggerId) return reply.status(200).send();
+        if (
+          actionId === HOME_CREATE_TASK_ACTION_ID ||
+          actionId === HOME_CREATE_AOR_ACTION_ID
+        ) {
+          if (!userSlackId) {
+            return reply.status(200).send();
+          }
+
+          if (!triggerId) {
+            return reply.status(200).send();
+          }
 
           await slack.views.open({
             trigger_id: triggerId,
-            view: createTaskModalView(),
+            view: createTaskModalView({
+              initialTaskType:
+                actionId === HOME_CREATE_AOR_ACTION_ID
+                  ? "on_demand"
+                  : "normal",
+            }),
           });
 
           return reply.status(200).send();
@@ -2228,9 +2209,20 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const recurrence = getSelectedOptionValue(values, TASK_RECURRENCE_BLOCK_ID, TASK_RECURRENCE_ACTION_ID);
 
           const urgency = getSelectedOptionValue(values, "urgency_block", "urgency") ?? "light";
+          let createMetadata: {
+            taskType?: string;
+          } = {};
+
+          try {
+            createMetadata = JSON.parse(
+              payload.view?.private_metadata || "{}"
+            );
+          } catch { }
+
           const taskType =
-            getSelectedOptionValue(values, TASK_TYPE_BLOCK_ID, TASK_TYPE_ACTION_ID) ??
-            "normal";
+            createMetadata.taskType === "on_demand"
+              ? "on_demand"
+              : "normal";
           const reminderMode =
             getSelectedOptionValue(values, "reminder_mode_block", "reminder_mode") ?? "until";
 

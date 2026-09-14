@@ -56,7 +56,7 @@ export function taskDetailsModalView(args: {
   const isOnDemand = args.taskType === "on_demand";
 
   const taskTypeText = isOnDemand
-    ? "⚡ Sob demanda"
+    ? "⚡ AOR"
     : "📅 Normal";
 
   const notionText = args.notionProcessUrl?.trim()

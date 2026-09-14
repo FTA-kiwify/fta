@@ -1,66 +1,75 @@
 import type {
-    PortalCreateTaskOptions,
+  PortalCreateTaskOptions,
 } from "../../services/portal/createTaskOptionsService";
 
 function escapeHtml(
-    value: string | null | undefined
+  value: string | null | undefined
 ) {
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 type CreateTaskModalConfig = {
-    mode?: "create" | "edit" | "template";
+  mode?: "create" | "edit" | "template";
+  initialTaskType?: "normal" | "on_demand";
 
-    task?: {
-        id: string;
-        title: string;
-        description: string | null;
-        processId: string | null;
-        responsible: string;
+  task?: {
+    id: string;
+    title: string;
+    description: string | null;
+    processId: string | null;
+    responsible: string;
 
-        term: string | null;
-        deadlineTime: string | null;
+    term: string | null;
+    deadlineTime: string | null;
 
-        recurrence: string | null;
-        urgency: string;
-        reminderMode: string;
+    recurrence: string | null;
+    urgency: string;
+    reminderMode: string;
 
-        turboPreviousDay: boolean;
-        turboStartTime: string | null;
+    turboPreviousDay: boolean;
+    turboStartTime: string | null;
 
-        calendarPrivate: boolean;
-        taskType: string;
+    calendarPrivate: boolean;
+    taskType: string;
 
-        carbonCopies: string[];
-    };
+    carbonCopies: string[];
+  };
 };
 
 export function createTaskModal(
-    options: PortalCreateTaskOptions,
-    config: CreateTaskModalConfig = {}
+  options: PortalCreateTaskOptions,
+  config: CreateTaskModalConfig = {}
 ) {
 
-    const isEdit =
-        config.mode === "edit" &&
-        Boolean(config.task);
+  const isEdit =
+    config.mode === "edit" &&
+    Boolean(config.task);
 
-    const task =
-        config.task ?? null;
+  const task =
+    config.task ?? null;
 
-    const responsibleInitial =
-        task?.responsible
-            ? options.collaborators.find(
-                collaborator =>
-                    collaborator.id === task.responsible
-            )
-            : null;
+  const taskType =
+    task?.taskType ??
+    config.initialTaskType ??
+    "normal";
 
-    return `
+  const isAor =
+    taskType === "on_demand";
+
+  const responsibleInitial =
+    task?.responsible
+      ? options.collaborators.find(
+        collaborator =>
+          collaborator.id === task.responsible
+      )
+      : null;
+
+  return `
     <div
       style="
         width:720px;
@@ -92,9 +101,9 @@ export function createTaskModal(
             "
           >
             ${isEdit
-            ? "Edite as informações da atividade."
-            : "Crie uma nova atividade no FTA."
-        }
+      ? "Edite as informações da atividade."
+      : "Crie uma nova atividade no FTA."
+    }
           </p>
 
         </div>
@@ -192,7 +201,7 @@ export function createTaskModal(
             </option>
 
             ${options.processes
-            .map(process => `
+      .map(process => `
                 <option
   value="${escapeHtml(process.id)}"
   ${task?.processId === process.id ? "selected" : ""}
@@ -200,7 +209,7 @@ export function createTaskModal(
                   ${escapeHtml(process.name)}
                 </option>
               `)
-            .join("")}
+      .join("")}
 
           </select>
 
@@ -259,7 +268,7 @@ export function createTaskModal(
             >
 
               ${options.collaborators
-            .map(collaborator => `
+      .map(collaborator => `
                   <button
                     type="button"
                     class="portal-responsible-option"
@@ -286,7 +295,7 @@ export function createTaskModal(
                     ${escapeHtml(collaborator.name)}
                   </button>
                 `)
-            .join("")}
+      .join("")}
 
               <div
                 id="portal-responsible-empty"
@@ -315,27 +324,11 @@ export function createTaskModal(
             Tipo da tarefa
           </label>
 
-          <select
+          <input
   id="portal-task-type"
-  class="portal-select"
-  onchange="portalHandleTaskTypeChange()"
->
-
-  <option
-    value="normal"
-    ${!task || task.taskType === "normal" ? "selected" : ""}
-  >
-    📅 Normal
-  </option>
-
-  <option
-    value="on_demand"
-    ${task?.taskType === "on_demand" ? "selected" : ""}
-  >
-    ⚡ Sob demanda
-  </option>
-
-</select>
+  type="hidden"
+  value="${isAor ? "on_demand" : "normal"}"
+/>
 
         </div>
 
@@ -415,14 +408,14 @@ export function createTaskModal(
               </option>
 
               ${options.dependencies
-            .map(task => `
+      .map(task => `
                   <option
                     value="${escapeHtml(task.id)}"
                   >
                     ${escapeHtml(task.name)}
                   </option>
                 `)
-            .join("")}
+      .join("")}
 
             </select>
 
@@ -727,7 +720,7 @@ export function createTaskModal(
             >
 
               ${options.collaborators
-            .map(collaborator => `
+      .map(collaborator => `
                   <button
                     type="button"
                     class="portal-cc-option"
@@ -754,7 +747,7 @@ export function createTaskModal(
                     ${escapeHtml(collaborator.name)}
                   </button>
                 `)
-            .join("")}
+      .join("")}
 
               <div
                 id="portal-cc-empty"
@@ -776,7 +769,7 @@ export function createTaskModal(
               style="display:none;"
             >
               ${options.collaborators
-            .map(collaborator => `
+      .map(collaborator => `
       <option
         value="${escapeHtml(collaborator.id)}"
         ${task?.carbonCopies?.includes(collaborator.id) ? "selected" : ""}
@@ -784,7 +777,7 @@ export function createTaskModal(
         ${escapeHtml(collaborator.name)}
       </option>
     `)
-            .join("")}
+      .join("")}
             </select>
 
           </div>
@@ -875,9 +868,9 @@ export function createTaskModal(
   type="button"
   class="btn-primary"
   onclick="${isEdit
-            ? `portalUpdateTask('${escapeHtml(task?.id)}')`
-            : "portalCreateTask()"
-        }"
+      ? `portalUpdateTask('${escapeHtml(task?.id)}')`
+      : "portalCreateTask()"
+    }"
 >
   ${isEdit ? "Salvar alterações" : "Criar"}
 </button>

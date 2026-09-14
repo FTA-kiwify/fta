@@ -203,7 +203,7 @@ export function collaboratorPage(
     >
 
       <h2 style="margin-bottom:20px;">
-        📌 Sob demanda
+        📌 AOR
       </h2>
 
       ${onDemandTasks.length
@@ -218,7 +218,7 @@ export function collaboratorPage(
         .join("")
       : `
             <p>
-              Nenhuma tarefa sob demanda.
+              Nenhuma tarefa AOR.
             </p>
           `
     }

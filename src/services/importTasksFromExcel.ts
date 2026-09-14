@@ -803,7 +803,7 @@ export async function importTasksFromExcelSlackFile(
   // título + alguma forma de identificar o responsável.
   //
   // Prazo não é obrigatório no cabeçalho porque
-  // tarefas "sob demanda" não possuem prazo.
+  // tarefas "AOR" não possuem prazo.
   //
   // Urgência também pode ser omitida:
   // nesse caso usamos Light.

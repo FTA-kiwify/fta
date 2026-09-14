@@ -3,6 +3,7 @@ import type { KnownBlock } from "@slack/web-api";
 
 export const HOME_CREATE_TASK_ACTION_ID = "home_create_task" as const;
 export const HOME_SEND_BATCH_ACTION_ID = "home_send_batch" as const;
+export const HOME_CREATE_AOR_ACTION_ID = "home_create_aor" as const;
 
 export function homeHeaderActionsBlocks(): KnownBlock[] {
   return [
@@ -19,6 +20,12 @@ export function homeHeaderActionsBlocks(): KnownBlock[] {
           text: { type: "plain_text", text: "➕ Criar tarefa" },
           action_id: HOME_CREATE_TASK_ACTION_ID,
           value: "open_create_task_modal",
+        },
+        {
+          type: "button",
+          text: { type: "plain_text", text: "⚡ Criar AOR" },
+          action_id: HOME_CREATE_AOR_ACTION_ID,
+          value: "open_create_aor_modal",
         },
         {
           type: "button",

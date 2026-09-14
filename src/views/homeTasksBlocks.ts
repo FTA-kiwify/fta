@@ -512,7 +512,7 @@ export function homeTasksBlocks(args: {
 
   blocks.push(
     ...groupWithCheckboxes({
-      title: "⚡ Sob demanda",
+      title: "⚡ AOR",
       blockIdPrefix: "my_on_demand",
       options: renderMyOptions(args.onDemandTasks),
     })

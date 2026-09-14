@@ -241,7 +241,7 @@ export async function portalRoutes(app: FastifyInstance) {
           .code(400)
           .send({
             error:
-              "Tarefas sob demanda não possuem prazo para reprogramar.",
+              "Tarefas AOR não possuem prazo para reprogramar.",
           });
       }
 
@@ -1930,6 +1930,33 @@ export async function portalRoutes(app: FastifyInstance) {
     }
   );
   app.get(
+    "/portal/tasks/create-aor/modal",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const options =
+        await getPortalCreateTaskOptions(
+          portalUser.slackUserId
+        );
+
+      return reply
+        .type("text/html")
+        .send(
+          createTaskModal(options, {
+            initialTaskType: "on_demand",
+          })
+        );
+    }
+  );
+  app.get(
     "/portal/tasks/:id/create-from-template/modal",
     async (request, reply) => {
 
@@ -1970,7 +1997,7 @@ export async function portalRoutes(app: FastifyInstance) {
 
       /*
        * ==========================================
-       * TEMPLATE SOB DEMANDA
+       * TEMPLATE AOR
        * ==========================================
        */
 
@@ -2009,7 +2036,7 @@ export async function portalRoutes(app: FastifyInstance) {
         return reply
           .code(400)
           .send(
-            "Esta tarefa não é uma tarefa sob demanda."
+            "Esta tarefa não é uma tarefa AOR."
           );
       }
 
@@ -2026,7 +2053,7 @@ export async function portalRoutes(app: FastifyInstance) {
       /*
        * Abre como CRIAÇÃO.
        *
-       * A sob demanda funciona apenas como template.
+       * A AOR funciona apenas como template.
        * A nova tarefa obrigatoriamente nasce NORMAL.
        */
 
@@ -3545,7 +3572,7 @@ export async function portalRoutes(app: FastifyInstance) {
           .code(400)
           .send({
             error:
-              "Tarefas sob demanda não podem ser concluídas.",
+              "Tarefas AOR não podem ser concluídas.",
             onDemandIds:
               result.onDemandIds,
           });
