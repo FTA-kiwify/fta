@@ -137,6 +137,10 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
 
 </div>
 
+</div>
+
+<div class="dashboard-grid">
+
       ${statCard({
       title: "Tarefas delegadas",
       value: data.pendingTasks,
