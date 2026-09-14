@@ -366,6 +366,7 @@ function parseTaskType(
       .replace(/\s+/g, "_");
 
   if (
+    v === "aor" ||
     v === "on_demand" ||
     v === "ondemand" ||
     v === "sob_demanda" ||
@@ -1202,6 +1203,119 @@ export async function importTasksFromExcelSlackFile(
           ).value
         )
         : null;
+
+        // -------------------------
+// Regras específicas para AOR
+// -------------------------
+
+if (isOnDemand) {
+
+  if (term) {
+    failed.push({
+      row: r,
+      reason:
+        "AOR não pode possuir prazo.",
+    });
+
+    continue;
+  }
+
+  if (deadlineTime) {
+    failed.push({
+      row: r,
+      reason:
+        "AOR não pode possuir horário.",
+    });
+
+    continue;
+  }
+
+  if (urgencyRaw.trim()) {
+    failed.push({
+      row: r,
+      reason:
+        "AOR não pode possuir urgência.",
+    });
+
+    continue;
+  }
+
+  const recurrenceRaw =
+    cols.recurrence
+      ? cellToString(
+          row.getCell(
+            cols.recurrence
+          ).value
+        )
+      : "";
+
+  if (recurrenceRaw.trim()) {
+    failed.push({
+      row: r,
+      reason:
+        "AOR não pode possuir recorrência.",
+    });
+
+    continue;
+  }
+
+  const reminderModeRaw =
+    cols.reminderMode
+      ? cellToString(
+          row.getCell(
+            cols.reminderMode
+          ).value
+        )
+      : "";
+
+  if (reminderModeRaw.trim()) {
+    failed.push({
+      row: r,
+      reason:
+        "AOR não pode possuir tipo de prazo.",
+    });
+
+    continue;
+  }
+
+  const turboPreviousDayRaw =
+    cols.turboPreviousDay
+      ? cellToString(
+          row.getCell(
+            cols.turboPreviousDay
+          ).value
+        )
+      : "";
+
+  if (turboPreviousDayRaw.trim()) {
+    failed.push({
+      row: r,
+      reason:
+        "AOR não pode possuir Turbo dia anterior.",
+    });
+
+    continue;
+  }
+
+  const turboStartTimeRaw =
+    cols.turboStartTime
+      ? cellToString(
+          row.getCell(
+            cols.turboStartTime
+          ).value
+        )
+      : "";
+
+  if (turboStartTimeRaw.trim()) {
+    failed.push({
+      row: r,
+      reason:
+        "AOR não pode possuir horário início Turbo.",
+    });
+
+    continue;
+  }
+}
 
     // -------------------------
     // CCs

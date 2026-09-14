@@ -48,12 +48,12 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
   });
 
   const headers = [
+    "Tipo da tarefa",
     "Título*",
     "Descrição",
     "E-mail do responsável",
     "ID Slack do responsável",
     "ID Slack de quem delegou",
-    "Tipo da tarefa",
     "Prazo",
     "Horário",
     "Urgência",
@@ -70,12 +70,12 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
   tasksSheet.addRow(headers);
 
   tasksSheet.columns = [
+    { key: "taskType", width: 20 },
     { key: "title", width: 32 },
     { key: "description", width: 40 },
     { key: "responsibleEmail", width: 32 },
     { key: "responsibleSlackId", width: 24 },
     { key: "delegationSlackId", width: 26 },
-    { key: "taskType", width: 20 },
     { key: "term", width: 16 },
     { key: "deadlineTime", width: 16 },
     { key: "urgency", width: 16 },
@@ -162,7 +162,7 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
 
   listsSheet.getCell("A1").value = "Tipo da tarefa";
   listsSheet.getCell("A2").value = "normal";
-  listsSheet.getCell("A3").value = "on_demand";
+  listsSheet.getCell("A3").value = "AOR";
 
   listsSheet.getCell("B1").value = "Urgência";
   listsSheet.getCell("B2").value = "light";
@@ -195,11 +195,11 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
   const firstDataRow = 2;
   const lastDataRow = 501;
 
-  // F = Tipo da tarefa
+  // A = Tipo da tarefa
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`F${row}`).dataValidation = {
+    tasksSheet.getCell(`A${row}`).dataValidation = {
       type: "list",
-      allowBlank: true,
+      allowBlank: false,
       formulae: ["'_Listas'!$A$2:$A$3"],
     };
   }
@@ -304,10 +304,12 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     "3. Informe o responsável por E-mail ou ID Slack.",
     "",
     "4. Tipo da tarefa:",
-    "   • normal = tarefa com prazo",
-    "   • on_demand = atividade AOR, sem prazo",
+    "   • normal = tarefa normal",
+    "   • AOR = atividade AOR",
     "",
-    "5. Para tarefa normal, o Prazo é obrigatório.",
+    "5. Regras por tipo:",
+    "   • normal = Prazo obrigatório; pode usar Horário, Urgência, Tipo de prazo, Recorrência e Turbo.",
+    "   • AOR = não preencher Prazo, Horário, Urgência, Tipo de prazo, Recorrência, Turbo dia anterior ou Horário início Turbo.",
     "",
     "6. Processo:",
     "   Use o dropdown da coluna Processo.",
