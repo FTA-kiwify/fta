@@ -1517,34 +1517,36 @@ export async function importTasksFromExcelSlackFile(
 
       } catch { }
 
-      await notifyTaskCreated({
-        slack,
+      if (taskType !== "on_demand") {
+        await notifyTaskCreated({
+          slack,
 
-        taskId:
-          task.id,
+          taskId:
+            task.id,
 
-        createdBy:
-          delegationSlackId,
+          createdBy:
+            delegationSlackId,
 
-        taskTitle:
-          task.title,
+          taskTitle:
+            task.title,
 
-        responsible:
-          task.responsible,
+          responsible:
+            task.responsible,
 
-        carbonCopies:
-          task.carbonCopies.map(
-            (c) =>
-              c.slackUserId
-          ),
+          carbonCopies:
+            task.carbonCopies.map(
+              (c) =>
+                c.slackUserId
+            ),
 
-        term:
-          task.term,
+          term:
+            task.term,
 
-        deadlineTime:
-          task.deadlineTime ??
-          null,
-      });
+          deadlineTime:
+            task.deadlineTime ??
+            null,
+        });
+      }
 
       created.push(
         task.id
