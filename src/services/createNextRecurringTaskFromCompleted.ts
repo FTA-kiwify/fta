@@ -91,6 +91,12 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       delegationEmail: true,
       responsible: true,
       responsibleEmail: true,
+      backupResponsible: true,
+      backupResponsibleEmail: true,
+      backupActive: true,
+      backupOriginalResponsible: true,
+      backupOriginalResponsibleEmail: true,
+      backupActivatedAt: true,
       term: true,
       recurrenceAnchor: true,
       deadlineTime: true,
@@ -209,6 +215,24 @@ export async function createNextRecurringTaskFromCompleted(args: { completedTask
       delegationEmail: completed.delegationEmail ?? null,
       responsible: completed.responsible,
       responsibleEmail: completed.responsibleEmail ?? null,
+
+      backupResponsible:
+        completed.backupResponsible ?? null,
+
+      backupResponsibleEmail:
+        completed.backupResponsibleEmail ?? null,
+
+      backupActive:
+        completed.backupActive,
+
+      backupOriginalResponsible:
+        completed.backupOriginalResponsible ?? null,
+
+      backupOriginalResponsibleEmail:
+        completed.backupOriginalResponsibleEmail ?? null,
+
+      backupActivatedAt:
+        completed.backupActivatedAt ?? null,
 
       term: nextTermSafeDate,
       deadlineTime: completed.deadlineTime ?? null,
