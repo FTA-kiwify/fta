@@ -111,6 +111,8 @@ export const createTaskSchema = z
     delegation: slackUserIdSchema,
     responsible: slackUserIdSchema,
 
+    backupResponsible: slackUserIdSchema.nullable().optional(),
+
     term: termSchema.optional(),
     deadlineTime: deadlineTimeSchema,
 
@@ -144,6 +146,18 @@ export const createTaskSchema = z
 
     const deadlineTime = data.deadlineTime ?? null;
 
+    const backupResponsible =
+      data.backupResponsible ?? null;
+
+    if (
+      backupResponsible &&
+      backupResponsible === data.responsible
+    ) {
+      throw new Error(
+        "O backup não pode ser a mesma pessoa responsável pela atividade."
+      );
+    }
+
     const carbonCopies = Array.from(new Set((data.carbonCopies ?? []).filter(Boolean)));
 
     return {
@@ -151,6 +165,7 @@ export const createTaskSchema = z
       term,
       recurrence,
       deadlineTime,
+      backupResponsible,
       reminderMode: data.reminderMode === "from" ? "from" : "until",
 
       turboPreviousDay: data.turboPreviousDay ?? false,

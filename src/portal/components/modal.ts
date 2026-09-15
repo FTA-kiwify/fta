@@ -906,6 +906,110 @@ window.portalSelectResponsible = function(
   }
 };
 
+window.portalOpenBackupResponsiblePicker = function() {
+
+  const dropdown =
+    document.getElementById(
+      "portal-backup-responsible-options"
+    );
+
+  if (!dropdown) return;
+
+  dropdown.style.display = "block";
+
+  window.portalFilterBackupResponsible();
+};
+
+
+window.portalFilterBackupResponsible = function() {
+
+  window.portalCloseUserDropdowns(
+    "portal-backup-responsible-options"
+  );
+
+  const input =
+    document.getElementById(
+      "portal-task-backup-responsible-search"
+    );
+
+  const empty =
+    document.getElementById(
+      "portal-backup-responsible-empty"
+    );
+
+  if (!input) return;
+
+  const search =
+    window.portalNormalizeSearch(
+      input.value
+    );
+
+  const options =
+    document.querySelectorAll(
+      ".portal-backup-responsible-option"
+    );
+
+  let visible = 0;
+
+  options.forEach(option => {
+
+    const name =
+      window.portalNormalizeSearch(
+        option.dataset.userName
+      );
+
+    const show =
+      !search ||
+      name.includes(search);
+
+    option.style.display =
+      show ? "block" : "none";
+
+    if (show) visible++;
+  });
+
+  if (empty) {
+    empty.style.display =
+      visible === 0
+        ? "block"
+        : "none";
+  }
+};
+
+
+window.portalSelectBackupResponsible = function(
+  userId,
+  userName
+) {
+
+  const hidden =
+    document.getElementById(
+      "portal-task-backup-responsible"
+    );
+
+  const input =
+    document.getElementById(
+      "portal-task-backup-responsible-search"
+    );
+
+  const dropdown =
+    document.getElementById(
+      "portal-backup-responsible-options"
+    );
+
+  if (hidden) {
+    hidden.value = userId;
+  }
+
+  if (input) {
+    input.value = userName;
+  }
+
+  if (dropdown) {
+    dropdown.style.display = "none";
+  }
+};
+
 
 window.portalOpenCcPicker = function() {
 
@@ -1186,6 +1290,15 @@ document.addEventListener(
       document.getElementById(
         "portal-responsible-options"
       );
+    const backupResponsiblePicker =
+      document.getElementById(
+        "portal-backup-responsible-picker"
+      );
+
+    const backupResponsibleDropdown =
+      document.getElementById(
+        "portal-backup-responsible-options"
+      );
 
     const ccPicker =
       document.getElementById(
@@ -1203,6 +1316,13 @@ document.addEventListener(
       !responsiblePicker.contains(target)
     ) {
       responsibleDropdown.style.display = "none";
+    }
+    if (
+      backupResponsibleDropdown &&
+      backupResponsiblePicker &&
+      !backupResponsiblePicker.contains(target)
+    ) {
+      backupResponsibleDropdown.style.display = "none";
     }
 
     if (
@@ -1244,6 +1364,9 @@ window.portalCreateTask = async function () {
 
   const responsible =
     getValue("portal-task-responsible");
+
+ const backupResponsible =
+    getValue("portal-task-backup-responsible") || null;
 
   const taskType =
     getValue("portal-task-type") || "normal";
@@ -1318,6 +1441,15 @@ window.portalCreateTask = async function () {
     alert("Selecione o responsável.");
     return;
   }
+  if (
+    backupResponsible &&
+    backupResponsible === responsible
+  ) {
+    alert(
+      "O backup deve ser diferente do responsável."
+    );
+    return;
+  }
 
   if (
     taskType !== "on_demand" &&
@@ -1357,6 +1489,7 @@ window.portalCreateTask = async function () {
             description || null,
           processId,
           responsible,
+          backupResponsible,
           taskType,
           term,
           deadlineTime,
@@ -1434,6 +1567,9 @@ window.portalUpdateTask = async function (taskId) {
   const responsible =
     getValue("portal-task-responsible");
 
+ const backupResponsible =
+    getValue("portal-task-backup-responsible") || null;
+
   const taskType =
     getValue("portal-task-type") || "normal";
 
@@ -1504,6 +1640,16 @@ window.portalUpdateTask = async function (taskId) {
   }
 
   if (
+    backupResponsible &&
+    backupResponsible === responsible
+  ) {
+    alert(
+      "O backup deve ser diferente do responsável."
+    );
+    return;
+  }
+
+  if (
     taskType !== "on_demand" &&
     !term
   ) {
@@ -1543,6 +1689,7 @@ window.portalUpdateTask = async function (taskId) {
             description || null,
           processId,
           responsible,
+          backupResponsible,
           taskType,
           term,
           deadlineTime,

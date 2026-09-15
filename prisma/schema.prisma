@@ -8,33 +8,39 @@ datasource db {
 }
 
 model Task {
-  id                 String       @id @default(uuid())
-  title              String
-  description        String?
-  notionProcessUrl   String?
-  delegation         String
-  delegationEmail    String?
-  responsible        String
-  responsibleEmail   String?
-  term               DateTime?
-  originalTerm       DateTime?
-  deadlineTime       String?
-  status             TaskStatus   @default(pending)
-  recurrence         Recurrence?
-  urgency            Urgency
-  taskType           TaskType     @default(normal)
-  reminderMode       ReminderMode @default(until)
-  turboPreviousDay   Boolean      @default(false)
-  turboStartTime     String?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @default(now()) @updatedAt
-  recurrenceAnchor   DateTime?
-  dependsOnId        String?
-  slackOpenChannelId String?
-  slackOpenMessageTs String?
-  googleEventId      String?
-  googleEventLink    String?
-  calendarPrivate    Boolean      @default(false)
+  id                             String       @id @default(uuid())
+  title                          String
+  description                    String?
+  notionProcessUrl               String?
+  delegation                     String
+  delegationEmail                String?
+  responsible                    String
+  responsibleEmail               String?
+  backupResponsible              String?
+  backupResponsibleEmail         String?
+  backupActive                   Boolean      @default(false)
+  backupOriginalResponsible      String?
+  backupOriginalResponsibleEmail String?
+  backupActivatedAt              DateTime?
+  term                           DateTime?
+  originalTerm                   DateTime?
+  deadlineTime                   String?
+  status                         TaskStatus   @default(pending)
+  recurrence                     Recurrence?
+  urgency                        Urgency
+  taskType                       TaskType     @default(normal)
+  reminderMode                   ReminderMode @default(until)
+  turboPreviousDay               Boolean      @default(false)
+  turboStartTime                 String?
+  createdAt                      DateTime     @default(now())
+  updatedAt                      DateTime     @default(now()) @updatedAt
+  recurrenceAnchor               DateTime?
+  dependsOnId                    String?
+  slackOpenChannelId             String?
+  slackOpenMessageTs             String?
+  googleEventId                  String?
+  googleEventLink                String?
+  calendarPrivate                Boolean      @default(false)
 
   processId String?
 
@@ -181,6 +187,20 @@ model TeamMember {
   @@map("team-members")
 }
 
+model CollaboratorState {
+  slackUserId String @id
+
+  status CollaboratorStatus @default(active)
+
+  backupActivatedAt DateTime?
+  deactivatedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("collaborator-states")
+}
+
 model Process {
   id String @id @default(cuid())
 
@@ -227,6 +247,12 @@ enum Urgency {
 enum ReminderMode {
   until
   from
+}
+
+enum CollaboratorStatus {
+  active
+  backup
+  inactive
 }
 
 enum TaskType {

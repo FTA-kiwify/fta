@@ -18,6 +18,9 @@ export const TASK_DEPENDS_ACTION_ID = "depends_on" as const;
 export const TASK_NOTION_PROCESS_BLOCK_ID = "notion_process_block" as const;
 export const TASK_NOTION_PROCESS_ACTION_ID = "notion_process_action" as const;
 
+export const TASK_BACKUP_RESP_BLOCK_ID = "backup_resp_block" as const;
+export const TASK_BACKUP_RESP_ACTION_ID = "backup_responsible" as const;
+
 export const TASK_REMINDER_MODE_BLOCK_ID = "reminder_mode_block" as const;
 export const TASK_REMINDER_MODE_ACTION_ID = "reminder_mode" as const;
 
@@ -36,6 +39,7 @@ type CreateTaskModalArgs = {
   initialTitle?: string;
   initialDescription?: string;
   initialResponsible?: string;
+  initialBackupResponsible?: string | null;
   initialDueDate?: string | null;
   initialDeadlineTime?: string | null;
   initialDependsOnOption?: any;
@@ -165,6 +169,29 @@ export function createTaskModalView(args?: CreateTaskModalArgs): ModalView {
           ...(args?.initialResponsible
             ? { initial_user: args.initialResponsible }
             : {}),
+        },
+      },
+      // Backup
+      {
+        type: "input",
+        optional: true,
+        block_id: TASK_BACKUP_RESP_BLOCK_ID,
+        label: {
+          type: "plain_text",
+          text: "Backup",
+        },
+        element: {
+          type: "users_select",
+          action_id: TASK_BACKUP_RESP_ACTION_ID,
+          ...(args?.initialBackupResponsible
+            ? {
+              initial_user: args.initialBackupResponsible,
+            }
+            : {}),
+          placeholder: {
+            type: "plain_text",
+            text: "Selecione o backup",
+          },
         },
       },
       ...(

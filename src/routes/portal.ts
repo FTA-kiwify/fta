@@ -2075,6 +2075,8 @@ export async function portalRoutes(app: FastifyInstance) {
                 responsible:
                   template.responsible,
 
+                backupResponsible: null,
+
                 term: null,
                 deadlineTime: null,
 
@@ -2141,6 +2143,7 @@ export async function portalRoutes(app: FastifyInstance) {
             processId: true,
             notionProcessUrl: true,
             responsible: true,
+            backupResponsible: true,
             delegation: true,
             status: true,
             term: true,
@@ -2249,6 +2252,8 @@ export async function portalRoutes(app: FastifyInstance) {
                 description: task.description,
                 processId: task.processId,
                 responsible: task.responsible,
+                backupResponsible:
+                  task.backupResponsible ?? null,
 
                 term: task.term
                   ? task.term
@@ -2363,6 +2368,7 @@ export async function portalRoutes(app: FastifyInstance) {
         description?: string | null;
         processId?: string | null;
         responsible?: string;
+        backupResponsible?: string | null;
         taskType?: string;
         term?: string | null;
         deadlineTime?: string | null;
@@ -2388,6 +2394,9 @@ export async function portalRoutes(app: FastifyInstance) {
       const responsible =
         body.responsible?.trim() ?? "";
 
+      const backupResponsible =
+        body.backupResponsible?.trim() || null;
+
       if (!title) {
         return reply
           .code(400)
@@ -2401,6 +2410,18 @@ export async function portalRoutes(app: FastifyInstance) {
           .code(400)
           .send({
             error: "Selecione o responsável.",
+          });
+      }
+
+      if (
+        backupResponsible &&
+        backupResponsible === responsible
+      ) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "O backup deve ser diferente do responsável.",
           });
       }
 
@@ -2503,6 +2524,8 @@ export async function portalRoutes(app: FastifyInstance) {
             portalUser.slackUserId,
 
           responsible,
+
+          backupResponsible,
 
           term,
 
@@ -2729,6 +2752,7 @@ export async function portalRoutes(app: FastifyInstance) {
         description?: string | null;
         processId?: string | null;
         responsible?: string;
+        backupResponsible?: string | null;
         taskType?: string;
         term?: string | null;
         deadlineTime?: string | null;
@@ -2753,6 +2777,9 @@ export async function portalRoutes(app: FastifyInstance) {
       const responsible =
         body.responsible?.trim() ?? "";
 
+      const backupResponsible =
+        body.backupResponsible?.trim() || null;
+
       if (!title) {
         return reply
           .code(400)
@@ -2766,6 +2793,18 @@ export async function portalRoutes(app: FastifyInstance) {
           .code(400)
           .send({
             error: "Selecione o responsável.",
+          });
+      }
+
+      if (
+        backupResponsible &&
+        backupResponsible === responsible
+      ) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "O backup deve ser diferente do responsável.",
           });
       }
 
@@ -2923,6 +2962,9 @@ export async function portalRoutes(app: FastifyInstance) {
 
             responsibleSlackId:
               responsible,
+
+            backupResponsibleSlackId:
+              backupResponsible,
 
             carbonCopiesSlackIds:
               body.carbonCopies ?? [],

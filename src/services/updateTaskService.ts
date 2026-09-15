@@ -32,6 +32,12 @@ const TASK_SELECT = {
   processId: true,
   delegation: true,
   responsible: true,
+  backupResponsible: true,
+  backupResponsibleEmail: true,
+  backupActive: true,
+  backupOriginalResponsible: true,
+  backupOriginalResponsibleEmail: true,
+  backupActivatedAt: true,
   term: true,
   deadlineTime: true,
   recurrence: true,
@@ -54,6 +60,12 @@ type TaskSelected = {
   notionProcessUrl: string | null;
   delegation: string | null;
   responsible: string;
+  backupResponsible: string | null;
+  backupResponsibleEmail: string | null;
+  backupActive: boolean;
+  backupOriginalResponsible: string | null;
+  backupOriginalResponsibleEmail: string | null;
+  backupActivatedAt: Date | null;
   term: Date | null;
   deadlineTime: string | null;
   recurrence: any;
@@ -76,6 +88,12 @@ type TaskSnapshot = {
   notionProcessUrl: string | null;
   delegation: string | null;
   responsible: string;
+  backupResponsible: string | null;
+  backupResponsibleEmail: string | null;
+  backupActive: boolean;
+  backupOriginalResponsible: string | null;
+  backupOriginalResponsibleEmail: string | null;
+  backupActivatedAt: Date | null;
   term: Date | null;
   deadlineTime: string | null;
   recurrence: string | null;
@@ -98,6 +116,12 @@ function toSnapshot(t: TaskSelected): TaskSnapshot {
     notionProcessUrl: t.notionProcessUrl ?? null,
     delegation: t.delegation ?? null,
     responsible: t.responsible,
+    backupResponsible: t.backupResponsible ?? null,
+    backupResponsibleEmail: t.backupResponsibleEmail ?? null,
+    backupActive: Boolean(t.backupActive),
+    backupOriginalResponsible: t.backupOriginalResponsible ?? null,
+    backupOriginalResponsibleEmail: t.backupOriginalResponsibleEmail ?? null,
+    backupActivatedAt: t.backupActivatedAt ?? null,
     term: t.term,
     deadlineTime: t.deadlineTime ?? null,
     recurrence: t.recurrence ? String(t.recurrence) : null,
@@ -125,6 +149,7 @@ export async function updateTaskService(args: {
   deadlineTime: string | null; // HH:MM | null
 
   responsibleSlackId: string;
+  backupResponsibleSlackId: string | null;
   carbonCopiesSlackIds: string[];
   recurrence: string | null;
 
@@ -145,6 +170,7 @@ export async function updateTaskService(args: {
     termIso,
     deadlineTime,
     responsibleSlackId,
+    backupResponsibleSlackId,
     carbonCopiesSlackIds,
     recurrence,
     urgency,
@@ -162,6 +188,18 @@ export async function updateTaskService(args: {
 
   const trimmedResponsible = (responsibleSlackId ?? "").trim();
   if (!trimmedResponsible) throw new Error("Responsible user is required");
+
+  const trimmedBackupResponsible =
+    backupResponsibleSlackId?.trim() || null;
+
+  if (
+    trimmedBackupResponsible &&
+    trimmedBackupResponsible === trimmedResponsible
+  ) {
+    throw new Error(
+      "O backup não pode ser a mesma pessoa responsável pela atividade."
+    );
+  }
 
   const recurrenceValue = normalizeRecurrence(recurrence);
   const urgencyValue = normalizeUrgency(urgency);
@@ -189,6 +227,12 @@ export async function updateTaskService(args: {
   if ((before.delegation ?? null) !== delegationSlackId) {
     throw new Error("Not allowed to edit this task");
   }
+
+  const responsibleChanged =
+    before.responsible !== trimmedResponsible;
+
+  const clearActiveBackup =
+    before.backupActive && responsibleChanged;
   const finalTerm = isOnDemand ? null : newTerm;
   const finalTime = isOnDemand ? null : newTime;
 
@@ -226,6 +270,16 @@ export async function updateTaskService(args: {
       deadlineTime: finalTime,
 
       responsible: trimmedResponsible,
+      backupResponsible: trimmedBackupResponsible,
+
+      ...(clearActiveBackup
+        ? {
+          backupActive: false,
+          backupOriginalResponsible: null,
+          backupOriginalResponsibleEmail: null,
+          backupActivatedAt: null,
+        }
+        : {}),
       recurrence: finalRecurrence as any,
 
       urgency: finalUrgency as any,

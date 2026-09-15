@@ -27,6 +27,8 @@ import {
   TASK_REMINDER_MODE_ACTION_ID,
   TASK_NOTION_PROCESS_BLOCK_ID,
   TASK_NOTION_PROCESS_ACTION_ID,
+  TASK_BACKUP_RESP_BLOCK_ID,
+  TASK_BACKUP_RESP_ACTION_ID,
   TASK_TYPE_BLOCK_ID,
   TASK_TYPE_ACTION_ID,
 } from "../views/createTaskModal";
@@ -122,6 +124,8 @@ import {
   EDIT_TIME_ACTION_ID,
   EDIT_RESP_BLOCK_ID,
   EDIT_RESP_ACTION_ID,
+  EDIT_BACKUP_RESP_BLOCK_ID,
+  EDIT_BACKUP_RESP_ACTION_ID,
   EDIT_CC_BLOCK_ID,
   EDIT_CC_ACTION_ID,
   EDIT_RECURRENCE_BLOCK_ID,
@@ -1788,6 +1792,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               term: true,
               deadlineTime: true,
               responsible: true,
+              backupResponsible: true,
               recurrence: true,
               urgency: true,
               reminderMode: true,
@@ -1830,6 +1835,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               currentDateIso,
               currentTime: task.deadlineTime ?? null,
               responsibleSlackId: task.responsible,
+              backupResponsibleSlackId:
+                task.backupResponsible ?? null,
               carbonCopiesSlackIds: task.carbonCopies.map((c) => c.slackUserId),
               recurrence: task.recurrence ?? null,
               urgency: (task as any).urgency ?? "light",
@@ -2182,6 +2189,13 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
           const responsible = getSelectedUser(values, "resp_block", "responsible") ?? "";
 
+          const backupResponsible =
+            getSelectedUser(
+              values,
+              TASK_BACKUP_RESP_BLOCK_ID,
+              TASK_BACKUP_RESP_ACTION_ID
+            ) ?? null;
+
           const dueDate = getSelectedDate(values, "due_block", "due_date");
 
           const todayIsoCreate = new Intl.DateTimeFormat("en-CA", {
@@ -2242,12 +2256,26 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           if (!userSlackId) return reply.send({});
           if (!title || !responsible) return reply.send({});
 
+          if (
+            backupResponsible &&
+            backupResponsible === responsible
+          ) {
+            return reply.send({
+              response_action: "errors",
+              errors: {
+                [TASK_BACKUP_RESP_BLOCK_ID]:
+                  "O backup deve ser diferente do responsável.",
+              },
+            });
+          }
+
           const task = await createTaskService({
             title,
             description,
             notionProcessUrl,
             delegation: userSlackId,
             responsible,
+            backupResponsible,
             term: termDate,
             deadlineTime: deadlineTime ?? null,
             recurrence: recurrence ?? null,
@@ -2374,6 +2402,12 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const deadlineTime = getSelectedTime(values, EDIT_TIME_BLOCK_ID, EDIT_TIME_ACTION_ID) ?? null;
 
           const responsibleSlackId = getSelectedUser(values, EDIT_RESP_BLOCK_ID, EDIT_RESP_ACTION_ID) ?? "";
+          const backupResponsibleSlackId =
+            getSelectedUser(
+              values,
+              EDIT_BACKUP_RESP_BLOCK_ID,
+              EDIT_BACKUP_RESP_ACTION_ID
+            ) ?? null;
           const carbonCopiesSlackIds = getSelectedUsers(values, EDIT_CC_BLOCK_ID, EDIT_CC_ACTION_ID);
 
           const recurrenceRaw =
@@ -2398,6 +2432,18 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           if (!responsibleSlackId) {
             return reply.send({ response_action: "errors", errors: { [EDIT_RESP_BLOCK_ID]: "Selecione o responsável." } });
           }
+          if (
+            backupResponsibleSlackId &&
+            backupResponsibleSlackId === responsibleSlackId
+          ) {
+            return reply.send({
+              response_action: "errors",
+              errors: {
+                [EDIT_BACKUP_RESP_BLOCK_ID]:
+                  "O backup deve ser diferente do responsável.",
+              },
+            });
+          }
           if (!urgency || !["light", "asap", "turbo"].includes(String(urgency))) {
             return reply.send({ response_action: "errors", errors: { [EDIT_URGENCY_BLOCK_ID]: "Selecione a urgência." } });
           }
@@ -2419,6 +2465,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             notionProcessUrl,
             deadlineTime,
             responsibleSlackId,
+            backupResponsibleSlackId,
             carbonCopiesSlackIds,
             recurrence,
             urgency,

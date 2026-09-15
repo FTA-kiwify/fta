@@ -23,6 +23,7 @@ type CreateTaskModalConfig = {
     description: string | null;
     processId: string | null;
     responsible: string;
+    backupResponsible: string | null;
 
     term: string | null;
     deadlineTime: string | null;
@@ -66,6 +67,14 @@ export function createTaskModal(
       ? options.collaborators.find(
         collaborator =>
           collaborator.id === task.responsible
+      )
+      : null;
+
+  const backupResponsibleInitial =
+    task?.backupResponsible
+      ? options.collaborators.find(
+        collaborator =>
+          collaborator.id === task.backupResponsible
       )
       : null;
 
@@ -321,6 +330,105 @@ export function createTaskModal(
           </div>
 
         </div>
+        <!-- BACKUP -->
+
+        <div class="portal-form-group">
+
+          <label class="portal-label">
+            Backup
+          </label>
+
+          <div
+            id="portal-backup-responsible-picker"
+            style="
+              position:relative;
+            "
+          >
+
+            <input
+              id="portal-task-backup-responsible-search"
+              class="portal-input"
+              type="text"
+              placeholder="Pesquisar usuário..."
+              autocomplete="off"
+              onfocus="portalOpenBackupResponsiblePicker()"
+              oninput="portalFilterBackupResponsible()"
+              value="${escapeHtml(backupResponsibleInitial?.name)}"
+            />
+
+            <input
+              id="portal-task-backup-responsible"
+              type="hidden"
+              value="${escapeHtml(backupResponsibleInitial?.id)}"
+            />
+
+            <div
+              id="portal-backup-responsible-options"
+              style="
+                display:none;
+                position:absolute;
+                left:0;
+                right:0;
+                top:calc(100% + 6px);
+                z-index:100;
+                max-height:260px;
+                overflow-y:auto;
+                background:#FFFFFF;
+                border:1px solid #E5E7EB;
+                border-radius:12px;
+                box-shadow:0 12px 30px rgba(15,23,42,.14);
+                padding:6px;
+              "
+            >
+
+              ${options.collaborators
+      .map(collaborator => `
+                  <button
+                    type="button"
+                    class="portal-backup-responsible-option"
+                    data-user-id="${escapeHtml(collaborator.id)}"
+                    data-user-name="${escapeHtml(collaborator.name)}"
+                    onclick="portalSelectBackupResponsible(
+                      '${escapeHtml(collaborator.id)}',
+                      '${escapeHtml(collaborator.name)}'
+                    )"
+                    style="
+                      width:100%;
+                      border:none;
+                      background:transparent;
+                      text-align:left;
+                      padding:10px 12px;
+                      border-radius:8px;
+                      cursor:pointer;
+                      font-size:14px;
+                      color:#1F2937;
+                    "
+                    onmouseover="this.style.background='#F3F4F6'"
+                    onmouseout="this.style.background='transparent'"
+                  >
+                    ${escapeHtml(collaborator.name)}
+                  </button>
+                `)
+      .join("")}
+
+              <div
+                id="portal-backup-responsible-empty"
+                style="
+                  display:none;
+                  padding:14px 12px;
+                  color:#6B7280;
+                  font-size:14px;
+                "
+              >
+                Nenhum usuário encontrado.
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
 
 
         <!-- TIPO -->

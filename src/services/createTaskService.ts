@@ -91,9 +91,16 @@ export async function createTaskService(raw: unknown) {
     : data.turboStartTime ?? null;
 
   // ✅ busca emails no Slack antes de salvar (pra o Calendar pegar depois)
-  const [delegationEmail, responsibleEmail] = await Promise.all([
+  const [
+    delegationEmail,
+    responsibleEmail,
+    backupResponsibleEmail,
+  ] = await Promise.all([
     getSlackUserEmail(data.delegation).catch(() => null),
     getSlackUserEmail(data.responsible).catch(() => null),
+    data.backupResponsible
+      ? getSlackUserEmail(data.backupResponsible).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   const carbonCopiesData = await Promise.all(
@@ -119,6 +126,9 @@ export async function createTaskService(raw: unknown) {
       responsible: data.responsible,
       responsibleEmail,
 
+      backupResponsible: data.backupResponsible ?? null,
+      backupResponsibleEmail,
+
       term: taskTerm,
       originalTerm: taskTerm,
       deadlineTime: taskDeadlineTime,
@@ -135,7 +145,7 @@ export async function createTaskService(raw: unknown) {
       status: "pending",
       calendarPrivate: data.calendarPrivate ?? false,
       taskType: data.taskType,
-      
+
 
       ...(carbonCopiesData.length
         ? {
@@ -158,6 +168,7 @@ export async function createTaskService(raw: unknown) {
     afterJson: {
       title: task.title,
       responsible: task.responsible,
+      backupResponsible: task.backupResponsible,
       delegation: task.delegation,
       processId: task.processId,
       notionProcessUrl: task.notionProcessUrl,

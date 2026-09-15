@@ -20,6 +20,9 @@ export const EDIT_TIME_ACTION_ID = "edit_time" as const;
 export const EDIT_RESP_BLOCK_ID = "edit_resp_block" as const;
 export const EDIT_RESP_ACTION_ID = "edit_resp" as const;
 
+export const EDIT_BACKUP_RESP_BLOCK_ID = "edit_backup_resp_block" as const;
+export const EDIT_BACKUP_RESP_ACTION_ID = "edit_backup_resp" as const;
+
 export const EDIT_CC_BLOCK_ID = "edit_cc_block" as const;
 export const EDIT_CC_ACTION_ID = "edit_cc" as const;
 
@@ -86,6 +89,7 @@ export function editTaskModalView(args: {
   currentTime?: string | null; // HH:MM
 
   responsibleSlackId: string;
+  backupResponsibleSlackId?: string | null;
   carbonCopiesSlackIds: string[];
   recurrence: string | null; // pode vir "none" ou null
 
@@ -262,6 +266,29 @@ export function editTaskModalView(args: {
           placeholder: { type: "plain_text", text: "Selecione o responsável" },
         },
         label: { type: "plain_text", text: "Responsável" },
+      },
+      // Backup
+      {
+        type: "input",
+        optional: true,
+        block_id: EDIT_BACKUP_RESP_BLOCK_ID,
+        element: {
+          type: "users_select",
+          action_id: EDIT_BACKUP_RESP_ACTION_ID,
+          ...(args.backupResponsibleSlackId
+            ? {
+              initial_user: args.backupResponsibleSlackId,
+            }
+            : {}),
+          placeholder: {
+            type: "plain_text",
+            text: "Selecione o backup",
+          },
+        },
+        label: {
+          type: "plain_text",
+          text: "Backup",
+        },
       },
 
       // Pessoas em cópia
