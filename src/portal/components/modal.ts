@@ -1748,16 +1748,13 @@ window.portalStartCollaboratorBackup = async function(slackUserId) {
 
   try {
     const response = await fetch(
-      "/portal/collaborators/" +
-        encodeURIComponent(slackUserId) +
-        "/backup/start",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+  "/portal/collaborators/" +
+    encodeURIComponent(slackUserId) +
+    "/backup/start",
+  {
+    method: "POST",
+  }
+);
 
     const result = await response.json();
 
@@ -1797,16 +1794,13 @@ window.portalStopCollaboratorBackup = async function(slackUserId) {
 
   try {
     const response = await fetch(
-      "/portal/collaborators/" +
-        encodeURIComponent(slackUserId) +
-        "/backup/stop",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+  "/portal/collaborators/" +
+    encodeURIComponent(slackUserId) +
+    "/backup/stop",
+  {
+    method: "POST",
+  }
+);
 
     const result = await response.json();
 
