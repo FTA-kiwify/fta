@@ -1740,9 +1740,9 @@ window.portalUpdateTask = async function (taskId) {
 
 window.portalStartCollaboratorBackup = async function(slackUserId) {
   const confirmed = confirm(
-    "Tem certeza que deseja iniciar o backup deste colaborador?\n\n" +
-    "Todas as tarefas elegíveis que possuem um responsável backup cadastrado serão redistribuídas para seus respectivos backups."
-  );
+  "Tem certeza que deseja iniciar o backup deste colaborador?\\n\\n" +
+  "Todas as tarefas elegíveis que possuem um responsável backup cadastrado serão redistribuídas para seus respectivos backups."
+);
 
   if (!confirmed) return;
 
@@ -1769,11 +1769,11 @@ window.portalStartCollaboratorBackup = async function(slackUserId) {
     }
 
     alert(
-      "Backup iniciado.\n\n" +
-      "Tarefas elegíveis: " + (result.eligible ?? 0) + "\n" +
-      "Redistribuídas: " + (result.transferred ?? 0) + "\n" +
-      "Falhas: " + (result.failed ?? 0)
-    );
+  "Backup iniciado.\\n\\n" +
+  "Tarefas elegíveis: " + (result.eligible ?? 0) + "\\n" +
+  "Redistribuídas: " + (result.transferred ?? 0) + "\\n" +
+  "Falhas: " + (result.failed ?? 0)
+);
 
     window.location.reload();
 
@@ -1789,9 +1789,9 @@ window.portalStartCollaboratorBackup = async function(slackUserId) {
 
 window.portalStopCollaboratorBackup = async function(slackUserId) {
   const confirmed = confirm(
-    "Tem certeza que deseja encerrar o backup deste colaborador?\n\n" +
-    "As tarefas redistribuídas temporariamente voltarão aos seus responsáveis originais."
-  );
+  "Tem certeza que deseja encerrar o backup deste colaborador?\\n\\n" +
+  "As tarefas redistribuídas temporariamente voltarão aos seus responsáveis originais."
+);
 
   if (!confirmed) return;
 
@@ -1818,19 +1818,19 @@ window.portalStopCollaboratorBackup = async function(slackUserId) {
     }
 
     if ((result.failed ?? 0) > 0) {
-      alert(
-        "O retorno do backup não foi concluído completamente.\n\n" +
-        "Encontradas: " + (result.found ?? 0) + "\n" +
-        "Restauradas: " + (result.restored ?? 0) + "\n" +
-        "Falhas: " + (result.failed ?? 0) + "\n\n" +
-        "O colaborador continuará com status de backup até que todas as tarefas sejam restauradas."
-      );
-    } else {
-      alert(
-        "Backup encerrado.\n\n" +
-        "Tarefas restauradas: " + (result.restored ?? 0)
-      );
-    }
+  alert(
+    "O retorno do backup não foi concluído completamente.\\n\\n" +
+    "Encontradas: " + (result.found ?? 0) + "\\n" +
+    "Restauradas: " + (result.restored ?? 0) + "\\n" +
+    "Falhas: " + (result.failed ?? 0) + "\\n\\n" +
+    "O colaborador continuará com status de backup até que todas as tarefas sejam restauradas."
+  );
+} else {
+  alert(
+    "Backup encerrado.\\n\\n" +
+    "Tarefas restauradas: " + (result.restored ?? 0)
+  );
+}
 
     window.location.reload();
 
