@@ -445,13 +445,29 @@ async function syncTaskParticipantEmails(args: {
   taskId: string;
   delegationSlackId: string;
   responsibleSlackId: string;
+  backupResponsibleSlackId?: string | null;
   carbonCopiesSlackIds: string[];
 }) {
-  const { slack, taskId, delegationSlackId, responsibleSlackId, carbonCopiesSlackIds } = args;
+  const {
+    slack,
+    taskId,
+    delegationSlackId,
+    responsibleSlackId,
+    backupResponsibleSlackId,
+    carbonCopiesSlackIds,
+  } = args;
 
-  const [delegationEmail, responsibleEmail] = await Promise.all([
+  const [
+    delegationEmail,
+    responsibleEmail,
+    backupResponsibleEmail,
+  ] = await Promise.all([
     getSlackUserEmail(slack, delegationSlackId),
     getSlackUserEmail(slack, responsibleSlackId),
+
+    backupResponsibleSlackId
+      ? getSlackUserEmail(slack, backupResponsibleSlackId)
+      : Promise.resolve(null),
   ]);
 
   await prisma.task.update({
@@ -459,13 +475,19 @@ async function syncTaskParticipantEmails(args: {
     data: {
       delegationEmail: delegationEmail ?? null,
       responsibleEmail: responsibleEmail ?? null,
+      backupResponsibleEmail: backupResponsibleEmail ?? null,
     },
   });
 
-  const ccIds = Array.from(new Set((carbonCopiesSlackIds ?? []).filter(Boolean)));
+  const ccIds = Array.from(
+    new Set((carbonCopiesSlackIds ?? []).filter(Boolean))
+  );
+
   if (!ccIds.length) return;
 
-  const emails = await Promise.all(ccIds.map((id) => getSlackUserEmail(slack, id)));
+  const emails = await Promise.all(
+    ccIds.map((id) => getSlackUserEmail(slack, id))
+  );
 
   await Promise.allSettled(
     ccIds.map((slackUserId, i) =>
@@ -1213,6 +1235,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 notionProcessUrl: true,
                 delegation: true,
                 responsible: true,
+                backupResponsible: true,
                 term: true,
                 deadlineTime: true,
                 recurrence: true,
@@ -1270,6 +1293,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               notionProcessUrl: oldTask.notionProcessUrl ?? undefined,
               delegation: oldTask.delegation ?? userSlackId,
               responsible: oldTask.responsible,
+              backupResponsible: oldTask.backupResponsible ?? null,
               term: oldTask.term ?? null,
               deadlineTime: oldTask.deadlineTime ?? null,
               recurrence: oldTask.recurrence ?? null,
@@ -1297,6 +1321,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 taskId: newTask.id,
                 delegationSlackId: newTask.delegation ?? userSlackId,
                 responsibleSlackId: newTask.responsible,
+                backupResponsibleSlackId: newTask.backupResponsible ?? null,
                 carbonCopiesSlackIds: (newTask as any).carbonCopies?.map((c: any) => c.slackUserId) ?? [],
               });
 
@@ -1676,6 +1701,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 id: true,
                 title: true,
                 responsible: true,
+                backupResponsible: true,
                 delegation: true,
                 carbonCopies: { select: { slackUserId: true } },
               },
@@ -1698,6 +1724,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                   slack,
                   canceledBySlackId: userSlackId,
                   responsibleSlackId: t.responsible,
+                  backupResponsibleSlackId: t.backupResponsible ?? null,
                   carbonCopiesSlackIds: t.carbonCopies.map((c) => c.slackUserId),
                   taskTitle: t.title,
                 })
@@ -2299,6 +2326,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 taskId: task.id,
                 delegationSlackId: userSlackId,
                 responsibleSlackId: task.responsible,
+                backupResponsibleSlackId: task.backupResponsible ?? null,
                 carbonCopiesSlackIds: (task as any).carbonCopies?.map((c: any) => c.slackUserId) ?? [],
               });
 
@@ -2334,6 +2362,10 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             const affected = new Set<string>();
             affected.add(userSlackId);
             affected.add(task.responsible);
+
+            if (task.backupResponsible) {
+              affected.add(task.backupResponsible);
+            }
             if (task.delegation) affected.add(task.delegation);
             for (const c of ((task as any).carbonCopies ?? [])) {
               affected.add(c.slackUserId);
@@ -2495,6 +2527,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 taskId,
                 delegationSlackId: userSlackId,
                 responsibleSlackId: updated.after.responsible,
+                backupResponsibleSlackId:
+                  updated.after.backupResponsible,
                 carbonCopiesSlackIds: updated.after.carbonCopies,
               });
 
@@ -2541,6 +2575,11 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
 
                 oldResponsible: before.responsible ?? null,
                 newResponsible: after.responsible ?? null,
+
+                oldBackupResponsible:
+                  before.backupResponsible ?? null,
+                newBackupResponsible:
+                  after.backupResponsible ?? null,
 
                 oldRecurrence: before.recurrence ?? null,
                 newRecurrence: after.recurrence ?? null,
@@ -2655,6 +2694,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 id: true,
                 title: true,
                 responsible: true,
+                backupResponsible: true,
                 delegation: true,
                 slackOpenChannelId: true,
                 slackOpenMessageTs: true,
@@ -2669,6 +2709,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               const dmPromise = notifyTaskRescheduledGroup({
                 slack,
                 responsibleSlackId: after.responsible,
+                backupResponsibleSlackId: after.backupResponsible ?? null,
                 delegationSlackId: after.delegation ?? null,
                 carbonCopiesSlackIds: after.carbonCopies.map((c) => c.slackUserId),
                 taskTitle: after.title,
@@ -2727,6 +2768,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             title: string;
             description?: string | null;
             responsible: string;
+            backupResponsible: string | null;
             termIso: string | null;
             deadlineTime: string | null;
             dependsOnId: string | null;
@@ -2741,6 +2783,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               titleBlock: `batch_title_block_${i}`,
               descBlock: `batch_desc_block_${i}`,
               respBlock: `batch_resp_block_${i}`,
+              backupBlock: `batch_backup_block_${i}`,
               dueBlock: `batch_due_block_${i}`,
               timeBlock: `batch_time_block_${i}`,
               urgencyBlock: `batch_urgency_block_${i}`,
@@ -2757,6 +2800,9 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             const description = (getInputValue(values, ids.descBlock, "description") ?? "").trim() || null;
 
             const responsible = getSelectedUser(values, ids.respBlock, "responsible") ?? "";
+
+            const backupResponsible =
+              getSelectedUser(values, ids.backupBlock, "backup_responsible") ?? null;
 
             const termIso = getSelectedDate(values, ids.dueBlock, "due_date") ?? null;
             const deadlineTime = getSelectedTime(values, ids.timeBlock, TASK_TIME_ACTION_ID) ?? null;
@@ -2778,6 +2824,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               title,
               description,
               responsible,
+              backupResponsible,
               termIso,
               deadlineTime,
               dependsOnId,
@@ -2801,6 +2848,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               description: t.description?.trim() ? t.description : undefined,
               delegation: userSlackId,
               responsible: t.responsible,
+              backupResponsible: t.backupResponsible,
               term: termDate,
               deadlineTime: t.deadlineTime ?? null,
               recurrence: t.recurrence ?? null,
@@ -2827,6 +2875,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                   taskId: task.id,
                   delegationSlackId: userSlackId,
                   responsibleSlackId: task.responsible,
+                  backupResponsibleSlackId: task.backupResponsibleSlackId ?? null,
                   carbonCopiesSlackIds: task.carbonCopies.map((c: any) => c.slackUserId),
                 });
 

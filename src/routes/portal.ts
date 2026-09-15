@@ -96,6 +96,16 @@ import { getSlackUserName } from "../services/slackUserLookup";
 import { notifyTaskCanceledGroup } from "../services/notifyTaskCanceledGroup";
 import { markTaskOpenMessageAsCanceled } from "../services/markTaskOpenMessageAsCanceled";
 
+import {
+  startCollaboratorBackup,
+  stopCollaboratorBackup,
+} from "../services/portal/collaboratorBackupService";
+
+import {
+  getCollaboratorDeactivationPreview,
+  deactivateCollaborator,
+} from "../services/portal/deactivateCollaboratorService";
+
 function getTopbarUser(request: any) {
 
   const portalUser = getPortalUser(request);
@@ -325,6 +335,7 @@ export async function portalRoutes(app: FastifyInstance) {
               id: true,
               title: true,
               responsible: true,
+              backupResponsible: true,
               delegation: true,
               slackOpenChannelId: true,
               slackOpenMessageTs: true,
@@ -360,6 +371,8 @@ export async function portalRoutes(app: FastifyInstance) {
 
             responsibleSlackId:
               after.responsible,
+
+            backupResponsibleSlackId: after.backupResponsible ?? null,
 
             delegationSlackId:
               after.delegation ?? null,
@@ -656,6 +669,312 @@ export async function portalRoutes(app: FastifyInstance) {
     );
 
   });
+
+  app.post(
+    "/portal/collaborators/:slackUserId/backup/start",
+    async (request, reply) => {
+      try {
+        const portalUser = getPortalUser(request);
+
+        if (!portalUser) {
+          return reply.code(401).send({
+            error: "Não autenticado",
+          });
+        }
+
+        const { slackUserId } = request.params as {
+          slackUserId: string;
+        };
+
+        const allowed = await canAccessCollaborator(
+          portalUser.slackUserId,
+          slackUserId
+        );
+
+        if (!allowed) {
+          return reply.code(403).send({
+            error: "Você não tem acesso a este colaborador.",
+          });
+        }
+
+        const result = await startCollaboratorBackup({
+          slack,
+          slackUserId,
+          actorSlackId: portalUser.slackUserId,
+        });
+
+        return reply.send({
+          ok: true,
+          ...result,
+        });
+      } catch (error: any) {
+        request.log.error(
+          { error },
+          "[PORTAL_COLLABORATOR_BACKUP_START] failed"
+        );
+
+        return reply.code(400).send({
+          error:
+            error?.message ??
+            "Não foi possível iniciar o backup.",
+        });
+      }
+    }
+  );
+
+  app.post(
+    "/portal/collaborators/:slackUserId/backup/stop",
+    async (request, reply) => {
+      try {
+        const portalUser = getPortalUser(request);
+
+        if (!portalUser) {
+          return reply.code(401).send({
+            error: "Não autenticado",
+          });
+        }
+
+        const { slackUserId } = request.params as {
+          slackUserId: string;
+        };
+
+        const allowed = await canAccessCollaborator(
+          portalUser.slackUserId,
+          slackUserId
+        );
+
+        if (!allowed) {
+          return reply.code(403).send({
+            error: "Você não tem acesso a este colaborador.",
+          });
+        }
+
+        const result = await stopCollaboratorBackup({
+          slack,
+          slackUserId,
+          actorSlackId: portalUser.slackUserId,
+        });
+
+        return reply.send({
+          ok: result.failed === 0,
+          ...result,
+        });
+      } catch (error: any) {
+        request.log.error(
+          { error },
+          "[PORTAL_COLLABORATOR_BACKUP_STOP] failed"
+        );
+
+        return reply.code(400).send({
+          error:
+            error?.message ??
+            "Não foi possível encerrar o backup.",
+        });
+      }
+    }
+  );
+
+  app.get(
+    "/portal/collaborators/:slackUserId/deactivation-preview",
+    async (request, reply) => {
+      try {
+        const portalUser = getPortalUser(request);
+
+        if (!portalUser) {
+          return reply.code(401).send({
+            error: "Não autenticado",
+          });
+        }
+
+        const { slackUserId } = request.params as {
+          slackUserId: string;
+        };
+
+        const allowed = await canAccessCollaborator(
+          portalUser.slackUserId,
+          slackUserId
+        );
+
+        if (!allowed) {
+          return reply.code(403).send({
+            error: "Você não tem acesso a este colaborador.",
+          });
+        }
+
+        const preview =
+          await getCollaboratorDeactivationPreview(
+            slackUserId
+          );
+
+        return reply.send({
+          ok: true,
+          ...preview,
+        });
+      } catch (error: any) {
+        request.log.error(
+          { error },
+          "[PORTAL_COLLABORATOR_DEACTIVATION_PREVIEW] failed"
+        );
+
+        return reply.code(400).send({
+          error:
+            error?.message ??
+            "Não foi possível preparar o desligamento.",
+        });
+      }
+    }
+  );
+
+  app.get(
+    "/portal/collaborators/:slackUserId/replacement-options",
+    async (request, reply) => {
+      try {
+        const portalUser = getPortalUser(request);
+
+        if (!portalUser) {
+          return reply.code(401).send({
+            error: "Não autenticado",
+          });
+        }
+
+        const { slackUserId } = request.params as {
+          slackUserId: string;
+        };
+
+        const allowed = await canAccessCollaborator(
+          portalUser.slackUserId,
+          slackUserId
+        );
+
+        if (!allowed) {
+          return reply.code(403).send({
+            error: "Você não tem acesso a este colaborador.",
+          });
+        }
+
+        const collaborators =
+          await getCollaborators();
+
+        const collaboratorStates =
+          await prisma.collaboratorState.findMany({
+            where: {
+              slackUserId: {
+                in: collaborators.map(
+                  collaborator =>
+                    collaborator.slackUserId
+                ),
+              },
+            },
+            select: {
+              slackUserId: true,
+              status: true,
+            },
+          });
+
+        const inactiveIds =
+          new Set(
+            collaboratorStates
+              .filter(
+                state =>
+                  state.status === "inactive"
+              )
+              .map(
+                state =>
+                  state.slackUserId
+              )
+          );
+
+        const options = collaborators
+          .filter(
+            collaborator =>
+              collaborator.slackUserId !== slackUserId &&
+              !inactiveIds.has(
+                collaborator.slackUserId
+              )
+          )
+          .map(collaborator => ({
+            id: collaborator.slackUserId,
+            name: collaborator.name,
+          }));
+
+        return reply.send({
+          ok: true,
+          options,
+        });
+
+      } catch (error: any) {
+        request.log.error(
+          { error },
+          "[PORTAL_COLLABORATOR_REPLACEMENT_OPTIONS] failed"
+        );
+
+        return reply.code(400).send({
+          error:
+            error?.message ??
+            "Não foi possível carregar os substitutos.",
+        });
+      }
+    }
+  );
+
+  app.post(
+    "/portal/collaborators/:slackUserId/deactivate",
+    async (request, reply) => {
+      try {
+        const portalUser = getPortalUser(request);
+
+        if (!portalUser) {
+          return reply.code(401).send({
+            error: "Não autenticado",
+          });
+        }
+
+        const { slackUserId } = request.params as {
+          slackUserId: string;
+        };
+
+        const allowed = await canAccessCollaborator(
+          portalUser.slackUserId,
+          slackUserId
+        );
+
+        if (!allowed) {
+          return reply.code(403).send({
+            error: "Você não tem acesso a este colaborador.",
+          });
+        }
+
+        const body = (request.body ?? {}) as {
+          replacementSlackId?: string | null;
+        };
+
+        const result = await deactivateCollaborator({
+          slack,
+          slackUserId,
+          actorSlackId: portalUser.slackUserId,
+          replacementSlackId:
+            body.replacementSlackId?.trim() || null,
+        });
+
+        return reply.send({
+          ok: result.deactivated,
+          ...result,
+        });
+
+      } catch (error: any) {
+        request.log.error(
+          { error },
+          "[PORTAL_COLLABORATOR_DEACTIVATE] failed"
+        );
+
+        return reply.code(400).send({
+          error:
+            error?.message ??
+            "Não foi possível desligar o colaborador.",
+        });
+      }
+    }
+  );
 
   app.post("/portal/teams", async (request, reply) => {
     try {
@@ -2581,6 +2900,9 @@ export async function portalRoutes(app: FastifyInstance) {
           responsibleSlackId:
             task.responsible,
 
+          backupResponsibleSlackId:
+            task.backupResponsible ?? null,
+
           carbonCopiesSlackIds:
             (task as any)
               .carbonCopies
@@ -3051,6 +3373,9 @@ export async function portalRoutes(app: FastifyInstance) {
           responsibleSlackId:
             updated.after.responsible,
 
+          backupResponsibleSlackId:
+            updated.after.backupResponsible,
+
           carbonCopiesSlackIds:
             updated.after.carbonCopies ?? [],
         });
@@ -3175,6 +3500,12 @@ export async function portalRoutes(app: FastifyInstance) {
 
           newResponsible:
             updated.after.responsible,
+
+          oldBackupResponsible:
+            updated.before.backupResponsible,
+
+          newBackupResponsible:
+            updated.after.backupResponsible,
 
           oldRecurrence:
             updated.before.recurrence,
@@ -3373,6 +3704,7 @@ export async function portalRoutes(app: FastifyInstance) {
             id: true,
             title: true,
             responsible: true,
+            backupResponsible: true,
             delegation: true,
 
             carbonCopies: {
@@ -3417,6 +3749,9 @@ export async function portalRoutes(app: FastifyInstance) {
 
             responsibleSlackId:
               task.responsible,
+
+            backupResponsibleSlackId:
+              task.backupResponsible ?? null,
 
             carbonCopiesSlackIds:
               task.carbonCopies.map(

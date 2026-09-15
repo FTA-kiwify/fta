@@ -25,13 +25,32 @@ export async function syncTaskParticipantEmails(args: {
   taskId: string;
   delegationSlackId: string;
   responsibleSlackId: string;
+  backupResponsibleSlackId?: string | null;
   carbonCopiesSlackIds: string[];
 }) {
-  const { slack, taskId, delegationSlackId, responsibleSlackId, carbonCopiesSlackIds } = args;
+  const {
+    slack,
+    taskId,
+    delegationSlackId,
+    responsibleSlackId,
+    backupResponsibleSlackId,
+    carbonCopiesSlackIds,
+  } = args;
 
-  const [delegationEmail, responsibleEmail] = await Promise.all([
+  const [
+    delegationEmail,
+    responsibleEmail,
+    backupResponsibleEmail,
+  ] = await Promise.all([
     getSlackUserEmail(slack, delegationSlackId),
     getSlackUserEmail(slack, responsibleSlackId),
+
+    backupResponsibleSlackId
+      ? getSlackUserEmail(
+        slack,
+        backupResponsibleSlackId
+      )
+      : Promise.resolve(null),
   ]);
 
   await prisma.task.update({
@@ -39,6 +58,7 @@ export async function syncTaskParticipantEmails(args: {
     data: {
       delegationEmail: delegationEmail ?? null,
       responsibleEmail: responsibleEmail ?? null,
+      backupResponsibleEmail: backupResponsibleEmail ?? null,
     },
   });
 

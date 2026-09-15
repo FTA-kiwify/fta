@@ -63,8 +63,12 @@ export async function notifyTaskCreated(args: NotifyTaskCreatedArgs) {
       deadlineTime: true,
       urgency: true,
       delegation: true,
+      backupResponsible: true,
     },
   });
+
+  const backupResponsible =
+    task?.backupResponsible?.trim() || null;
 
   const title = task?.title ?? args.taskTitle;
   const desc = safeDesc(task?.description ?? null);
@@ -132,26 +136,26 @@ export async function notifyTaskCreated(args: NotifyTaskCreatedArgs) {
       {
         type: "actions",
         elements: [
-                {
-                  type: "button",
-                  style: "primary",
-                  text: { type: "plain_text", text: "✅ Concluir" },
-                  action_id: TASK_DETAILS_CONCLUDE_ACTION_ID,
-                  value: taskId,
-                },
-                {
-                  type: "button",
-                  text: { type: "plain_text", text: "📅 Reprogramar Prazo" },
-                  action_id: TASKS_RESCHEDULE_ACTION_ID,
-                  value: taskId,
-                },
-                {
-                  type: "button",
-                  text: { type: "plain_text", text: ":thread: Abrir thread" },
-                  action_id: TASKS_SEND_QUESTION_ACTION_ID,
-                  value: taskId,
-                },
-              ],
+          {
+            type: "button",
+            style: "primary",
+            text: { type: "plain_text", text: "✅ Concluir" },
+            action_id: TASK_DETAILS_CONCLUDE_ACTION_ID,
+            value: taskId,
+          },
+          {
+            type: "button",
+            text: { type: "plain_text", text: "📅 Reprogramar Prazo" },
+            action_id: TASKS_RESCHEDULE_ACTION_ID,
+            value: taskId,
+          },
+          {
+            type: "button",
+            text: { type: "plain_text", text: ":thread: Abrir thread" },
+            action_id: TASKS_SEND_QUESTION_ACTION_ID,
+            value: taskId,
+          },
+        ],
       },
 
       {
@@ -177,14 +181,77 @@ export async function notifyTaskCreated(args: NotifyTaskCreatedArgs) {
   } catch (e) {
     console.error("[notifyTaskCreated] failed to notify responsible:", e);
   }
+  // =======================================
+  // 2) Mensagem para o Backup
+  // =======================================
+  if (
+    backupResponsible &&
+    backupResponsible !== responsible &&
+    backupResponsible !== createdBy
+  ) {
+    try {
+      const backupText =
+        `🛟 <@${createdBy}> atribuiu a atividade *${title}* para <@${responsible}> ` +
+        `(você está como backup)`;
 
+      const channelId =
+        await openDm(slack, backupResponsible);
+
+      await slack.chat.postMessage({
+        channel: channelId,
+        text: backupText,
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: backupText,
+            },
+          },
+          {
+            type: "section",
+            block_id: "task_due",
+            text: {
+              type: "mrkdwn",
+              text: `*Prazo:* ${prazo}`,
+            },
+          } as any,
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: {
+                  type: "plain_text",
+                  text: ":thread: Abrir thread",
+                },
+                action_id:
+                  TASKS_SEND_QUESTION_ACTION_ID,
+                value: taskId,
+              },
+            ],
+          },
+        ],
+      });
+    } catch (e) {
+      console.error(
+        `[notifyTaskCreated] failed to notify backup ${backupResponsible}:`,
+        e
+      );
+    }
+  }
   // =======================================
   // 2) Mensagem pros CCs
   // =======================================
   const ccText = `👀 <@${createdBy}> atribuiu a atividade *${title}* para <@${responsible}> (você está em cópia)`;
 
+  const ccToNotify = ccUnique.filter(
+    (ccId) =>
+      ccId !== backupResponsible
+  );
+
   await Promise.all(
-    ccUnique.map(async (ccId) => {
+    ccToNotify.map(async (ccId) => {
       try {
         if (!ccId) return;
         if (ccId === responsible) return;

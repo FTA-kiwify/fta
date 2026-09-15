@@ -13,6 +13,17 @@ export function collaboratorPage(
 
   const today = getBrazilToday();
 
+  const collaboratorStatus =
+    collaborator.collaboratorStatus ?? "active";
+
+  const isBackupActive =
+    !collaborator.isTeam &&
+    collaboratorStatus === "backup";
+
+  const isInactive =
+    !collaborator.isTeam &&
+    collaboratorStatus === "inactive";
+
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -52,7 +63,88 @@ export function collaboratorPage(
     task => task.taskType === "on_demand"
   );
 
+  const collaboratorActions =
+    collaborator.isTeam
+      ? ""
+      : `
+      <div
+        class="card"
+        style="
+          margin-bottom:28px;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:20px;
+          flex-wrap:wrap;
+        "
+      >
+        <div>
+          <div style="font-size:14px;color:#6B7280;margin-bottom:6px;">
+            Status do colaborador
+          </div>
+
+          <div style="font-size:18px;font-weight:700;">
+            ${isInactive
+        ? "⚫ Desligado"
+        : isBackupActive
+          ? "🟡 Backup ativo"
+          : "🟢 Ativo"
+      }
+          </div>
+        </div>
+
+        <div
+          style="
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+          "
+        >
+          ${isInactive
+        ? ""
+        : isBackupActive
+          ? `
+                  <button
+                    class="btn btn-secondary"
+                    type="button"
+                    id="portal-stop-collaborator-backup"
+                    onclick="portalStopCollaboratorBackup('${collaborator.slackUserId}')"
+                  >
+                    ↩️ Encerrar backup
+                  </button>
+                `
+          : `
+                  <button
+                    class="btn btn-secondary"
+                    type="button"
+                    id="portal-start-collaborator-backup"
+                    onclick="portalStartCollaboratorBackup('${collaborator.slackUserId}')"
+                  >
+                    🛟 Iniciar backup
+                  </button>
+                `
+      }
+
+          ${!isInactive
+        ? `
+                <button
+                  class="btn btn-danger"
+                  type="button"
+                  id="portal-deactivate-collaborator"
+                  onclick="portalDeactivateCollaborator('${collaborator.slackUserId}')"
+                >
+                  🚫 Desligar colaborador
+                </button>
+              `
+        : ""
+      }
+        </div>
+      </div>
+    `;
+
   return `
+
+    ${collaboratorActions}
 
     <div class="dashboard-grid">
 

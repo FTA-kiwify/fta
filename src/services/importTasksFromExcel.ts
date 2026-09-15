@@ -568,6 +568,9 @@ export async function importTasksFromExcelSlackFile(
     responsibleEmail?: number;
     responsibleSlackId?: number;
 
+    backupResponsibleEmail?: number;
+    backupResponsibleSlackId?: number;
+
 
     term?: number;
     deadlineTime?: number;
@@ -637,6 +640,30 @@ export async function importTasksFromExcelSlackFile(
         ].includes(h)
       ) {
         cols.responsibleSlackId =
+          colNumber;
+      }
+
+      if (
+        [
+          "email_do_backup",
+          "backup_email",
+          "email_do_responsavel_backup",
+          "email_do_responsável_backup",
+        ].includes(h)
+      ) {
+        cols.backupResponsibleEmail =
+          colNumber;
+      }
+
+      if (
+        [
+          "id_slack_do_backup",
+          "backup_slack_id",
+          "responsavel_backup_slack_id",
+          "responsável_backup_slack_id",
+        ].includes(h)
+      ) {
+        cols.backupResponsibleSlackId =
           colNumber;
       }
 
@@ -925,6 +952,82 @@ export async function importTasksFromExcelSlackFile(
 
       continue;
     }
+
+    // -------------------------
+    // Responsável Backup
+    // -------------------------
+
+    const backupResponsibleEmailRaw =
+      cols.backupResponsibleEmail
+        ? cellToString(
+          row.getCell(
+            cols.backupResponsibleEmail
+          ).value
+        )
+        : "";
+
+    const backupResponsibleSlackIdRaw =
+      cols.backupResponsibleSlackId
+        ? cellToString(
+          row.getCell(
+            cols.backupResponsibleSlackId
+          ).value
+        )
+        : "";
+
+    const backupResponsibleEmail =
+      backupResponsibleEmailRaw
+        ? parseEmail(
+          backupResponsibleEmailRaw
+        )
+        : null;
+
+    let backupResponsibleSlackId =
+      backupResponsibleSlackIdRaw
+        ? parseSlackUserId(
+          backupResponsibleSlackIdRaw
+        )
+        : null;
+
+    if (
+      !backupResponsibleSlackId &&
+      backupResponsibleEmail
+    ) {
+      backupResponsibleSlackId =
+        await slackUserIdFromEmail(
+          slack,
+          backupResponsibleEmail
+        );
+    }
+
+    if (
+      (backupResponsibleEmailRaw || backupResponsibleSlackIdRaw) &&
+      !backupResponsibleSlackId
+    ) {
+      failed.push({
+        row: r,
+        reason:
+          backupResponsibleEmail
+            ? `Não consegui achar o Slack ID do backup pelo e-mail: "${backupResponsibleEmail}"`
+            : `Responsável backup inválido (email="${backupResponsibleEmailRaw || ""}", slackId="${backupResponsibleSlackIdRaw || ""}")`,
+      });
+
+      continue;
+    }
+
+    if (
+      backupResponsibleSlackId &&
+      backupResponsibleSlackId === responsibleSlackId
+    ) {
+      failed.push({
+        row: r,
+        reason:
+          "O backup deve ser diferente do responsável.",
+      });
+
+      continue;
+    }
+
 
     // -------------------------
     // Delegador
@@ -1445,6 +1548,9 @@ export async function importTasksFromExcelSlackFile(
           responsible:
             responsibleSlackId,
 
+          backupResponsible: backupResponsibleSlackId,
+
+
           processId:
             selectedProcess?.id ??
             null,
@@ -1508,6 +1614,8 @@ export async function importTasksFromExcelSlackFile(
           delegationSlackId,
           responsibleSlackId:
             task.responsible,
+          backupResponsibleSlackId:
+            task.backupResponsible ?? null,
           carbonCopiesSlackIds:
             task.carbonCopies.map(
               (c) =>

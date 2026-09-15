@@ -19,6 +19,7 @@ function taskBlockIds(i: number) {
     titleBlock: `batch_title_block_${i}`,
     descBlock: `batch_desc_block_${i}`,
     respBlock: `batch_resp_block_${i}`,
+    backupBlock: `batch_backup_block_${i}`,
     dueBlock: `batch_due_block_${i}`,
     timeBlock: `batch_time_block_${i}`,
     urgencyBlock: `batch_urgency_block_${i}`,
@@ -71,6 +72,17 @@ function taskBlocks(i: number) {
       element: {
         type: "users_select",
         action_id: "responsible",
+      },
+    },
+
+    {
+      type: "input",
+      optional: true,
+      block_id: ids.backupBlock,
+      label: { type: "plain_text", text: "Backup" },
+      element: {
+        type: "users_select",
+        action_id: "backup_responsible",
       },
     },
 

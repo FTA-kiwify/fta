@@ -4,6 +4,7 @@ import type { WebClient } from "@slack/web-api";
 type NotifyTaskRescheduledGroupArgs = {
   slack: WebClient;
   responsibleSlackId: string;
+  backupResponsibleSlackId?: string | null;
   delegationSlackId: string | null;
   carbonCopiesSlackIds: string[];
   taskTitle: string;
@@ -20,13 +21,20 @@ function uniq(ids: Array<string | null | undefined>) {
 
 function buildAlignThreadText(args: {
   responsibleSlackId: string;
+  backupResponsibleSlackId?: string | null;
   delegationSlackId: string | null;
   carbonCopiesSlackIds: string[];
 }) {
-  const { responsibleSlackId, delegationSlackId, carbonCopiesSlackIds } = args;
+  const {
+    responsibleSlackId,
+    backupResponsibleSlackId,
+    delegationSlackId,
+    carbonCopiesSlackIds,
+  } = args;
 
   const all = uniq([
     responsibleSlackId,
+    backupResponsibleSlackId,
     delegationSlackId,
     ...(carbonCopiesSlackIds ?? []),
   ]);
@@ -74,15 +82,17 @@ export async function notifyTaskRescheduledGroup(args: NotifyTaskRescheduledGrou
   const {
     slack,
     responsibleSlackId,
+    backupResponsibleSlackId,
     delegationSlackId,
     carbonCopiesSlackIds,
     taskTitle,
     newDateBr,
   } = args;
 
-  // participantes: responsável + delegador + CCs (sem duplicar)
+  // participantes: responsável + backup + delegador + CCs (sem duplicar)
   const participants = uniq([
     responsibleSlackId,
+    backupResponsibleSlackId,
     delegationSlackId,
     ...(carbonCopiesSlackIds ?? []),
   ]);
@@ -95,6 +105,7 @@ export async function notifyTaskRescheduledGroup(args: NotifyTaskRescheduledGrou
   // ✅ Mensagem na thread (com mentions)
   const threadText = buildAlignThreadText({
     responsibleSlackId,
+    backupResponsibleSlackId,
     delegationSlackId,
     carbonCopiesSlackIds,
   });

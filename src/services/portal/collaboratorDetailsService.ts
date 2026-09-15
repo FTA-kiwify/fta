@@ -31,6 +31,11 @@ export type CollaboratorDetails = {
   isTeam?: boolean;
   slackUserId: string;
   name: string;
+
+  collaboratorStatus?: "active" | "backup" | "inactive";
+  backupActivatedAt?: Date | null;
+  deactivatedAt?: Date | null;
+
   totalTasks: number;
   todayTasks: number;
 
@@ -60,6 +65,21 @@ export async function getCollaboratorDetails(
   const responsibleName =
     await getSlackUserName(slackUserId);
 
+  const collaboratorState =
+    await prisma.collaboratorState.findUnique({
+      where: {
+        slackUserId,
+      },
+      select: {
+        status: true,
+        backupActivatedAt: true,
+        deactivatedAt: true,
+      },
+    });
+
+
+  const collaboratorStatus =
+    collaboratorState?.status ?? "active";
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);
@@ -312,56 +332,56 @@ export async function getCollaboratorDetails(
   ].filter(group => group.tasks.length > 0);
 
   const themeMap = new Map<
-  string,
-  CollaboratorTask[]
->();
+    string,
+    CollaboratorTask[]
+  >();
 
-for (const task of tasks) {
+  for (const task of tasks) {
 
-  const themeName =
-    task.process?.theme?.trim() ||
-    "Outros";
+    const themeName =
+      task.process?.theme?.trim() ||
+      "Outros";
 
-  if (!themeMap.has(themeName)) {
-    themeMap.set(
-      themeName,
-      []
-    );
+    if (!themeMap.has(themeName)) {
+      themeMap.set(
+        themeName,
+        []
+      );
+    }
+
+    themeMap.get(themeName)!.push({
+      id: task.id,
+      title: task.title,
+      term: task.term,
+      deadlineTime: task.deadlineTime,
+      urgency: task.urgency,
+      taskType: task.taskType,
+      responsibleName,
+    });
   }
 
-  themeMap.get(themeName)!.push({
-    id: task.id,
-    title: task.title,
-    term: task.term,
-    deadlineTime: task.deadlineTime,
-    urgency: task.urgency,
-    taskType: task.taskType,
-    responsibleName,
-  });
-}
+  const themes: CollaboratorTheme[] =
+    Array.from(themeMap.entries())
+      .map(([name, themeTasks]) => ({
+        name,
+        tasks: themeTasks,
+      }))
+      .sort((a, b) => {
 
-const themes: CollaboratorTheme[] =
-  Array.from(themeMap.entries())
-    .map(([name, themeTasks]) => ({
-      name,
-      tasks: themeTasks,
-    }))
-    .sort((a, b) => {
+        // "Outros" sempre por último.
+        if (a.name === "Outros") {
+          return 1;
+        }
 
-      // "Outros" sempre por último.
-      if (a.name === "Outros") {
-        return 1;
-      }
+        if (b.name === "Outros") {
+          return -1;
+        }
 
-      if (b.name === "Outros") {
-        return -1;
-      }
-
-      return a.name.localeCompare(
-        b.name,
-        "pt-BR"
-      );
-    });
+        return a.name.localeCompare(
+          b.name,
+          "pt-BR"
+        );
+      });
 
   return {
 
@@ -370,6 +390,12 @@ const themes: CollaboratorTheme[] =
     slackUserId,
 
     name: responsibleName,
+
+    collaboratorStatus,
+    backupActivatedAt:
+      collaboratorState?.backupActivatedAt ?? null,
+    deactivatedAt:
+      collaboratorState?.deactivatedAt ?? null,
 
     totalTasks: tasks.length,
 

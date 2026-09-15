@@ -74,6 +74,7 @@ export async function notifyTaskCompleted(args: {
       urgency: true,
       responsible: true,
       delegation: true,
+      backupResponsible: true,
       slackOpenChannelId: true,
       slackOpenMessageTs: true,
       carbonCopies: { select: { slackUserId: true } },
@@ -84,16 +85,33 @@ export async function notifyTaskCompleted(args: {
 
   const responsibleId = task.responsible;
   const delegationId = task.delegation ?? task.responsible;
+  const backupResponsibleId = task.backupResponsible ?? null;
   const ccIds = uniq(task.carbonCopies.map((c) => c.slackUserId));
-  const participants = uniq([responsibleId, delegationId, ...ccIds]);
+
+  const participants = uniq([
+    responsibleId,
+    delegationId,
+    backupResponsibleId ?? "",
+    ...ccIds,
+  ]);
 
   const isSelfOnly = participants.length === 1;
 
   const rootDmText = `✅ A tarefa *${task.title}* foi concluída.`;
 
-  const ccMentions = ccIds.map((id) => `<@${id}>`).join(", ");
-  const ccSuffix = ccIds.length ? `, com cópia para ${ccMentions}` : "";
-  const feedbackText = `<@${responsibleId}>, aqui você pode dar ou receber feedback de <@${delegationId}>${ccSuffix}. Se precisar, reabra como uma nova tarefa.`;
+  const otherParticipants = uniq([
+    delegationId,
+    backupResponsibleId ?? "",
+    ...ccIds,
+  ]).filter((id) => id !== responsibleId);
+
+  const otherParticipantsMentions = otherParticipants
+    .map((id) => `<@${id}>`)
+    .join(", ");
+
+  const feedbackText = otherParticipantsMentions
+    ? `<@${responsibleId}>, aqui você pode dar ou receber feedback de ${otherParticipantsMentions}. Se precisar, reabra como uma nova tarefa.`
+    : `<@${responsibleId}>, se precisar, reabra como uma nova tarefa.`;
 
   // =========================================================
   // (1) Atualiza a mensagem raiz (ABERTURA) removendo botões e colocando "✅ Concluída"

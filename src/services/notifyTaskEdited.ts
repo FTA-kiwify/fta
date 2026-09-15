@@ -25,6 +25,9 @@ type NotifyTaskEditedArgs = {
   oldResponsible?: string | null;
   newResponsible?: string | null;
 
+  oldBackupResponsible?: string | null;
+  newBackupResponsible?: string | null;
+
   oldRecurrence?: string | null;
   newRecurrence?: string | null;
 
@@ -191,6 +194,9 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
     newDeadlineTime,
     oldResponsible,
     newResponsible,
+    oldBackupResponsible,
+    newBackupResponsible,
+
     oldRecurrence,
     newRecurrence,
 
@@ -214,8 +220,18 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
     newCarbonCopies,
   } = args;
 
-  const afterResponsible = (newResponsible ?? responsible ?? "").trim();
-  const participants = uniq([editedBy, afterResponsible, ...(carbonCopies ?? [])]);
+  const afterResponsible =
+    (newResponsible ?? responsible ?? "").trim();
+
+  const afterBackupResponsible =
+    (newBackupResponsible ?? "").trim();
+
+  const participants = uniq([
+    editedBy,
+    afterResponsible,
+    afterBackupResponsible,
+    ...(carbonCopies ?? []),
+  ]);
 
   const title = (newTitle ?? oldTitle ?? "tarefa").trim() || "tarefa";
 
@@ -240,6 +256,26 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
     const to = newResponsible ? mention(newResponsible) : "_vazio_";
     changes.push(`• *Responsável:* ${from} → ${to}`);
   }
+
+  if (
+    (oldBackupResponsible || newBackupResponsible) &&
+    oldBackupResponsible !== newBackupResponsible
+  ) {
+    const from =
+      oldBackupResponsible
+        ? mention(oldBackupResponsible)
+        : "_nenhum_";
+
+    const to =
+      newBackupResponsible
+        ? mention(newBackupResponsible)
+        : "_nenhum_";
+
+    changes.push(
+      `• *Backup:* ${from} → ${to}`
+    );
+  }
+
 
   if ((oldRecurrence || newRecurrence) && oldRecurrence !== newRecurrence) {
     changes.push(`• *Recorrência:* ${oldRecurrence ?? "_nenhuma_"} → ${newRecurrence ?? "_nenhuma_"}`);
@@ -306,6 +342,9 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
 
   const targetsMentions = [
     afterResponsible ? mention(afterResponsible) : null,
+    afterBackupResponsible
+      ? mention(afterBackupResponsible)
+      : null,
     ccMentions || null,
   ]
     .filter(Boolean)

@@ -30,6 +30,7 @@ export async function openQuestionThread(args: {
       title: true,
       delegation: true,
       responsible: true,
+      backupResponsible: true,
       carbonCopies: { select: { slackUserId: true } },
     },
   });
@@ -38,7 +39,13 @@ export async function openQuestionThread(args: {
 
   const cc = task.carbonCopies.map((c) => c.slackUserId);
 
-  const participants = uniq([requestedBy, task.delegation, task.responsible, ...cc]);
+  const participants = uniq([
+    requestedBy,
+    task.delegation,
+    task.responsible,
+    task.backupResponsible ?? "",
+    ...cc,
+  ]);
   const mentions = participants.map((id) => `<@${id}>`).join(", ");
 
   const channelId = await openGroupDm(slack, participants);
@@ -63,7 +70,7 @@ export async function openQuestionThread(args: {
     await slack.chat.postMessage({
       channel: channelId,
       thread_ts: msg.ts,
-      text:`:speech_balloon: *:thread: Converse entre: *${mentions}`,
+      text: `:speech_balloon: *:thread: Converse entre: *${mentions}`,
     });
   }
 

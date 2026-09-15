@@ -1733,6 +1733,329 @@ window.portalUpdateTask = async function (taskId) {
     }
   }
 };
+
+// ==========================================
+// COLABORADOR — BACKUP
+// ==========================================
+
+window.portalStartCollaboratorBackup = async function(slackUserId) {
+  const confirmed = confirm(
+    "Tem certeza que deseja iniciar o backup deste colaborador?\n\n" +
+    "Todas as tarefas elegíveis que possuem um responsável backup cadastrado serão redistribuídas para seus respectivos backups."
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(
+      "/portal/collaborators/" +
+        encodeURIComponent(slackUserId) +
+        "/backup/start",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+        "Não foi possível iniciar o backup."
+      );
+    }
+
+    alert(
+      "Backup iniciado.\n\n" +
+      "Tarefas elegíveis: " + (result.eligible ?? 0) + "\n" +
+      "Redistribuídas: " + (result.transferred ?? 0) + "\n" +
+      "Falhas: " + (result.failed ?? 0)
+    );
+
+    window.location.reload();
+
+  } catch (error) {
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível iniciar o backup."
+    );
+  }
+};
+
+
+window.portalStopCollaboratorBackup = async function(slackUserId) {
+  const confirmed = confirm(
+    "Tem certeza que deseja encerrar o backup deste colaborador?\n\n" +
+    "As tarefas redistribuídas temporariamente voltarão aos seus responsáveis originais."
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(
+      "/portal/collaborators/" +
+        encodeURIComponent(slackUserId) +
+        "/backup/stop",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+        "Não foi possível encerrar o backup."
+      );
+    }
+
+    if ((result.failed ?? 0) > 0) {
+      alert(
+        "O retorno do backup não foi concluído completamente.\n\n" +
+        "Encontradas: " + (result.found ?? 0) + "\n" +
+        "Restauradas: " + (result.restored ?? 0) + "\n" +
+        "Falhas: " + (result.failed ?? 0) + "\n\n" +
+        "O colaborador continuará com status de backup até que todas as tarefas sejam restauradas."
+      );
+    } else {
+      alert(
+        "Backup encerrado.\n\n" +
+        "Tarefas restauradas: " + (result.restored ?? 0)
+      );
+    }
+
+    window.location.reload();
+
+  } catch (error) {
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível encerrar o backup."
+    );
+  }
+};
+
+window.portalDeactivateCollaborator = async function(slackUserId) {
+  try {
+
+    // ------------------------------------------
+    // 1. Busca impacto do desligamento
+    // ------------------------------------------
+
+    const previewResponse = await fetch(
+      "/portal/collaborators/" +
+        encodeURIComponent(slackUserId) +
+        "/deactivation-preview"
+    );
+
+    const preview =
+      await previewResponse.json();
+
+    if (!previewResponse.ok) {
+      throw new Error(
+        preview?.error ||
+        "Não foi possível preparar o desligamento."
+      );
+    }
+
+    let replacementSlackId = null;
+    let replacementName = null;
+
+    // ------------------------------------------
+    // 2. Se houver tarefas sem destino automático,
+    //    precisamos escolher substituto
+    // ------------------------------------------
+
+    if ((preview.toReplacement ?? 0) > 0) {
+
+      const optionsResponse = await fetch(
+        "/portal/collaborators/" +
+          encodeURIComponent(slackUserId) +
+          "/replacement-options"
+      );
+
+      const optionsResult =
+        await optionsResponse.json();
+
+      if (!optionsResponse.ok) {
+        throw new Error(
+          optionsResult?.error ||
+          "Não foi possível carregar os substitutos."
+        );
+      }
+
+      const options =
+        optionsResult.options ?? [];
+
+      if (!options.length) {
+        alert(
+          "Não há nenhum colaborador disponível para receber as tarefas que precisam de substituto."
+        );
+        return;
+      }
+
+      const list =
+        options
+          .map(
+            (item, index) =>
+              (index + 1) +
+              " - " +
+              item.name
+          )
+          .join("\\n");
+
+      const selected =
+        prompt(
+          "Este desligamento possui " +
+          (preview.toReplacement ?? 0) +
+          " tarefa(s) que precisam de um substituto.\\n\\n" +
+          "Escolha quem receberá essas tarefas:\\n\\n" +
+          list +
+          "\\n\\nDigite o número do colaborador:"
+        );
+
+      if (selected === null) {
+        return;
+      }
+
+      const selectedIndex =
+        Number(selected) - 1;
+
+      if (
+        !Number.isInteger(selectedIndex) ||
+        selectedIndex < 0 ||
+        selectedIndex >= options.length
+      ) {
+        alert(
+          "Selecione um substituto válido."
+        );
+        return;
+      }
+
+      replacementSlackId =
+        options[selectedIndex].id;
+
+      replacementName =
+        options[selectedIndex].name;
+    }
+
+    // ------------------------------------------
+    // 3. Confirmação FINAL
+    // ------------------------------------------
+
+    let confirmationText =
+      "Tem certeza que deseja desligar este colaborador?\\n\\n" +
+      "Total de tarefas pendentes: " +
+      (preview.total ?? 0) +
+      "\\n" +
+      "Tarefas que irão para os backups cadastrados: " +
+      (preview.toBackup ?? 0);
+
+    if ((preview.toReplacement ?? 0) > 0) {
+      confirmationText +=
+        "\\nTarefas que irão para " +
+        replacementName +
+        ": " +
+        (preview.toReplacement ?? 0);
+    }
+
+    if ((preview.privateTasks ?? 0) > 0) {
+      confirmationText +=
+        "\\n\\nDessas, " +
+        (preview.privateTasks ?? 0) +
+        " tarefa(s) privada(s) serão transferidas ao substituto.";
+    }
+
+    confirmationText +=
+      "\\n\\nEsta ação representa o desligamento do colaborador e a redistribuição definitiva das tarefas.";
+
+    const confirmed =
+      confirm(confirmationText);
+
+    if (!confirmed) {
+      return;
+    }
+
+    // ------------------------------------------
+    // 4. Executa desligamento
+    // ------------------------------------------
+
+    const response = await fetch(
+      "/portal/collaborators/" +
+        encodeURIComponent(slackUserId) +
+        "/deactivate",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify({
+          replacementSlackId,
+        }),
+      }
+    );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+        "Não foi possível desligar o colaborador."
+      );
+    }
+
+    // ------------------------------------------
+    // 5. Segurança para resultado parcial
+    // ------------------------------------------
+
+    if (!result.deactivated) {
+      alert(
+        "O desligamento não foi concluído.\\n\\n" +
+        "Tarefas encontradas: " +
+        (result.total ?? 0) +
+        "\\nTransferidas: " +
+        (result.transferred ?? 0) +
+        "\\nFalhas: " +
+        (result.failed ?? 0) +
+        "\\nAinda atribuídas ao colaborador: " +
+        (result.remaining ?? 0) +
+        "\\n\\nO colaborador NÃO foi marcado como desligado."
+      );
+
+      window.location.reload();
+      return;
+    }
+
+    alert(
+      "Colaborador desligado com sucesso.\\n\\n" +
+      "Tarefas redistribuídas: " +
+      (result.transferred ?? 0)
+    );
+
+    window.location.reload();
+
+  } catch (error) {
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível desligar o colaborador."
+    );
+  }
+};
+
 </script>
   `;
 }

@@ -36,13 +36,26 @@ export async function notifyTaskCanceledGroup(args: {
   slack: WebClient;
   canceledBySlackId: string;
   responsibleSlackId: string;
+  backupResponsibleSlackId?: string | null;
   carbonCopiesSlackIds: string[];
   taskTitle: string;
 }) {
-  const { slack, canceledBySlackId, responsibleSlackId, carbonCopiesSlackIds, taskTitle } = args;
+  const {
+    slack,
+    canceledBySlackId,
+    responsibleSlackId,
+    backupResponsibleSlackId,
+    carbonCopiesSlackIds,
+    taskTitle,
+  } = args;
 
-  // participantes: quem cancelou + responsável + CCs
-  const participants = [canceledBySlackId, responsibleSlackId, ...(carbonCopiesSlackIds ?? [])];
+  // participantes: quem cancelou + responsável + backup + CCs
+  const participants = [
+    canceledBySlackId,
+    responsibleSlackId,
+    backupResponsibleSlackId ?? "",
+    ...(carbonCopiesSlackIds ?? []),
+  ];
 
   const channelId = await openGroupDm(slack, participants);
 
@@ -50,7 +63,11 @@ export async function notifyTaskCanceledGroup(args: {
   const rootText = `❌ Tarefa cancelada!`;
 
   // ✅ demais envolvidos (sem duplicar e sem repetir o canceledBy)
-  const others = uniqMentions([responsibleSlackId, ...(carbonCopiesSlackIds ?? [])]).filter(
+  const others = uniqMentions([
+    responsibleSlackId,
+    backupResponsibleSlackId ?? "",
+    ...(carbonCopiesSlackIds ?? []),
+  ]).filter(
     (id) => id !== canceledBySlackId
   );
 
