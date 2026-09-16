@@ -2130,11 +2130,13 @@ window.portalConfirmCollaboratorDeactivation =
   async function(slackUserId, taskBackups) {
 
     const confirmed = confirm(
-      "Tem certeza que deseja desligar este colaborador?\\n\\n" +
-      "Todas as atividades serão redistribuídas para os backups definidos. " +
-      "Se o colaborador também for o delegador da atividade, o backup passará a ser o novo delegador.\\n\\n" +
-      "Esta redistribuição é definitiva."
-    );
+  "Tem certeza que deseja desligar este colaborador?\\n\\n" +
+  "As atividades públicas serão redistribuídas para os backups definidos. " +
+  "As atividades privadas serão canceladas automaticamente.\\n\\n" +
+  "Se o colaborador também for o delegador de uma atividade pública, " +
+  "o backup passará a ser o novo delegador.\\n\\n" +
+  "Esta ação é definitiva."
+);
 
     if (!confirmed) {
       return;
