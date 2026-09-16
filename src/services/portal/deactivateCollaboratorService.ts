@@ -66,12 +66,12 @@ export async function getCollaboratorDeactivationPreview(
                     Boolean(
                         backupResponsible &&
                         backupResponsible !==
-                            slackUserId
+                        slackUserId
                     );
 
                 const backupResponsibleName =
                     hasValidBackup &&
-                    backupResponsible
+                        backupResponsible
                         ? await getSlackUserName(
                             backupResponsible
                         ).catch(
@@ -267,7 +267,7 @@ export async function deactivateCollaborator(args: {
             (
                 existingBackup &&
                     existingBackup !==
-                        slackUserId
+                    slackUserId
                     ? existingBackup
                     : null
             );
@@ -435,7 +435,7 @@ export async function deactivateCollaborator(args: {
             (
                 existingBackup &&
                     existingBackup !==
-                        slackUserId
+                    slackUserId
                     ? existingBackup
                     : null
             );
@@ -495,6 +495,30 @@ export async function deactivateCollaborator(args: {
             });
 
             /*
+ * No desligamento definitivo, o backup
+ * assume a responsabilidade da atividade.
+ *
+ * Portanto ele deixa de ser Backup:
+ * a vaga de backup fica vazia até que
+ * outro colaborador seja definido.
+ */
+
+            await prisma.task.update({
+                where: {
+                    id:
+                        task.id,
+                },
+
+                data: {
+                    backupResponsible:
+                        null,
+
+                    backupResponsibleEmail:
+                        null,
+                },
+            });
+
+            /*
              * Se o colaborador desligado também
              * era o delegador, o backup passa
              * a ser o novo delegador.
@@ -537,7 +561,7 @@ export async function deactivateCollaborator(args: {
                         destination,
 
                     backupResponsibleSlackId:
-                        destination,
+                        null,
 
                     carbonCopiesSlackIds:
                         task.carbonCopies.map(

@@ -920,6 +920,31 @@ window.portalOpenBackupResponsiblePicker = function() {
   window.portalFilterBackupResponsible();
 };
 
+window.portalHandleBackupResponsibleInput = function() {
+
+  const input =
+    document.getElementById(
+      "portal-task-backup-responsible-search"
+    );
+
+  const hidden =
+    document.getElementById(
+      "portal-task-backup-responsible"
+    );
+
+  if (!input || !hidden) return;
+
+  /*
+   * Se o usuário alterar manualmente o texto,
+   * a seleção anterior deixa de ser válida.
+   *
+   * Isso permite, inclusive, apagar o Backup
+   * e salvar a tarefa sem Backup.
+   */
+  hidden.value = "";
+
+  window.portalFilterBackupResponsible();
+};
 
 window.portalFilterBackupResponsible = function() {
 

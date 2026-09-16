@@ -439,7 +439,7 @@ export function createTaskModal(
               placeholder="Pesquisar usuário..."
               autocomplete="off"
               onfocus="portalOpenBackupResponsiblePicker()"
-              oninput="portalFilterBackupResponsible()"
+              oninput="portalHandleBackupResponsibleInput()"
               value="${escapeHtml(backupResponsibleInitial?.name)}"
             />
 
