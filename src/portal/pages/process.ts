@@ -1,8 +1,63 @@
 import { upcomingTask } from "../components/upcomingTask";
+import { accordion } from "../components/accordion";
+import { getBrazilToday } from "../../utils/date";
 
 export function processPage(
   process: any
 ) {
+
+  const today = getBrazilToday();
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(
+    tomorrow.getDate() + 1
+  );
+
+  const dayAfter = new Date(tomorrow);
+  dayAfter.setDate(
+    dayAfter.getDate() + 1
+  );
+
+  const todayTasks =
+    process.tasks.filter((task: any) =>
+      task.term &&
+      new Date(task.term) >= today &&
+      new Date(task.term) < tomorrow
+    );
+
+  const tomorrowTasks =
+    process.tasks.filter((task: any) =>
+      task.term &&
+      new Date(task.term) >= tomorrow &&
+      new Date(task.term) < dayAfter
+    );
+
+  const futureTasks =
+    process.tasks.filter((task: any) =>
+      task.term &&
+      new Date(task.term) >= dayAfter
+    );
+
+
+  const noTermTasks =
+    process.tasks.filter((task: any) =>
+      !task.term
+    );
+
+  const renderTasks = (tasks: any[]) =>
+    tasks
+      .map(task =>
+        upcomingTask({
+          id: task.id,
+          title: task.title,
+          responsible:
+            task.responsibleName,
+          urgency: task.urgency,
+          deadlineTime:
+            task.deadlineTime,
+        })
+      )
+      .join("");
 
   return `
 
@@ -166,36 +221,89 @@ export function processPage(
 
         </div>
 
-        ${process.tasks.length === 0
-
+                ${process.tasks.length === 0
       ? `
-                <p
+              <p
+                style="
+                  color:#6B7280;
+                  margin:0;
+                "
+              >
+                Nenhuma tarefa pendente.
+              </p>
+            `
+      : `
+            
+      }
+
+              <div
+                style="
+                  margin-top:0;
+                  margin-bottom:20px;
+                "
+              >
+                <h3
                   style="
-                    color:#6B7280;
-                    margin:0;
+                    margin:0 0 14px;
+                    font-size:18px;
                   "
                 >
-                  Nenhuma tarefa pendente.
-                </p>
-              `
+                  Hoje
+                </h3>
 
-      : process.tasks.map((task: any) =>
+                ${todayTasks.length
+        ? renderTasks(todayTasks)
+        : `
+                        <p
+                          style="
+                            color:#6B7280;
+                            margin:0;
+                          "
+                        >
+                          Nenhuma tarefa para hoje.
+                        </p>
+                      `
+      }
+              </div>
 
-        upcomingTask({
+              ${accordion({
+        id: "process-tomorrow-tasks",
+        title: "Amanhã",
+        count: tomorrowTasks.length,
+        body: tomorrowTasks.length
+          ? renderTasks(tomorrowTasks)
+          : `
+                      <p style="color:#6B7280;">
+                        Nenhuma tarefa para amanhã.
+                      </p>
+                    `,
+      })}
 
-          id: task.id,
+              ${accordion({
+        id: "process-future-tasks",
+        title: "Futuras",
+        count: futureTasks.length,
+        body: futureTasks.length
+          ? renderTasks(futureTasks)
+          : `
+                      <p style="color:#6B7280;">
+                        Nenhuma tarefa futura.
+                      </p>
+                    `,
+      })}
 
-          title: task.title,
-
-          responsible: task.responsibleName,
-
-          urgency: task.urgency,
-
-          deadlineTime: task.deadlineTime,
-
+              ${noTermTasks.length
+        ? accordion({
+          id: "process-no-term-tasks",
+          title: "Sem prazo",
+          count: noTermTasks.length,
+          body: renderTasks(
+            noTermTasks
+          ),
         })
-
-      ).join("")
+        : ""
+      }
+            `
     }
 
       </div>
