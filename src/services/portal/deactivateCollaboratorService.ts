@@ -5,6 +5,21 @@ import { prisma } from "../../lib/prisma";
 import { transferTaskResponsibility } from "../transferTaskResponsibility";
 import { syncTaskParticipantEmails } from "../syncTaskParticipantEmails";
 import { getSlackUserName } from "../slackUserLookup";
+import { notifyTaskCanceledGroup } from "../notifyTaskCanceledGroup";
+import { markTaskOpenMessageAsCanceled } from "../markTaskOpenMessageAsCanceled";
+import { deleteCalendarEventForTask } from "../googleCalendar";
+
+/*
+ * =========================================================
+ * PREVIEW DO DESLIGAMENTO
+ *
+ * IMPORTANTE:
+ * tarefas privadas NÃO aparecem no preview.
+ *
+ * Elas serão canceladas automaticamente no desligamento
+ * e nunca serão transferidas para backup.
+ * =========================================================
+ */
 
 export async function getCollaboratorDeactivationPreview(
     slackUserId: string
@@ -13,27 +28,20 @@ export async function getCollaboratorDeactivationPreview(
         where: {
             responsible: slackUserId,
             status: "pending",
+            calendarPrivate: false,
         },
 
         select: {
             id: true,
             title: true,
-            calendarPrivate: true,
             backupResponsible: true,
         },
     });
 
     let toBackup = 0;
     let toReplacement = 0;
-    let privateTasks = 0;
 
     for (const task of tasks) {
-        if (task.calendarPrivate) {
-            privateTasks++;
-            toReplacement++;
-            continue;
-        }
-
         const backup =
             task.backupResponsible?.trim();
 
@@ -47,63 +55,68 @@ export async function getCollaboratorDeactivationPreview(
         }
     }
 
-
     const taskDetails =
-    await Promise.all(
-        tasks.map(async task => {
-            const backupResponsible =
-                task.backupResponsible?.trim() || null;
+        await Promise.all(
+            tasks.map(async task => {
+                const backupResponsible =
+                    task.backupResponsible?.trim() ||
+                    null;
 
-            const hasValidBackup =
-                Boolean(
-                    backupResponsible &&
-                    backupResponsible !== slackUserId
-                );
+                const hasValidBackup =
+                    Boolean(
+                        backupResponsible &&
+                        backupResponsible !==
+                            slackUserId
+                    );
 
-            const backupResponsibleName =
-                hasValidBackup &&
-                backupResponsible
-                    ? await getSlackUserName(
-                        backupResponsible
-                    ).catch(
-                        () =>
+                const backupResponsibleName =
+                    hasValidBackup &&
+                    backupResponsible
+                        ? await getSlackUserName(
                             backupResponsible
-                    )
-                    : null;
+                        ).catch(
+                            () =>
+                                backupResponsible
+                        )
+                        : null;
 
-            return {
-                id: task.id,
-                title: task.title,
-                calendarPrivate:
-                    task.calendarPrivate,
+                return {
+                    id: task.id,
+                    title: task.title,
 
-                backupResponsible:
-                    hasValidBackup
-                        ? backupResponsible
-                        : null,
+                    backupResponsible:
+                        hasValidBackup
+                            ? backupResponsible
+                            : null,
 
-                backupResponsibleName,
+                    backupResponsibleName,
 
-                needsBackup:
-                    !hasValidBackup,
-            };
-        })
-    );
+                    needsBackup:
+                        !hasValidBackup,
+                };
+            })
+        );
 
     return {
         total: tasks.length,
         toBackup,
         toReplacement,
-        privateTasks,
         tasks: taskDetails,
     };
 }
 
 
+/*
+ * =========================================================
+ * DESLIGAMENTO DEFINITIVO
+ * =========================================================
+ */
+
 export async function deactivateCollaborator(args: {
     slack: WebClient;
     slackUserId: string;
     actorSlackId: string;
+
     taskBackups: Array<{
         taskId: string;
         backupSlackId: string;
@@ -114,6 +127,11 @@ export async function deactivateCollaborator(args: {
         slackUserId,
         actorSlackId,
     } = args;
+
+    /*
+     * Backups escolhidos no modal para tarefas
+     * que ainda não possuíam backup cadastrado.
+     */
 
     const taskBackupMap =
         new Map(
@@ -128,6 +146,12 @@ export async function deactivateCollaborator(args: {
                     item.backupSlackId.trim(),
                 ])
         );
+
+    /*
+     * ==========================================
+     * ESTADO ATUAL DO COLABORADOR
+     * ==========================================
+     */
 
     const currentState =
         await prisma.collaboratorState.findUnique({
@@ -147,42 +171,103 @@ export async function deactivateCollaborator(args: {
 
     /*
      * ==========================================
-     * TAREFAS ATIVAS
+     * TAREFAS PRIVADAS
+     *
+     * Não são transferidas.
+     * Não exigem backup.
+     * São canceladas automaticamente.
      * ==========================================
      */
 
-    const tasks = await prisma.task.findMany({
-        where: {
-            responsible: slackUserId,
-            status: "pending",
-        },
+    const privateTasks =
+        await prisma.task.findMany({
+            where: {
+                responsible:
+                    slackUserId,
 
-        select: {
-            id: true,
-            delegation: true,
-            calendarPrivate: true,
-            backupResponsible: true,
-            responsible: true,
-            carbonCopies: {
-                select: {
-                    slackUserId: true,
+                status:
+                    "pending",
+
+                calendarPrivate:
+                    true,
+            },
+
+            select: {
+                id: true,
+                title: true,
+                responsible: true,
+                backupResponsible: true,
+
+                carbonCopies: {
+                    select: {
+                        slackUserId: true,
+                    },
                 },
             },
-        },
-    });
+        });
+
+    /*
+     * ==========================================
+     * TAREFAS PÚBLICAS
+     *
+     * Somente estas serão redistribuídas.
+     * ==========================================
+     */
+
+    const tasks =
+        await prisma.task.findMany({
+            where: {
+                responsible:
+                    slackUserId,
+
+                status:
+                    "pending",
+
+                calendarPrivate:
+                    false,
+            },
+
+            select: {
+                id: true,
+                delegation: true,
+                backupResponsible: true,
+                responsible: true,
+
+                carbonCopies: {
+                    select: {
+                        slackUserId: true,
+                    },
+                },
+            },
+        });
+
+    /*
+     * ==========================================
+     * VALIDA DESTINO DAS TAREFAS PÚBLICAS
+     *
+     * Fazemos esta validação ANTES de cancelar
+     * privadas ou transferir qualquer tarefa.
+     *
+     * Assim, se faltar backup em alguma pública,
+     * nada é alterado.
+     * ==========================================
+     */
 
     for (const task of tasks) {
         const existingBackup =
             task.backupResponsible?.trim();
 
         const selectedBackup =
-            taskBackupMap.get(task.id);
+            taskBackupMap.get(
+                task.id
+            );
 
         const destination =
             selectedBackup ||
             (
                 existingBackup &&
-                    existingBackup !== slackUserId
+                    existingBackup !==
+                        slackUserId
                     ? existingBackup
                     : null
             );
@@ -193,54 +278,196 @@ export async function deactivateCollaborator(args: {
             );
         }
 
-        if (destination === slackUserId) {
+        if (
+            destination ===
+            slackUserId
+        ) {
             throw new Error(
                 "O backup de uma atividade não pode ser o próprio colaborador desligado."
             );
         }
     }
 
-    const transferredTaskIds: string[] = [];
-    const failedTaskIds: string[] = [];
+    /*
+     * ==========================================
+     * CANCELA TAREFAS PRIVADAS
+     * ==========================================
+     */
+
+    if (privateTasks.length) {
+
+        /*
+         * Notificação de cancelamento.
+         */
+
+        await Promise.allSettled(
+            privateTasks.map(task =>
+                notifyTaskCanceledGroup({
+                    slack,
+
+                    canceledBySlackId:
+                        actorSlackId,
+
+                    responsibleSlackId:
+                        task.responsible,
+
+                    backupResponsibleSlackId:
+                        task.backupResponsible ??
+                        null,
+
+                    carbonCopiesSlackIds:
+                        task.carbonCopies.map(
+                            copy =>
+                                copy.slackUserId
+                        ),
+
+                    taskTitle:
+                        task.title,
+                })
+            )
+        );
+
+        /*
+         * Invalida a mensagem aberta no Slack.
+         */
+
+        await Promise.allSettled(
+            privateTasks.map(task =>
+                markTaskOpenMessageAsCanceled({
+                    slack,
+
+                    taskId:
+                        task.id,
+
+                    taskTitle:
+                        task.title,
+
+                    canceledBySlackId:
+                        actorSlackId,
+                })
+            )
+        );
+
+        /*
+         * Remove evento do Google Calendar.
+         */
+
+        await Promise.allSettled(
+            privateTasks.map(task =>
+                deleteCalendarEventForTask(
+                    task.id
+                )
+            )
+        );
+
+        /*
+         * Auditoria.
+         */
+
+        await Promise.all(
+            privateTasks.map(task =>
+                prisma.taskAuditLog.create({
+                    data: {
+                        taskId:
+                            task.id,
+
+                        action:
+                            "TASK_CANCELLED",
+
+                        actorSlackId:
+                            actorSlackId,
+                    },
+                })
+            )
+        );
+
+        /*
+         * Cancela efetivamente.
+         */
+
+        await prisma.task.updateMany({
+            where: {
+                id: {
+                    in:
+                        privateTasks.map(
+                            task =>
+                                task.id
+                        ),
+                },
+
+                responsible:
+                    slackUserId,
+
+                status:
+                    "pending",
+            },
+
+            data: {
+                status:
+                    "cancelled",
+            },
+        });
+    }
 
     /*
      * ==========================================
-     * REDISTRIBUIÇÃO DEFINITIVA
+     * REDISTRIBUIÇÃO DAS TAREFAS PÚBLICAS
      * ==========================================
      */
+
+    const transferredTaskIds: string[] =
+        [];
+
+    const failedTaskIds: string[] =
+        [];
 
     for (const task of tasks) {
         const existingBackup =
             task.backupResponsible?.trim();
 
         const selectedBackup =
-            taskBackupMap.get(task.id);
+            taskBackupMap.get(
+                task.id
+            );
 
         const destination =
             selectedBackup ||
             (
                 existingBackup &&
-                    existingBackup !== slackUserId
+                    existingBackup !==
+                        slackUserId
                     ? existingBackup
                     : null
             );
 
+        /*
+         * Em tese nunca chegamos aqui sem destino,
+         * pois já validamos todas anteriormente.
+         */
+
         if (!destination) {
-            failedTaskIds.push(task.id);
+            failedTaskIds.push(
+                task.id
+            );
+
             continue;
         }
 
         try {
+
             /*
              * Se o backup foi escolhido durante
              * o desligamento, salva esse backup
-             * definitivamente na própria tarefa.
+             * definitivamente na tarefa.
              */
+
             if (selectedBackup) {
                 await prisma.task.update({
                     where: {
-                        id: task.id,
+                        id:
+                            task.id,
                     },
+
                     data: {
                         backupResponsible:
                             selectedBackup,
@@ -249,34 +476,43 @@ export async function deactivateCollaborator(args: {
             }
 
             /*
-             * Transfere a responsabilidade
-             * para o backup da atividade.
+             * Transfere responsabilidade.
              */
+
             await transferTaskResponsibility({
                 slack,
-                taskId: task.id,
+
+                taskId:
+                    task.id,
+
                 newResponsibleSlackId:
                     destination,
+
                 actorSlackId,
-                reason: "deactivation",
+
+                reason:
+                    "deactivation",
             });
 
             /*
-             * Se o próprio colaborador desligado
-             * também era o delegador, o backup
-             * passa a ser o novo delegador.
+             * Se o colaborador desligado também
+             * era o delegador, o backup passa
+             * a ser o novo delegador.
              *
-             * Se a tarefa foi delegada por outra
-             * pessoa, preservamos o delegador.
+             * Se outra pessoa delegou a tarefa,
+             * preservamos essa pessoa.
              */
+
             if (
                 task.delegation ===
                 slackUserId
             ) {
                 await prisma.task.update({
                     where: {
-                        id: task.id,
+                        id:
+                            task.id,
                     },
+
                     data: {
                         delegation:
                             destination,
@@ -284,19 +520,25 @@ export async function deactivateCollaborator(args: {
                 });
 
                 /*
-                 * Atualiza também os e-mails dos
-                 * participantes após a mudança
-                 * de delegador.
+                 * Atualiza os e-mails após
+                 * a troca do delegador.
                  */
+
                 await syncTaskParticipantEmails({
                     slack,
-                    taskId: task.id,
+
+                    taskId:
+                        task.id,
+
                     delegationSlackId:
                         destination,
+
                     responsibleSlackId:
                         destination,
+
                     backupResponsibleSlackId:
                         destination,
+
                     carbonCopiesSlackIds:
                         task.carbonCopies.map(
                             copy =>
@@ -306,21 +548,27 @@ export async function deactivateCollaborator(args: {
             }
 
             /*
-             * Caso esta pessoa estivesse em backup
-             * temporário antes da desativação,
-             * qualquer estado temporário desta task
-             * deixa de fazer sentido.
+             * O desligamento é definitivo.
+             * Portanto qualquer estado de backup
+             * temporário deixa de fazer sentido.
              */
+
             await prisma.task.update({
                 where: {
-                    id: task.id,
+                    id:
+                        task.id,
                 },
+
                 data: {
-                    backupActive: false,
+                    backupActive:
+                        false,
+
                     backupOriginalResponsible:
                         null,
+
                     backupOriginalResponsibleEmail:
                         null,
+
                     backupActivatedAt:
                         null,
                 },
@@ -334,8 +582,11 @@ export async function deactivateCollaborator(args: {
             console.error(
                 "[COLLABORATOR_DEACTIVATE] task failed",
                 {
-                    taskId: task.id,
+                    taskId:
+                        task.id,
+
                     slackUserId,
+
                     error,
                 }
             );
@@ -350,16 +601,23 @@ export async function deactivateCollaborator(args: {
      * ==========================================
      * SEGURANÇA FINAL
      *
-     * Não desativa enquanto existir qualquer
-     * task pending atribuída ao colaborador.
+     * Depois do processo:
+     *
+     * - privadas devem estar canceladas;
+     * - públicas devem ter sido transferidas;
+     * - nenhuma pending pode continuar atribuída
+     *   ao colaborador desligado.
      * ==========================================
      */
 
     const remainingTasks =
         await prisma.task.count({
             where: {
-                responsible: slackUserId,
-                status: "pending",
+                responsible:
+                    slackUserId,
+
+                status:
+                    "pending",
             },
         });
 
@@ -368,12 +626,17 @@ export async function deactivateCollaborator(args: {
         remainingTasks > 0
     ) {
         return {
-            deactivated: false as const,
+            deactivated:
+                false as const,
 
-            total: tasks.length,
+            total:
+                tasks.length,
 
             transferred:
                 transferredTaskIds.length,
+
+            cancelledPrivate:
+                privateTasks.length,
 
             failed:
                 failedTaskIds.length,
@@ -399,31 +662,51 @@ export async function deactivateCollaborator(args: {
 
         create: {
             slackUserId,
-            status: "inactive",
-            backupActivatedAt: null,
-            deactivatedAt: new Date(),
+
+            status:
+                "inactive",
+
+            backupActivatedAt:
+                null,
+
+            deactivatedAt:
+                new Date(),
         },
 
         update: {
-            status: "inactive",
-            backupActivatedAt: null,
-            deactivatedAt: new Date(),
+            status:
+                "inactive",
+
+            backupActivatedAt:
+                null,
+
+            deactivatedAt:
+                new Date(),
         },
     });
 
     return {
-        deactivated: true as const,
+        deactivated:
+            true as const,
 
-        total: tasks.length,
+        total:
+            tasks.length,
 
         transferred:
             transferredTaskIds.length,
 
-        failed: 0,
+        cancelledPrivate:
+            privateTasks.length,
 
-        remaining: 0,
+        failed:
+            0,
+
+        remaining:
+            0,
 
         transferredTaskIds,
-        failedTaskIds: [],
+
+        failedTaskIds:
+            [],
     };
 }
