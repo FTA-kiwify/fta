@@ -22,6 +22,7 @@ export function taskDetailsModalView(args: {
   taskId: string; // ✅ NOVO
   title: string;
   responsibleSlackId: string;
+  backupResponsibleSlackId: string | null;
   delegationSlackId: string | null;
   dueDateIso: string | null; // YYYY-MM-DD
   originalDueDateIso: string | null; // YYYY-MM-DD
@@ -52,6 +53,10 @@ export function taskDetailsModalView(args: {
     : "—";
 
   const delegatedText = args.delegationSlackId ? `<@${args.delegationSlackId}>` : "—";
+  const backupText =
+  args.backupResponsibleSlackId
+    ? `<@${args.backupResponsibleSlackId}>`
+    : "—";
   const recurrenceText = args.recurrence ?? "—";
   const isOnDemand = args.taskType === "on_demand";
 
@@ -81,6 +86,7 @@ export function taskDetailsModalView(args: {
       type: "section",
       fields: [
         { type: "mrkdwn", text: `*Responsável:*\n<@${args.responsibleSlackId}>\n\n` },
+        { type: "mrkdwn", text: `*Backup:*\n${backupText}\n\n` },
         { type: "mrkdwn", text: `*Delegado por:*\n${delegatedText}\n\n` },
 
         { type: "mrkdwn", text: `*Tipo da tarefa:*\n${taskTypeText}\n\n` },

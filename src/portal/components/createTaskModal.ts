@@ -78,6 +78,14 @@ export function createTaskModal(
       )
       : null;
 
+  const processInitial =
+    task?.processId
+      ? options.processes.find(
+        process =>
+          process.id === task.processId
+      )
+      : null;
+
   return `
     <div
       style="
@@ -191,7 +199,7 @@ export function createTaskModal(
         </div>
 
 
-        <!-- PROCESSO -->
+                <!-- PROCESSO -->
 
         <div class="portal-form-group">
 
@@ -207,27 +215,106 @@ export function createTaskModal(
             </span>
           </label>
 
-          <select
-            id="portal-task-process"
-            class="portal-select"
+          <div
+            id="portal-process-picker"
+            style="
+              position:relative;
+            "
           >
 
-            <option value="">
-              Selecione um processo
-            </option>
+            <input
+              type="hidden"
+              id="portal-task-process"
+              value="${escapeHtml(processInitial?.id ?? "")}"
+            />
 
-            ${options.processes
-      .map(process => `
-                <option
-  value="${escapeHtml(process.id)}"
-  ${task?.processId === process.id ? "selected" : ""}
->
-                  ${escapeHtml(process.name)}
-                </option>
-              `)
-      .join("")}
+            <input
+              type="text"
+              id="portal-task-process-search"
+              class="portal-input"
+              placeholder="Buscar processo..."
+              autocomplete="off"
+              value="${escapeHtml(processInitial?.name ?? "")}"
+              onfocus="portalOpenProcessPicker()"
+              oninput="portalFilterProcesses()"
+            />
 
-          </select>
+            <div
+              id="portal-process-options"
+              style="
+                display:none;
+                position:absolute;
+                z-index:30;
+                top:calc(100% + 6px);
+                left:0;
+                right:0;
+                max-height:260px;
+                overflow-y:auto;
+                background:#FFFFFF;
+                border:1px solid #D1D5DB;
+                border-radius:10px;
+                box-shadow:0 12px 28px rgba(15,23,42,.14);
+                padding:6px;
+              "
+            >
+
+              <button
+                type="button"
+                class="portal-process-option"
+                data-search=""
+                onclick="portalSelectProcess('', '')"
+                style="
+                  width:100%;
+                  border:none;
+                  background:transparent;
+                  padding:10px 12px;
+                  text-align:left;
+                  cursor:pointer;
+                  border-radius:8px;
+                "
+              >
+                Sem processo
+              </button>
+
+              ${options.processes
+                .map(process => `
+                  <button
+                    type="button"
+                    class="portal-process-option"
+                    data-search="${escapeHtml(process.name)}"
+                    onclick="portalSelectProcess(
+                      '${escapeHtml(process.id)}',
+                      '${escapeHtml(process.name).replace(/'/g, "&#039;")}'
+                    )"
+                    style="
+                      width:100%;
+                      border:none;
+                      background:transparent;
+                      padding:10px 12px;
+                      text-align:left;
+                      cursor:pointer;
+                      border-radius:8px;
+                    "
+                  >
+                    ${escapeHtml(process.name)}
+                  </button>
+                `)
+                .join("")}
+
+              <div
+                id="portal-process-empty"
+                style="
+                  display:none;
+                  padding:12px;
+                  color:#6B7280;
+                "
+              >
+                Nenhum processo encontrado.
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 

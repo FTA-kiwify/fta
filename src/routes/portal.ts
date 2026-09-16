@@ -2087,6 +2087,11 @@ export async function portalRoutes(app: FastifyInstance) {
             width: 28,
           },
           {
+            header: "Backup",
+            key: "backupResponsibleName",
+            width: 28,
+          },
+          {
             header: "Recorrência",
             key: "recurrenceLabel",
             width: 20,
@@ -2119,6 +2124,8 @@ export async function portalRoutes(app: FastifyInstance) {
             title: row.title,
             responsibleName:
               row.responsibleName,
+            backupResponsibleName:
+              row.backupResponsibleName,
             recurrenceLabel:
               row.recurrence === "daily"
                 ? "Diária"

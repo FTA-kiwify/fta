@@ -1916,6 +1916,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               urgency: true,
               recurrence: true,
               responsible: true,
+              backupResponsible: true,
               delegation: true,
               calendarPrivate: true,
               taskType: true,
@@ -1943,6 +1944,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
               taskId: task.id,
               title: task.title,
               responsibleSlackId: task.responsible,
+              backupResponsibleSlackId:
+                task.backupResponsible ?? null,
               delegationSlackId: task.delegation ?? null,
               dueDateIso,
               originalDueDateIso,

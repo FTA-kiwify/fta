@@ -2213,6 +2213,107 @@ window.portalConfirmCollaboratorDeactivation =
       );
     }
   };
+  window.portalOpenProcessPicker = function() {
+  window.portalCloseUserDropdowns(
+    "portal-process-options"
+  );
+
+  const dropdown =
+    document.getElementById(
+      "portal-process-options"
+    );
+
+  if (!dropdown) return;
+
+  dropdown.style.display = "block";
+
+  window.portalFilterProcesses();
+};
+
+
+window.portalFilterProcesses = function() {
+  const input =
+    document.getElementById(
+      "portal-task-process-search"
+    );
+
+  const empty =
+    document.getElementById(
+      "portal-process-empty"
+    );
+
+  if (!input) return;
+
+  const search =
+    window.portalNormalizeSearch(
+      input.value
+    );
+
+  const options =
+    document.querySelectorAll(
+      ".portal-process-option"
+    );
+
+  let visible = 0;
+
+  options.forEach(option => {
+    const text =
+      window.portalNormalizeSearch(
+        option.dataset.search || ""
+      );
+
+    const show =
+      !search ||
+      text.includes(search);
+
+    option.style.display =
+      show ? "block" : "none";
+
+    if (show) {
+      visible++;
+    }
+  });
+
+  if (empty) {
+    empty.style.display =
+      visible === 0
+        ? "block"
+        : "none";
+  }
+};
+
+
+window.portalSelectProcess = function(
+  processId,
+  processName
+) {
+  const hidden =
+    document.getElementById(
+      "portal-task-process"
+    );
+
+  const input =
+    document.getElementById(
+      "portal-task-process-search"
+    );
+
+  const dropdown =
+    document.getElementById(
+      "portal-process-options"
+    );
+
+  if (hidden) {
+    hidden.value = processId;
+  }
+
+  if (input) {
+    input.value = processName;
+  }
+
+  if (dropdown) {
+    dropdown.style.display = "none";
+  }
+};
 </script>
   `;
 }

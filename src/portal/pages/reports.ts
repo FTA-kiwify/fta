@@ -1,33 +1,33 @@
 import type {
-    ReportData,
+  ReportData,
 } from "../../services/portal/reportService";
 
 function escapeHtml(
-    value: string | null | undefined
+  value: string | null | undefined
 ) {
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function recurrenceLabel(
-    recurrence: string
+  recurrence: string
 ) {
-    const labels: Record<string, string> = {
-        daily: "Diária",
-        weekly: "Semanal",
-        biweekly: "Quinzenal",
-        monthly: "Mensal",
-        quarterly: "Trimestral",
-        semiannual: "Semestral",
-        annual: "Anual",
-        none: "Sem recorrência",
-    };
+  const labels: Record<string, string> = {
+    daily: "Diária",
+    weekly: "Semanal",
+    biweekly: "Quinzenal",
+    monthly: "Mensal",
+    quarterly: "Trimestral",
+    semiannual: "Semestral",
+    annual: "Anual",
+    none: "Sem recorrência",
+  };
 
-    return labels[recurrence] ?? recurrence;
+  return labels[recurrence] ?? recurrence;
 }
 
 /*
@@ -38,19 +38,19 @@ function recurrenceLabel(
  * sem navegar para uma página nova.
  */
 function reportCard({
-    title,
-    value,
-    subtitle,
-    icon,
-    onclick,
+  title,
+  value,
+  subtitle,
+  icon,
+  onclick,
 }: {
-    title: string;
-    value: number | string;
-    subtitle: string;
-    icon: string;
-    onclick?: string;
+  title: string;
+  value: number | string;
+  subtitle: string;
+  icon: string;
+  onclick?: string;
 }) {
-    return `
+  return `
         <div
       class="stat-card"
       ${onclick ? `onclick="${onclick}"` : ""}
@@ -61,7 +61,7 @@ function reportCard({
         ${onclick ? "cursor:pointer;" : ""}
       "
       ${onclick
-            ? `
+      ? `
             onmouseover="
               this.style.transform='translateY(-2px)';
             "
@@ -69,8 +69,8 @@ function reportCard({
               this.style.transform='translateY(0)';
             "
           `
-            : ""
-        }
+      : ""
+    }
     >
 
       <div>
@@ -109,21 +109,22 @@ function reportCard({
  * utilizado no Dashboard, Colaborador etc.
  */
 function activityRow(
-    row: ReportData["rows"][number]
+  row: ReportData["rows"][number]
 ) {
-    return `
+  return `
     <div
       onclick="openPortalModal('/portal/tasks/${encodeURIComponent(row.id)}/modal')"
       style="
         display:grid;
         grid-template-columns:
-          minmax(260px,2fr)
-          minmax(170px,1fr)
-          minmax(130px,.8fr)
-          minmax(200px,1.3fr)
-          minmax(130px,.8fr)
-          minmax(130px,.8fr)
-          28px;
+  minmax(260px,2fr)
+  minmax(170px,1fr)
+  minmax(170px,1fr)
+  minmax(130px,.8fr)
+  minmax(200px,1.3fr)
+  minmax(130px,.8fr)
+  minmax(130px,.8fr)
+  28px;
         gap:18px;
         align-items:center;
         padding:15px 12px;
@@ -159,14 +160,25 @@ function activityRow(
       </div>
 
       <div
+  style="
+    color:#475569;
+    font-size:14px;
+  "
+>
+  ${escapeHtml(
+    row.backupResponsibleName
+  )}
+</div>
+
+      <div
         style="
           color:#475569;
           font-size:14px;
         "
       >
         ${escapeHtml(
-        recurrenceLabel(row.recurrence)
-    )}
+    recurrenceLabel(row.recurrence)
+  )}
       </div>
 
       <div
@@ -176,8 +188,8 @@ function activityRow(
         "
       >
         ${escapeHtml(
-        row.processTitle ?? "—"
-    )}
+    row.processTitle ?? "—"
+  )}
       </div>
 
       <div
@@ -187,8 +199,8 @@ function activityRow(
         "
       >
         ${escapeHtml(
-        row.verticalName ?? "—"
-    )}
+    row.verticalName ?? "—"
+  )}
       </div>
 
       <div
@@ -198,8 +210,8 @@ function activityRow(
         "
       >
         ${escapeHtml(
-        row.teamName ?? "—"
-    )}
+    row.teamName ?? "—"
+  )}
       </div>
 
       <div
@@ -217,111 +229,111 @@ function activityRow(
 }
 
 export function reportsPage(
-    data: ReportData
+  data: ReportData
 ) {
 
-    /*
-     * =========================
-     * CONTADORES
-     * =========================
-     */
+  /*
+   * =========================
+   * CONTADORES
+   * =========================
+   */
 
-    const collaboratorCount =
-        new Set(
-            data.rows.map(
-                row => row.responsibleId
-            )
-        ).size;
+  const collaboratorCount =
+    new Set(
+      data.rows.map(
+        row => row.responsibleId
+      )
+    ).size;
 
-    const processCount =
-        new Set(
-            data.rows
-                .map(row => row.processId)
-                .filter(Boolean)
-        ).size;
+  const processCount =
+    new Set(
+      data.rows
+        .map(row => row.processId)
+        .filter(Boolean)
+    ).size;
 
-    const verticalCount =
-        new Set(
-            data.rows
-                .map(row => row.verticalId)
-                .filter(Boolean)
-        ).size;
+  const verticalCount =
+    new Set(
+      data.rows
+        .map(row => row.verticalId)
+        .filter(Boolean)
+    ).size;
 
-    /*
-     * =========================
-     * URL DO EXCEL
-     * =========================
-     */
+  /*
+   * =========================
+   * URL DO EXCEL
+   * =========================
+   */
 
-    const exportParams =
-        new URLSearchParams();
+  const exportParams =
+    new URLSearchParams();
 
-    if (data.filters.verticalId) {
-        exportParams.set(
-            "verticalId",
-            data.filters.verticalId
-        );
-    }
+  if (data.filters.verticalId) {
+    exportParams.set(
+      "verticalId",
+      data.filters.verticalId
+    );
+  }
 
-    if (data.filters.collaboratorId) {
-        exportParams.set(
-            "collaboratorId",
-            data.filters.collaboratorId
-        );
-    }
+  if (data.filters.collaboratorId) {
+    exportParams.set(
+      "collaboratorId",
+      data.filters.collaboratorId
+    );
+  }
 
-    if (data.filters.processId) {
-        exportParams.set(
-            "processId",
-            data.filters.processId
-        );
-    }
+  if (data.filters.processId) {
+    exportParams.set(
+      "processId",
+      data.filters.processId
+    );
+  }
 
-    const exportUrl =
-        `/portal/reports/export${exportParams.toString()
-            ? `?${exportParams.toString()}`
-            : ""
-        }`;
+  const exportUrl =
+    `/portal/reports/export${exportParams.toString()
+      ? `?${exportParams.toString()}`
+      : ""
+    }`;
 
-    /*
-     * =========================
-     * QUERY DOS MODAIS
-     * =========================
-     *
-     * Mantém exatamente os mesmos filtros
-     * utilizados no relatório.
-     */
+  /*
+   * =========================
+   * QUERY DOS MODAIS
+   * =========================
+   *
+   * Mantém exatamente os mesmos filtros
+   * utilizados no relatório.
+   */
 
-    const reportParams =
-        new URLSearchParams();
+  const reportParams =
+    new URLSearchParams();
 
-    if (data.filters.verticalId) {
-        reportParams.set(
-            "verticalId",
-            data.filters.verticalId
-        );
-    }
+  if (data.filters.verticalId) {
+    reportParams.set(
+      "verticalId",
+      data.filters.verticalId
+    );
+  }
 
-    if (data.filters.collaboratorId) {
-        reportParams.set(
-            "collaboratorId",
-            data.filters.collaboratorId
-        );
-    }
+  if (data.filters.collaboratorId) {
+    reportParams.set(
+      "collaboratorId",
+      data.filters.collaboratorId
+    );
+  }
 
-    if (data.filters.processId) {
-        reportParams.set(
-            "processId",
-            data.filters.processId
-        );
-    }
+  if (data.filters.processId) {
+    reportParams.set(
+      "processId",
+      data.filters.processId
+    );
+  }
 
-    const reportQuery =
-        reportParams.toString()
-            ? `?${reportParams.toString()}`
-            : "";
+  const reportQuery =
+    reportParams.toString()
+      ? `?${reportParams.toString()}`
+      : "";
 
-    return `
+  return `
 
     <!-- ========================= -->
     <!-- FILTROS                   -->
@@ -420,19 +432,19 @@ export function reportsPage(
             </option>
 
             ${data.verticals
-            .map(vertical => `
+      .map(vertical => `
                 <option
                   value="${escapeHtml(vertical.id)}"
                   ${data.filters.verticalId ===
-                    vertical.id
-                    ? "selected"
-                    : ""
-                }
+          vertical.id
+          ? "selected"
+          : ""
+        }
                 >
                   ${escapeHtml(vertical.name)}
                 </option>
               `)
-            .join("")}
+      .join("")}
 
           </select>
 
@@ -468,23 +480,23 @@ export function reportsPage(
             </option>
 
             ${data.collaborators
-            .map(collaborator => `
+      .map(collaborator => `
                 <option
                   value="${escapeHtml(
-                collaborator.id
-            )}"
+        collaborator.id
+      )}"
                   ${data.filters.collaboratorId ===
-                    collaborator.id
-                    ? "selected"
-                    : ""
-                }
+          collaborator.id
+          ? "selected"
+          : ""
+        }
                 >
                   ${escapeHtml(
-                    collaborator.name
-                )}
+          collaborator.name
+        )}
                 </option>
               `)
-            .join("")}
+      .join("")}
 
           </select>
 
@@ -520,19 +532,19 @@ export function reportsPage(
             </option>
 
             ${data.processes
-            .map(process => `
+      .map(process => `
                 <option
                   value="${escapeHtml(process.id)}"
                   ${data.filters.processId ===
-                    process.id
-                    ? "selected"
-                    : ""
-                }
+          process.id
+          ? "selected"
+          : ""
+        }
                 >
                   ${escapeHtml(process.name)}
                 </option>
               `)
-            .join("")}
+      .join("")}
 
           </select>
 
@@ -570,40 +582,40 @@ export function reportsPage(
     >
 
       ${reportCard({
-                title: "Atividades",
-                value: data.rows.length,
-                subtitle: "No relatório",
-                icon: "📋",
-                onclick:
-                    `openPortalModal('/portal/reports/activities/modal${reportQuery}', '480px')`,
-            })}
+        title: "Atividades",
+        value: data.rows.length,
+        subtitle: "No relatório",
+        icon: "📋",
+        onclick:
+          `openPortalModal('/portal/reports/activities/modal${reportQuery}', '480px')`,
+      })}
 
       ${reportCard({
-                title: "Colaboradores",
-                value: collaboratorCount,
-                subtitle: "Com atividades",
-                icon: "👥",
-                onclick:
-                    `openPortalModal('/portal/reports/collaborators/modal${reportQuery}', '480px')`,
-            })}
+        title: "Colaboradores",
+        value: collaboratorCount,
+        subtitle: "Com atividades",
+        icon: "👥",
+        onclick:
+          `openPortalModal('/portal/reports/collaborators/modal${reportQuery}', '480px')`,
+      })}
 
       ${reportCard({
-                title: "Processos",
-                value: processCount,
-                subtitle: "Vinculados",
-                icon: "📚",
-                onclick:
-                    `openPortalModal('/portal/reports/processes/modal${reportQuery}', '480px')`,
-            })}
+        title: "Processos",
+        value: processCount,
+        subtitle: "Vinculados",
+        icon: "📚",
+        onclick:
+          `openPortalModal('/portal/reports/processes/modal${reportQuery}', '480px')`,
+      })}
 
       ${reportCard({
-                title: "Verticais",
-                value: verticalCount,
-                subtitle: `Time ${data.team ?? ""}`,
-                icon: "🏢",
-                onclick:
-                    `openPortalModal('/portal/reports/verticals/modal${reportQuery}', '480px')`,
-            })}
+        title: "Verticais",
+        value: verticalCount,
+        subtitle: `Time ${data.team ?? ""}`,
+        icon: "🏢",
+        onclick:
+          `openPortalModal('/portal/reports/verticals/modal${reportQuery}', '480px')`,
+      })}
 
     </div>
 
@@ -648,15 +660,15 @@ export function reportsPage(
           >
             ${data.rows.length}
             atividade${data.rows.length === 1
-            ? ""
-            : "s"
-        }
+      ? ""
+      : "s"
+    }
           </span>
 
         </div>
 
         ${data.rows.length
-            ? `
+      ? `
               <a
                 href="${escapeHtml(exportUrl)}"
                 style="
@@ -676,13 +688,13 @@ export function reportsPage(
                 📥 Exportar Excel
               </a>
             `
-            : ""
-        }
+      : ""
+    }
 
       </div>
 
       ${data.rows.length
-            ? `
+      ? `
             <div
               style="
                 width:100%;
@@ -692,7 +704,7 @@ export function reportsPage(
 
               <div
                 style="
-                  min-width:1050px;
+                  min-width:1220px;
                 "
               >
 
@@ -702,13 +714,14 @@ export function reportsPage(
                   style="
                     display:grid;
                     grid-template-columns:
-                      minmax(260px,2fr)
-                      minmax(170px,1fr)
-                      minmax(130px,.8fr)
-                      minmax(200px,1.3fr)
-                      minmax(130px,.8fr)
-                      minmax(130px,.8fr)
-                      28px;
+  minmax(260px,2fr)
+  minmax(170px,1fr)
+  minmax(170px,1fr)
+  minmax(130px,.8fr)
+  minmax(200px,1.3fr)
+  minmax(130px,.8fr)
+  minmax(130px,.8fr)
+  28px;
                     gap:18px;
                     padding:10px 12px;
                     border-bottom:1px solid #D1D5DB;
@@ -723,6 +736,10 @@ export function reportsPage(
                   <div>
                     Responsável
                   </div>
+
+                  <div>
+  Backup
+</div>
 
                   <div>
                     Recorrência
@@ -747,16 +764,16 @@ export function reportsPage(
                 <!-- LINHAS -->
 
                 ${data.rows
-                .map(row =>
-                    activityRow(row)
-                )
-                .join("")}
+        .map(row =>
+          activityRow(row)
+        )
+        .join("")}
 
               </div>
 
             </div>
           `
-            : `
+      : `
             <div
               style="
                 padding:50px 20px;
@@ -768,7 +785,7 @@ export function reportsPage(
               para os filtros selecionados.
             </div>
           `
-        }
+    }
 
     </div>
 
