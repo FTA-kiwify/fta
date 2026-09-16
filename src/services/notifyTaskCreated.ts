@@ -191,7 +191,7 @@ export async function notifyTaskCreated(args: NotifyTaskCreatedArgs) {
   ) {
     try {
       const backupText =
-        `🛟 <@${createdBy}> atribuiu a atividade *${title}* para <@${responsible}> ` +
+        `🏝️ <@${createdBy}> atribuiu a atividade *${title}* para <@${responsible}> ` +
         `(você está como backup)`;
 
       const channelId =

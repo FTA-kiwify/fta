@@ -120,7 +120,7 @@ export function collaboratorPage(
                     id="portal-start-collaborator-backup"
                     onclick="portalStartCollaboratorBackup('${collaborator.slackUserId}')"
                   >
-                    🛟 Iniciar backup
+                    🏝️ Iniciar backup
                   </button>
                 `
       }
