@@ -265,6 +265,11 @@ export function taskModal(task: TaskDetails) {
       task.responsible
     )}
 
+    ${infoCard(
+      "🏝️ Backup",
+      task.backupResponsible ?? "—"
+    )}
+
         ${infoCard(
       "👨‍💼 Delegado por",
       task.delegatedBy ?? "-"

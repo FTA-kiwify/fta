@@ -18,6 +18,8 @@ export type ReportRow = {
   title: string;
   responsibleId: string;
   responsibleName: string;
+  backupResponsibleId: string | null;
+  backupResponsibleName: string;
   recurrence: string;
   processId: string | null;
   processTitle: string | null;
@@ -89,8 +91,8 @@ export async function getReportData(
    */
   const selectedVertical = filters.verticalId
     ? verticals.find(
-        vertical => vertical.id === filters.verticalId
-      )
+      vertical => vertical.id === filters.verticalId
+    )
     : null;
 
   if (filters.verticalId && !selectedVertical) {
@@ -104,8 +106,8 @@ export async function getReportData(
    */
   const memberIds = selectedVertical
     ? selectedVertical.members.map(
-        member => member.slackUserId
-      )
+      member => member.slackUserId
+    )
     : access.memberSlackUserIds;
 
   const allowedMemberIds = new Set(memberIds);
@@ -158,8 +160,8 @@ export async function getReportData(
 
   const selectedProcess = filters.processId
     ? processOptions.find(
-        process => process.id === filters.processId
-      )
+      process => process.id === filters.processId
+    )
     : null;
 
   if (filters.processId && !selectedProcess) {
@@ -227,16 +229,16 @@ export async function getReportData(
 
       ...(filters.collaboratorId
         ? {
-            responsible:
-              filters.collaboratorId,
-          }
+          responsible:
+            filters.collaboratorId,
+        }
         : {}),
 
       ...(filters.processId
         ? {
-            processId:
-              filters.processId,
-          }
+          processId:
+            filters.processId,
+        }
         : {}),
     },
 
@@ -244,6 +246,7 @@ export async function getReportData(
       id: true,
       title: true,
       responsible: true,
+      backupResponsible: true,
       recurrence: true,
       processId: true,
 
@@ -309,6 +312,22 @@ export async function getReportData(
       responsibleIds
     );
 
+  const backupResponsibleIds = [
+    ...new Set(
+      filteredTasks
+        .map(task => task.backupResponsible)
+        .filter(
+          (id): id is string =>
+            Boolean(id)
+        )
+    ),
+  ];
+
+  const backupResponsibleNames =
+    await resolveManySlackNames(
+      backupResponsibleIds
+    );
+
   const rows: ReportRow[] =
     filteredTasks.map(task => {
       const responsibleVertical =
@@ -326,6 +345,19 @@ export async function getReportData(
         responsibleName:
           responsibleNames[task.responsible] ??
           task.responsible,
+
+        backupResponsibleId:
+          task.backupResponsible ?? null,
+
+        backupResponsibleName:
+          task.backupResponsible
+            ? (
+              backupResponsibleNames[
+              task.backupResponsible
+              ] ??
+              task.backupResponsible
+            )
+            : "—",
 
         recurrence:
           task.recurrence ?? "none",

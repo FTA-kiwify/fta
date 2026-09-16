@@ -6,6 +6,7 @@ export type TaskDetails = {
   title: string;
   description: string | null;
   responsible: string;
+  backupResponsible: string | null;
   delegatedBy: string | null;
   deadline: Date | null;
   originalDeadline: Date | null;
@@ -57,6 +58,13 @@ export async function getTaskDetails(
     task.responsible
   );
 
+  const backupResponsible =
+  task.backupResponsible
+    ? await getSlackUserName(
+        task.backupResponsible
+      )
+    : null;
+
   const delegatedBy = task.delegation
     ? await getSlackUserName(task.delegation)
     : null;
@@ -93,6 +101,7 @@ export async function getTaskDetails(
     description: task.description,
 
     responsible,
+    backupResponsible,
 
     delegatedBy,
 
