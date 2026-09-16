@@ -315,7 +315,7 @@ export function portalCss() {
 /* ---------- AÇÕES PRINCIPAIS ---------- */
 
 .portal-action-btn{
-  width:150px;
+  width:170px;
   height:42px;
   padding:0 16px;
   border-radius:10px;
