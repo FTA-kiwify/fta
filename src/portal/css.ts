@@ -312,7 +312,63 @@ export function portalCss() {
 .btn-secondary:hover{
   background:#F9FAFB;
 }
+/* ---------- AÇÕES PRINCIPAIS ---------- */
 
+.portal-action-btn{
+  width:150px;
+  height:42px;
+  padding:0 16px;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  white-space:nowrap;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  box-sizing:border-box;
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    background .15s ease;
+}
+
+.portal-action-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 4px 10px rgba(15,23,42,.10);
+}
+
+.portal-action-primary{
+  border:1px solid #25835D;
+  background:#25835D;
+  color:#FFFFFF;
+  box-shadow:0 2px 6px rgba(15,23,42,.08);
+}
+
+.portal-action-primary:hover{
+  background:#1F7553;
+}
+
+.portal-action-outline{
+  border:1px solid #25835D;
+  background:#FFFFFF;
+  color:#25835D;
+}
+
+.portal-action-outline:hover{
+  background:#F0FDF4;
+}
+
+.portal-action-danger{
+  border:1px solid #DC2626;
+  background:#FFFFFF;
+  color:#DC2626;
+}
+
+.portal-action-danger:hover{
+  background:#FEF2F2;
+}
 /* ---------- MODAL ---------- */
 
 .portal-modal-header{

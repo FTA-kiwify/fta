@@ -105,7 +105,7 @@ export function collaboratorPage(
         : isBackupActive
           ? `
                   <button
-                    class="btn btn-secondary"
+                    class="portal-action-btn portal-action-outline"
                     type="button"
                     id="portal-stop-collaborator-backup"
                     onclick="portalStopCollaboratorBackup('${collaborator.slackUserId}')"
@@ -115,7 +115,7 @@ export function collaboratorPage(
                 `
           : `
                   <button
-                    class="btn btn-secondary"
+                    class="portal-action-btn portal-action-outline"
                     type="button"
                     id="portal-start-collaborator-backup"
                     onclick="portalStartCollaboratorBackup('${collaborator.slackUserId}')"
@@ -128,7 +128,7 @@ export function collaboratorPage(
           ${!isInactive
         ? `
                 <button
-                  class="btn btn-danger"
+                  class="portal-action-btn portal-action-danger"
                   type="button"
                   id="portal-deactivate-collaborator"
                   onclick="portalDeactivateCollaborator('${collaborator.slackUserId}')"

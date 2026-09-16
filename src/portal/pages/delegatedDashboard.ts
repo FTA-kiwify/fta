@@ -80,38 +80,10 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
   "
 >
 
-  <button
+    <button
     type="button"
+    class="portal-action-btn portal-action-primary"
     onclick="openPortalModal('/portal/tasks/create/modal', '760px')"
-    style="
-      border:none;
-      background:#25835D;
-      color:#FFFFFF;
-      padding:12px 18px;
-      border-radius:10px;
-      font-size:14px;
-      font-weight:600;
-      cursor:pointer;
-      white-space:nowrap;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      box-shadow:0 2px 6px rgba(15,23,42,.08);
-      transition:
-        transform .15s ease,
-        box-shadow .15s ease,
-        background .15s ease;
-    "
-    onmouseover="
-      this.style.transform='translateY(-1px)';
-      this.style.boxShadow='0 4px 10px rgba(15,23,42,.12)';
-      this.style.background='#1F7553';
-    "
-    onmouseout="
-      this.style.transform='translateY(0)';
-      this.style.boxShadow='0 2px 6px rgba(15,23,42,.08)';
-      this.style.background='#25835D';
-    "
   >
     <span style="font-size:18px; line-height:1;">＋</span>
     Criar tarefa
@@ -119,20 +91,11 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
 
   <button
     type="button"
+    class="portal-action-btn portal-action-outline"
     onclick="openPortalModal('/portal/tasks/create-aor/modal', '760px')"
-    style="
-      border:1px solid #25835D;
-      background:#FFFFFF;
-      color:#25835D;
-      padding:12px 18px;
-      border-radius:10px;
-      font-size:14px;
-      font-weight:600;
-      cursor:pointer;
-      white-space:nowrap;
-    "
   >
-    ⚡ Criar AOR
+    <span style="font-size:16px; line-height:1;">⚡</span>
+    Criar AOR
   </button>
 
 </div>
