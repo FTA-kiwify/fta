@@ -234,7 +234,6 @@ export function processPage(
             `
       : `
             
-      }
 
               <div
                 style="
