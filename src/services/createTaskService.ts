@@ -158,6 +158,18 @@ export async function createTaskService(raw: unknown) {
     include: { carbonCopies: true },
   });
 
+  await prisma.collaboratorState.updateMany({
+  where: {
+    slackUserId: task.responsible,
+    status: "inactive",
+  },
+  data: {
+    status: "active",
+    backupActivatedAt: null,
+    deactivatedAt: null,
+  },
+});
+
   await createTaskAuditLog({
     taskId: task.id,
 

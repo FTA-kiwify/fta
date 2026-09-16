@@ -852,17 +852,21 @@ export async function portalRoutes(app: FastifyInstance) {
           });
         }
 
-        const collaborators =
-          await getCollaborators();
+        const createOptions =
+          await getPortalCreateTaskOptions(
+            portalUser.slackUserId
+          );
+
+        const collaboratorIds =
+          createOptions.collaborators.map(
+            collaborator => collaborator.id
+          );
 
         const collaboratorStates =
           await prisma.collaboratorState.findMany({
             where: {
               slackUserId: {
-                in: collaborators.map(
-                  collaborator =>
-                    collaborator.slackUserId
-                ),
+                in: collaboratorIds,
               },
             },
             select: {
@@ -884,18 +888,21 @@ export async function portalRoutes(app: FastifyInstance) {
               )
           );
 
-        const options = collaborators
-          .filter(
-            collaborator =>
-              collaborator.slackUserId !== slackUserId &&
-              !inactiveIds.has(
-                collaborator.slackUserId
-              )
-          )
-          .map(collaborator => ({
-            id: collaborator.slackUserId,
-            name: collaborator.name,
-          }));
+        const options =
+          createOptions.collaborators
+            .filter(
+              collaborator =>
+                collaborator.id !== slackUserId &&
+                !inactiveIds.has(
+                  collaborator.id
+                )
+            )
+            .map(
+              collaborator => ({
+                id: collaborator.id,
+                name: collaborator.name,
+              })
+            );
 
         return reply.send({
           ok: true,
@@ -945,15 +952,32 @@ export async function portalRoutes(app: FastifyInstance) {
         }
 
         const body = (request.body ?? {}) as {
-          replacementSlackId?: string | null;
+          taskBackups?: Array<{
+            taskId?: string;
+            backupSlackId?: string;
+          }>;
         };
+
+        const taskBackups =
+          (body.taskBackups ?? [])
+            .map(item => ({
+              taskId:
+                item.taskId?.trim() || "",
+              backupSlackId:
+                item.backupSlackId?.trim() || "",
+            }))
+            .filter(
+              item =>
+                item.taskId &&
+                item.backupSlackId
+            );
 
         const result = await deactivateCollaborator({
           slack,
           slackUserId,
-          actorSlackId: portalUser.slackUserId,
-          replacementSlackId:
-            body.replacementSlackId?.trim() || null,
+          actorSlackId:
+            portalUser.slackUserId,
+          taskBackups,
         });
 
         return reply.send({

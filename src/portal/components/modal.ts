@@ -1839,11 +1839,6 @@ window.portalStopCollaboratorBackup = async function(slackUserId) {
 
 window.portalDeactivateCollaborator = async function(slackUserId) {
   try {
-
-    // ------------------------------------------
-    // 1. Busca impacto do desligamento
-    // ------------------------------------------
-
     const previewResponse = await fetch(
       "/portal/collaborators/" +
         encodeURIComponent(slackUserId) +
@@ -1860,196 +1855,362 @@ window.portalDeactivateCollaborator = async function(slackUserId) {
       );
     }
 
-    let replacementSlackId = null;
-    let replacementName = null;
+    const optionsResponse = await fetch(
+      "/portal/collaborators/" +
+        encodeURIComponent(slackUserId) +
+        "/replacement-options"
+    );
 
-    // ------------------------------------------
-    // 2. Se houver tarefas sem destino automático,
-    //    precisamos escolher substituto
-    // ------------------------------------------
+    const optionsResult =
+      await optionsResponse.json();
 
-    if ((preview.toReplacement ?? 0) > 0) {
+    if (!optionsResponse.ok) {
+      throw new Error(
+        optionsResult?.error ||
+        "Não foi possível carregar os backups disponíveis."
+      );
+    }
 
-      const optionsResponse = await fetch(
-        "/portal/collaborators/" +
-          encodeURIComponent(slackUserId) +
-          "/replacement-options"
+    window.portalOpenDeactivationModal(
+      slackUserId,
+      preview,
+      optionsResult.options ?? []
+    );
+
+  } catch (error) {
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível preparar o desligamento."
+    );
+  }
+};
+window.portalOpenDeactivationModal = function(
+  slackUserId,
+  preview,
+  options
+) {
+  const modal =
+    document.getElementById(
+      "portal-modal"
+    );
+
+  const content =
+    document.getElementById(
+      "portal-modal-content"
+    );
+
+  if (!modal || !content) {
+    return;
+  }
+
+  const tasks =
+    preview.tasks ?? [];
+
+  const escapeHtml = function(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
+  const optionHtml =
+    options
+      .map(function(option) {
+        return (
+          '<option value="' +
+          escapeHtml(option.id) +
+          '">' +
+          escapeHtml(option.name) +
+          '</option>'
+        );
+      })
+      .join("");
+
+  const taskHtml =
+    tasks.length
+      ? tasks
+          .map(function(task) {
+
+            const backupField =
+              task.needsBackup
+                ? (
+                    '<select ' +
+                      'class="portal-deactivation-backup" ' +
+                      'data-task-id="' +
+                      escapeHtml(task.id) +
+                      '" ' +
+                      'style="' +
+                        'width:100%;' +
+                        'padding:10px 12px;' +
+                        'border:1px solid #D1D5DB;' +
+                        'border-radius:10px;' +
+                        'background:#FFFFFF;' +
+                      '"' +
+                    '>' +
+                      '<option value="">' +
+                        'Selecione o backup...' +
+                      '</option>' +
+                      optionHtml +
+                    '</select>'
+                  )
+                : (
+                    '<div ' +
+                      'style="' +
+                        'padding:10px 12px;' +
+                        'border-radius:10px;' +
+                        'background:#ECFDF5;' +
+                        'color:#166534;' +
+                        'font-weight:600;' +
+                      '"' +
+                    '>' +
+                      '✓ ' +
+                      escapeHtml(
+                        task.backupResponsibleName ||
+                        task.backupResponsible
+                      ) +
+                    '</div>'
+                  );
+
+            return (
+              '<div ' +
+                'style="' +
+                  'padding:16px 0;' +
+                  'border-bottom:1px solid #E5E7EB;' +
+                '"' +
+              '>' +
+
+                '<div ' +
+                  'style="' +
+                    'font-weight:700;' +
+                    'margin-bottom:8px;' +
+                    'color:#111827;' +
+                  '"' +
+                '>' +
+                  escapeHtml(task.title) +
+                '</div>' +
+
+                '<div ' +
+                  'style="' +
+                    'font-size:13px;' +
+                    'color:#6B7280;' +
+                    'margin-bottom:8px;' +
+                  '"' +
+                '>' +
+                  (
+                    task.calendarPrivate
+                      ? "🔒 Tarefa privada"
+                      : "📋 Tarefa"
+                  ) +
+                '</div>' +
+
+                backupField +
+
+              '</div>'
+            );
+          })
+          .join("")
+      : (
+          '<div ' +
+            'style="' +
+              'padding:18px 0;' +
+              'color:#6B7280;' +
+            '"' +
+          '>' +
+            'Este colaborador não possui tarefas pendentes.' +
+          '</div>'
+        );
+
+  content.innerHTML =
+    '<div style="padding:28px;">' +
+
+      '<h2 ' +
+        'style="' +
+          'margin:0 0 8px;' +
+          'font-size:22px;' +
+        '"' +
+      '>' +
+        '🚫 Desligar colaborador' +
+      '</h2>' +
+
+      '<p ' +
+        'style="' +
+          'margin:0 0 20px;' +
+          'color:#6B7280;' +
+          'line-height:1.5;' +
+        '"' +
+      '>' +
+        'Confira os backups das atividades antes de continuar.' +
+      '</p>' +
+
+      '<div>' +
+        taskHtml +
+      '</div>' +
+
+      '<div ' +
+        'style="' +
+          'display:flex;' +
+          'justify-content:flex-end;' +
+          'gap:10px;' +
+          'margin-top:24px;' +
+        '"' +
+      '>' +
+
+        '<button ' +
+          'type="button" ' +
+          'class="btn btn-secondary" ' +
+          'onclick="closePortalModal()"' +
+        '>' +
+          'Cancelar' +
+        '</button>' +
+
+        '<button ' +
+          'type="button" ' +
+          'class="btn btn-danger" ' +
+          'onclick="portalContinueCollaboratorDeactivation(' +
+            "'" +
+            escapeHtml(slackUserId) +
+            "'" +
+          ')"' +
+        '>' +
+          'Continuar' +
+        '</button>' +
+
+      '</div>' +
+
+    '</div>';
+
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
+};
+
+window.portalContinueCollaboratorDeactivation =
+  function(slackUserId) {
+
+    const selects =
+      Array.from(
+        document.querySelectorAll(
+          ".portal-deactivation-backup"
+        )
       );
 
-      const optionsResult =
-        await optionsResponse.json();
+    const missing =
+      selects.filter(
+        select =>
+          !String(
+            select.value || ""
+          ).trim()
+      );
 
-      if (!optionsResponse.ok) {
-        throw new Error(
-          optionsResult?.error ||
-          "Não foi possível carregar os substitutos."
-        );
-      }
+    if (missing.length) {
+      alert(
+        "Defina o backup de todas as atividades antes de continuar."
+      );
 
-      const options =
-        optionsResult.options ?? [];
-
-      if (!options.length) {
-        alert(
-          "Não há nenhum colaborador disponível para receber as tarefas que precisam de substituto."
-        );
-        return;
-      }
-
-      const list =
-        options
-          .map(
-            (item, index) =>
-              (index + 1) +
-              " - " +
-              item.name
-          )
-          .join("\\n");
-
-      const selected =
-        prompt(
-          "Este desligamento possui " +
-          (preview.toReplacement ?? 0) +
-          " tarefa(s) que precisam de um substituto.\\n\\n" +
-          "Escolha quem receberá essas tarefas:\\n\\n" +
-          list +
-          "\\n\\nDigite o número do colaborador:"
-        );
-
-      if (selected === null) {
-        return;
-      }
-
-      const selectedIndex =
-        Number(selected) - 1;
-
-      if (
-        !Number.isInteger(selectedIndex) ||
-        selectedIndex < 0 ||
-        selectedIndex >= options.length
-      ) {
-        alert(
-          "Selecione um substituto válido."
-        );
-        return;
-      }
-
-      replacementSlackId =
-        options[selectedIndex].id;
-
-      replacementName =
-        options[selectedIndex].name;
+      missing[0]?.focus();
+      return;
     }
 
-    // ------------------------------------------
-    // 3. Confirmação FINAL
-    // ------------------------------------------
+    const taskBackups =
+      selects.map(select => ({
+        taskId:
+          select.dataset.taskId,
+        backupSlackId:
+          select.value,
+      }));
 
-    let confirmationText =
+    window.portalConfirmCollaboratorDeactivation(
+      slackUserId,
+      taskBackups
+    );
+  };
+window.portalConfirmCollaboratorDeactivation =
+  async function(slackUserId, taskBackups) {
+
+    const confirmed = confirm(
       "Tem certeza que deseja desligar este colaborador?\\n\\n" +
-      "Total de tarefas pendentes: " +
-      (preview.total ?? 0) +
-      "\\n" +
-      "Tarefas que irão para os backups cadastrados: " +
-      (preview.toBackup ?? 0);
-
-    if ((preview.toReplacement ?? 0) > 0) {
-      confirmationText +=
-        "\\nTarefas que irão para " +
-        replacementName +
-        ": " +
-        (preview.toReplacement ?? 0);
-    }
-
-    if ((preview.privateTasks ?? 0) > 0) {
-      confirmationText +=
-        "\\n\\nDessas, " +
-        (preview.privateTasks ?? 0) +
-        " tarefa(s) privada(s) serão transferidas ao substituto.";
-    }
-
-    confirmationText +=
-      "\\n\\nEsta ação representa o desligamento do colaborador e a redistribuição definitiva das tarefas.";
-
-    const confirmed =
-      confirm(confirmationText);
+      "Todas as atividades serão redistribuídas para os backups definidos. " +
+      "Se o colaborador também for o delegador da atividade, o backup passará a ser o novo delegador.\\n\\n" +
+      "Esta redistribuição é definitiva."
+    );
 
     if (!confirmed) {
       return;
     }
 
-    // ------------------------------------------
-    // 4. Executa desligamento
-    // ------------------------------------------
+    try {
 
-    const response = await fetch(
-      "/portal/collaborators/" +
-        encodeURIComponent(slackUserId) +
-        "/deactivate",
-      {
-        method: "POST",
+      const response = await fetch(
+        "/portal/collaborators/" +
+          encodeURIComponent(slackUserId) +
+          "/deactivate",
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
 
-        body: JSON.stringify({
-          replacementSlackId,
-        }),
-      }
-    );
-
-    const result =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        result?.error ||
-        "Não foi possível desligar o colaborador."
+          body: JSON.stringify({
+            taskBackups,
+          }),
+        }
       );
-    }
 
-    // ------------------------------------------
-    // 5. Segurança para resultado parcial
-    // ------------------------------------------
+      const result =
+        await response.json();
 
-    if (!result.deactivated) {
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+          "Não foi possível desligar o colaborador."
+        );
+      }
+
+      /*
+       * Segurança:
+       * o service não marca inactive se alguma
+       * atividade continuar com o colaborador.
+       */
+      if (!result.deactivated) {
+
+        alert(
+          "O desligamento não foi concluído.\\n\\n" +
+          "Tarefas encontradas: " +
+          (result.total ?? 0) +
+          "\\nTransferidas: " +
+          (result.transferred ?? 0) +
+          "\\nFalhas: " +
+          (result.failed ?? 0) +
+          "\\nAinda atribuídas ao colaborador: " +
+          (result.remaining ?? 0) +
+          "\\n\\nO colaborador NÃO foi marcado como desligado."
+        );
+
+        window.location.reload();
+        return;
+      }
+
       alert(
-        "O desligamento não foi concluído.\\n\\n" +
-        "Tarefas encontradas: " +
-        (result.total ?? 0) +
-        "\\nTransferidas: " +
-        (result.transferred ?? 0) +
-        "\\nFalhas: " +
-        (result.failed ?? 0) +
-        "\\nAinda atribuídas ao colaborador: " +
-        (result.remaining ?? 0) +
-        "\\n\\nO colaborador NÃO foi marcado como desligado."
+        "Colaborador desligado com sucesso.\\n\\n" +
+        "Tarefas redistribuídas: " +
+        (result.transferred ?? 0)
       );
 
       window.location.reload();
-      return;
+
+    } catch (error) {
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível desligar o colaborador."
+      );
     }
-
-    alert(
-      "Colaborador desligado com sucesso.\\n\\n" +
-      "Tarefas redistribuídas: " +
-      (result.transferred ?? 0)
-    );
-
-    window.location.reload();
-
-  } catch (error) {
-
-    alert(
-      error instanceof Error
-        ? error.message
-        : "Não foi possível desligar o colaborador."
-    );
-  }
-};
-
+  };
 </script>
   `;
 }
