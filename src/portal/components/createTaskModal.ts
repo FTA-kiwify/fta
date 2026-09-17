@@ -125,7 +125,7 @@ export function createTaskModal(
         ? "Edite as informações da AOR."
         : "Edite as informações da atividade.")
       : (isAor
-        ? "Crie uma nova AOR no FTA."
+        ? "Crie uma atividade sem prazo no FTA. AORs são atividades eventuais que também podem servir como templates. Elas não possuem prazo, recorrência ou lembretes."
         : "Crie uma nova atividade no FTA.")
     }
           </p>
@@ -277,7 +277,7 @@ export function createTaskModal(
               </button>
 
               ${options.processes
-                .map(process => `
+      .map(process => `
                   <button
                     type="button"
                     class="portal-process-option"
@@ -299,7 +299,7 @@ export function createTaskModal(
                     ${escapeHtml(process.name)}
                   </button>
                 `)
-                .join("")}
+      .join("")}
 
               <div
                 id="portal-process-empty"
@@ -518,21 +518,13 @@ export function createTaskModal(
 
 
 
-        <!-- TIPO -->
+        <!-- TIPO DA TAREFA -->
 
-        <div class="portal-form-group">
-
-          <label class="portal-label">
-            Tipo da tarefa
-          </label>
-
-          <input
+<input
   id="portal-task-type"
   type="hidden"
   value="${isAor ? "on_demand" : "normal"}"
 />
-
-        </div>
 
 
         <!-- CAMPOS DA TAREFA NORMAL -->
