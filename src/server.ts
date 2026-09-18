@@ -5,6 +5,7 @@ import { sendMessage } from "./routes/sendMessage";
 import { startCrons } from "./jobs/startCrons";
 import path from "node:path";
 import fastifyStatic from "@fastify/static";
+import multipart from "@fastify/multipart";
 import { googleOAuthRoutes } from "./routes/googleOAuthRoutes";
 import { googleCalendarTestRoutes } from "./routes/googleCalendarTestRoutes";
 import { startPruneDoneTasksCron } from "./jobs/pruneDoneTasksCron";
@@ -15,11 +16,19 @@ import { slackOAuthRoutes } from "./routes/slackOAuthRoutes";
 async function main() {
   const app = fastify({ logger: { level: "info" } });
 
+  app.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024,
+      files: 1,
+    },
+  });
+
   app.register(slackRoutes);
   app.register(slackOAuthRoutes);
   app.register(portalRoutes);
   app.register(sendMessage);
   app.register(adminRoutes);
+  
 
   app.register(googleOAuthRoutes, { prefix: "/google" });
   app.register(googleCalendarTestRoutes, { prefix: "/google" });

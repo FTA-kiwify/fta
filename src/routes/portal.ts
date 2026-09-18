@@ -95,6 +95,9 @@ import { handleTaskResponsibleReassign } from "../services/handleTaskResponsible
 import { getSlackUserName } from "../services/slackUserLookup";
 import { notifyTaskCanceledGroup } from "../services/notifyTaskCanceledGroup";
 import { markTaskOpenMessageAsCanceled } from "../services/markTaskOpenMessageAsCanceled";
+import { batchImportModal } from "../portal/components/batchImportModal";
+import { generateTasksImportTemplate } from "../services/generateTasksImportTemplate";
+import { importTasksFromExcelBuffer } from "../services/importTasksFromExcel";
 
 import {
   startCollaboratorBackup,
@@ -2252,6 +2255,131 @@ export async function portalRoutes(app: FastifyInstance) {
         throw error;
       }
 
+    }
+  );
+  app.get(
+    "/portal/tasks/batch/modal",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      return reply
+        .type("text/html")
+        .send(
+          batchImportModal()
+        );
+    }
+  );
+  app.get(
+    "/portal/tasks/batch/template",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send("Não autenticado.");
+      }
+
+      const buffer =
+        await generateTasksImportTemplate();
+
+      const fileName =
+        `FTA_Importacao_Atividades_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx`;
+
+      return reply
+        .header(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        .header(
+          "Content-Disposition",
+          `attachment; filename="${fileName}"`
+        )
+        .send(buffer);
+    }
+  );
+
+  app.post(
+    "/portal/tasks/batch/import",
+    async (request, reply) => {
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return reply
+          .code(401)
+          .send({
+            error: "Não autenticado.",
+          });
+      }
+
+      const file =
+        await request.file();
+
+      if (!file) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "Selecione uma planilha para importar.",
+          });
+      }
+
+      const fileName =
+        file.filename?.toLowerCase() ?? "";
+
+      if (!fileName.endsWith(".xlsx")) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              "Envie um arquivo no formato .xlsx.",
+          });
+      }
+
+      const buffer =
+        await file.toBuffer();
+
+      const result =
+        await importTasksFromExcelBuffer({
+          slack,
+          uploadedBySlackId:
+            portalUser.slackUserId,
+          buffer,
+        });
+
+      if (result.fatalError) {
+        return reply
+          .code(400)
+          .send({
+            error:
+              result.fatalError,
+          });
+      }
+
+      return reply.send({
+        created:
+          result.created.length,
+
+        failed:
+          result.failed,
+
+        failedCount:
+          result.failed.length,
+      });
     }
   );
   app.get(

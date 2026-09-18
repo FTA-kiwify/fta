@@ -2339,6 +2339,172 @@ window.portalSelectProcess = function(
     dropdown.style.display = "none";
   }
 };
+
+window.portalImportTasksBatch = async function() {
+
+  const input =
+    document.getElementById(
+      "portal-batch-import-file"
+    );
+
+  const button =
+    document.getElementById(
+      "portal-batch-import-button"
+    );
+
+  const resultBox =
+    document.getElementById(
+      "portal-batch-import-result"
+    );
+
+  const file =
+    input?.files?.[0];
+
+  if (!file) {
+    alert(
+      "Selecione uma planilha .xlsx."
+    );
+    return;
+  }
+
+  if (
+    !file.name
+      .toLowerCase()
+      .endsWith(".xlsx")
+  ) {
+    alert(
+      "Selecione um arquivo .xlsx."
+    );
+    return;
+  }
+
+  const originalText =
+    button?.innerHTML;
+
+  if (button) {
+    button.disabled = true;
+    button.innerHTML =
+      "Processando...";
+  }
+
+  if (resultBox) {
+    resultBox.style.display =
+      "none";
+  }
+
+  try {
+
+    const formData =
+      new FormData();
+
+    formData.append(
+      "file",
+      file
+    );
+
+    const response =
+      await fetch(
+        "/portal/tasks/batch/import",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+        "Não foi possível importar a planilha."
+      );
+    }
+
+    const failures =
+      Array.isArray(result.failed)
+        ? result.failed
+        : [];
+
+    let html =
+      "<strong>Importação concluída.</strong><br>" +
+      "✅ Criadas: " +
+      String(result.created ?? 0);
+
+    if (failures.length) {
+
+      html +=
+        "<br>⛔ Falhas: " +
+        String(failures.length) +
+        "<br><br>";
+
+      html += failures
+        .slice(0, 10)
+        .map(item =>
+          "Linha " +
+          String(item.row) +
+          ": " +
+          String(item.reason)
+        )
+        .join("<br>");
+
+      if (failures.length > 10) {
+        html +=
+          "<br>… +" +
+          String(
+            failures.length - 10
+          ) +
+          " outras";
+      }
+    }
+
+    if (resultBox) {
+      resultBox.innerHTML =
+        html;
+
+      resultBox.style.display =
+        "block";
+
+      resultBox.style.background =
+        failures.length
+          ? "#FFF7ED"
+          : "#F0FDF4";
+
+      resultBox.style.color =
+        failures.length
+          ? "#9A3412"
+          : "#166534";
+    }
+
+  } catch (error) {
+
+    if (resultBox) {
+      resultBox.innerHTML =
+        error instanceof Error
+          ? error.message
+          : "Erro ao importar a planilha.";
+
+      resultBox.style.display =
+        "block";
+
+      resultBox.style.background =
+        "#FEF2F2";
+
+      resultBox.style.color =
+        "#B91C1C";
+    }
+
+  } finally {
+
+    if (button) {
+      button.disabled = false;
+
+      button.innerHTML =
+        originalText ||
+        "📤 Enviar";
+    }
+  }
+};
 </script>
   `;
 }
