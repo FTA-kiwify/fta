@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@fastify/formbody": "^8.0.2",
+    "@fastify/multipart": "^10.1.1",
     "@fastify/static": "^9.0.0",
     "@notionhq/client": "^5.23.2",
     "@prisma/adapter-better-sqlite3": "^7.2.0",

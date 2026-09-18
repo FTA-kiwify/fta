@@ -511,54 +511,43 @@ async function downloadSlackFileToBuffer(
   );
 }
 
-export async function importTasksFromExcelSlackFile(
-  args: {
-    slack: WebClient;
-    uploadedBySlackId: string;
-    channelId: string;
-    threadTs: string;
-    file: SlackFile;
-  }
-) {
+export type ImportTasksFromExcelResult = {
+  created: string[];
+
+  failed: Array<{
+    row: number;
+    reason: string;
+  }>;
+
+  fatalError: string | null;
+};
+
+
+export async function importTasksFromExcelBuffer(args: {
+  slack: WebClient;
+  uploadedBySlackId: string;
+  buffer: Buffer;
+}): Promise<ImportTasksFromExcelResult> {
 
   const {
     slack,
     uploadedBySlackId,
-    channelId,
-    threadTs,
-    file,
+    buffer,
   } = args;
 
-  await slack.chat.postMessage({
-    channel: channelId,
-    thread_ts: threadTs,
-    text:
-      `📥 Recebi o arquivo *${file.name ?? "tasks.xlsx"}*. Vou processar agora…`,
-  });
+  const wb = new ExcelJS.Workbook();
 
-  const buf =
-    await downloadSlackFileToBuffer(
-      file
-    );
+  await wb.xlsx.load(buffer);
 
-  const wb =
-    new ExcelJS.Workbook();
-
-  await wb.xlsx.load(buf);
-
-  const ws =
-    wb.worksheets[0];
+  const ws = wb.worksheets[0];
 
   if (!ws) {
-
-    await slack.chat.postMessage({
-      channel: channelId,
-      thread_ts: threadTs,
-      text:
-        "⛔ Não encontrei nenhuma aba no arquivo.",
-    });
-
-    return;
+    return {
+      created: [],
+      failed: [],
+      fatalError:
+        "Não encontrei nenhuma aba no arquivo.",
+    };
   }
 
   type Cols = {
@@ -830,22 +819,12 @@ export async function importTasksFromExcelSlackFile(
     )
   ) {
 
-    await slack.chat.postMessage({
-      channel: channelId,
-      thread_ts: threadTs,
-      text:
-        "⛔ Headers inválidos.\n" +
-        "O arquivo precisa ter obrigatoriamente (linha 1):\n" +
-        "• *Título*\n" +
-        "• *E-mail do responsável* **OU** *ID Slack do responsável*\n\n" +
-        "Campos opcionais:\n" +
-        "Descrição, Tipo da tarefa, Prazo, Horário, " +
-        "Urgência, Recorrência, Tipo de prazo, Nome do Processo, ID Processo, " +
-        "Privacidade, Turbo dia anterior, Horário início Turbo, " +
-        "E-mail das cópias e ID Slack das cópias.",
-    });
-
-    return;
+    return {
+      created: [],
+      failed: [],
+      fatalError:
+        "Headers inválidos. O arquivo precisa ter Título e E-mail do responsável ou ID Slack do responsável.",
+    };
   }
 
   const created: string[] = [];
@@ -1672,37 +1651,88 @@ export async function importTasksFromExcelSlackFile(
     }
   }
 
+
+
+  return {
+    created,
+    failed,
+    fatalError: null,
+  };
+}
+
+
+export async function importTasksFromExcelSlackFile(
+  args: {
+    slack: WebClient;
+    uploadedBySlackId: string;
+    channelId: string;
+    threadTs: string;
+    file: SlackFile;
+  }
+) {
+
+  const {
+    slack,
+    uploadedBySlackId,
+    channelId,
+    threadTs,
+    file,
+  } = args;
+
+  await slack.chat.postMessage({
+    channel: channelId,
+    thread_ts: threadTs,
+    text:
+      `📥 Recebi o arquivo *${file.name ?? "tasks.xlsx"}*. Vou processar agora…`,
+  });
+
+  const buffer =
+    await downloadSlackFileToBuffer(file);
+
+  const result =
+    await importTasksFromExcelBuffer({
+      slack,
+      uploadedBySlackId,
+      buffer,
+    });
+
+  if (result.fatalError) {
+    await slack.chat.postMessage({
+      channel: channelId,
+      thread_ts: threadTs,
+      text: `⛔ ${result.fatalError}`,
+    });
+
+    return;
+  }
+
   const okMsg =
-    created.length
-      ? `✅ Criei *${created.length}* tarefa(s).`
+    result.created.length
+      ? `✅ Criei *${result.created.length}* tarefa(s).`
       : "⚠️ Não criei nenhuma tarefa.";
 
   const failMsg =
-    failed.length
+    result.failed.length
       ? (
-        `\n\n⛔ Falhas (${failed.length}):\n` +
-        failed
+        `\n\n⛔ Falhas (${result.failed.length}):\n` +
+        result.failed
           .slice(0, 10)
           .map(
-            (f) =>
+            f =>
               `• Linha ${f.row}: ${f.reason}`
           )
           .join("\n") +
         (
-          failed.length > 10
-            ? `\n… +${failed.length - 10} outras`
+          result.failed.length > 10
+            ? `\n… +${result.failed.length - 10} outras`
             : ""
         )
       )
       : "";
 
   await slack.chat.postMessage({
-    channel:
-      channelId,
-    thread_ts:
-      threadTs,
-    text:
-      okMsg +
-      failMsg,
+    channel: channelId,
+    thread_ts: threadTs,
+    text: okMsg + failMsg,
   });
 }

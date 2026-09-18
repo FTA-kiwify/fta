@@ -98,6 +98,15 @@ export function delegatedDashboardPage(data: DelegatedDashboardData) {
     Criar AOR
   </button>
 
+  <button
+  type="button"
+  class="portal-action-btn portal-action-outline"
+  onclick="openPortalModal('/portal/tasks/batch/modal', '680px')"
+>
+  <span style="font-size:16px; line-height:1;">📦</span>
+  Enviar em lote
+</button>
+
 </div>
 
 </div>

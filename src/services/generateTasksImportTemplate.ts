@@ -53,6 +53,8 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     "Descrição",
     "E-mail do responsável",
     "ID Slack do responsável",
+    "E-mail do backup",
+    "ID Slack do backup",
     "Prazo",
     "Horário",
     "Urgência",
@@ -74,6 +76,8 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     { key: "description", width: 40 },
     { key: "responsibleEmail", width: 32 },
     { key: "responsibleSlackId", width: 24 },
+    { key: "backupResponsibleEmail", width: 32 },
+    { key: "backupResponsibleSlackId", width: 24 },
     { key: "term", width: 16 },
     { key: "deadlineTime", width: 16 },
     { key: "urgency", width: 16 },
@@ -276,9 +280,9 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
   }
 
   tasksSheet.autoFilter = {
-  from: "A1",
-  to: "P1",
-};
+    from: "A1",
+    to: "P1",
+  };
 
   // =====================================================
   // ABA DE INSTRUÇÕES
@@ -300,6 +304,7 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     "2. Título é obrigatório.",
     "",
     "3. Informe o responsável por E-mail ou ID Slack.",
+    "   O backup é opcional e também pode ser informado por E-mail ou ID Slack.",
     "",
     "4. Tipo da tarefa:",
     "   • normal = tarefa normal",
