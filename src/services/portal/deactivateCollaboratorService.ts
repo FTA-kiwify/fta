@@ -518,58 +518,7 @@ export async function deactivateCollaborator(args: {
                 },
             });
 
-            /*
-             * Se o colaborador desligado também
-             * era o delegador, o backup passa
-             * a ser o novo delegador.
-             *
-             * Se outra pessoa delegou a tarefa,
-             * preservamos essa pessoa.
-             */
 
-            if (
-                task.delegation ===
-                slackUserId
-            ) {
-                await prisma.task.update({
-                    where: {
-                        id:
-                            task.id,
-                    },
-
-                    data: {
-                        delegation:
-                            destination,
-                    },
-                });
-
-                /*
-                 * Atualiza os e-mails após
-                 * a troca do delegador.
-                 */
-
-                await syncTaskParticipantEmails({
-                    slack,
-
-                    taskId:
-                        task.id,
-
-                    delegationSlackId:
-                        destination,
-
-                    responsibleSlackId:
-                        destination,
-
-                    backupResponsibleSlackId:
-                        null,
-
-                    carbonCopiesSlackIds:
-                        task.carbonCopies.map(
-                            copy =>
-                                copy.slackUserId
-                        ),
-                });
-            }
 
             /*
              * O desligamento é definitivo.
@@ -622,6 +571,115 @@ export async function deactivateCollaborator(args: {
     }
 
     /*
+ * ==========================================
+ * TRANSFERE AS DELEGAÇÕES DO COLABORADOR
+ *
+ * Toda tarefa pendente que ainda tenha
+ * o colaborador desligado como delegador
+ * passa a ser delegada pelo responsável
+ * atual da própria tarefa.
+ *
+ * Isso também cobre tarefas que o
+ * colaborador delegou para terceiros e
+ * pelas quais ele nunca foi responsável.
+ * ==========================================
+ */
+
+    const delegatedTasks =
+        await prisma.task.findMany({
+            where: {
+                delegation:
+                    slackUserId,
+
+                status:
+                    "pending",
+            },
+
+            select: {
+                id: true,
+                responsible: true,
+                backupResponsible: true,
+
+                carbonCopies: {
+                    select: {
+                        slackUserId: true,
+                    },
+                },
+            },
+        });
+
+    const failedDelegationTaskIds: string[] =
+        [];
+
+    for (const task of delegatedTasks) {
+        try {
+            /*
+             * O responsável atual passa a ser
+             * também o delegador.
+             */
+            await prisma.task.update({
+                where: {
+                    id:
+                        task.id,
+                },
+
+                data: {
+                    delegation:
+                        task.responsible,
+                },
+            });
+
+            /*
+             * Atualiza delegationEmail e os
+             * demais e-mails dos participantes.
+             */
+            await syncTaskParticipantEmails({
+                slack,
+
+                taskId:
+                    task.id,
+
+                delegationSlackId:
+                    task.responsible,
+
+                responsibleSlackId:
+                    task.responsible,
+
+                backupResponsibleSlackId:
+                    task.backupResponsible ??
+                    null,
+
+                carbonCopiesSlackIds:
+                    task.carbonCopies.map(
+                        copy =>
+                            copy.slackUserId
+                    ),
+            });
+
+        } catch (error) {
+            console.error(
+                "[COLLABORATOR_DEACTIVATE] delegation transfer failed",
+                {
+                    taskId:
+                        task.id,
+
+                    slackUserId,
+
+                    newDelegation:
+                        task.responsible,
+
+                    error,
+                }
+            );
+
+            failedDelegationTaskIds.push(
+                task.id
+            );
+        }
+    }
+
+
+    /*
      * ==========================================
      * SEGURANÇA FINAL
      *
@@ -647,6 +705,8 @@ export async function deactivateCollaborator(args: {
 
     if (
         failedTaskIds.length > 0 ||
+        failedDelegationTaskIds.length > 0 ||
+
         remainingTasks > 0
     ) {
         return {
@@ -665,11 +725,15 @@ export async function deactivateCollaborator(args: {
             failed:
                 failedTaskIds.length,
 
+            failedDelegations:
+                failedDelegationTaskIds.length,
+
             remaining:
                 remainingTasks,
 
             transferredTaskIds,
             failedTaskIds,
+            failedDelegationTaskIds,
         };
     }
 
@@ -731,6 +795,12 @@ export async function deactivateCollaborator(args: {
         transferredTaskIds,
 
         failedTaskIds:
+            [],
+
+        failedDelegations:
+            0,
+
+        failedDelegationTaskIds:
             [],
     };
 }
