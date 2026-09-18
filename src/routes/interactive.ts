@@ -2585,6 +2585,8 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 editedBy: userSlackId,
                 responsible: after.responsible,
                 carbonCopies: allCc,
+                delegation:
+                  after.delegation ?? null,
 
                 oldTitle: before.title ?? null,
                 newTitle: after.title ?? null,

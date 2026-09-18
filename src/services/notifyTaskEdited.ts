@@ -7,6 +7,7 @@ type NotifyTaskEditedArgs = {
   taskId: string;
 
   editedBy: string; // quem editou (delegador)
+  delegation: string | null;
   responsible: string; // responsável atual (depois da edição)
 
   // participantes (CC final). Pode ser união before+after.
@@ -183,6 +184,7 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
     slack,
     taskId,
     editedBy,
+    delegation,
     responsible,
     carbonCopies,
 
@@ -227,9 +229,8 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
     (newBackupResponsible ?? "").trim();
 
   const participants = uniq([
-    editedBy,
+    delegation,
     afterResponsible,
-    afterBackupResponsible,
     ...(carbonCopies ?? []),
   ]);
 
@@ -341,10 +342,8 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
   const ccMentions = uniq(newCarbonCopies ?? []).map(mention).join(", ");
 
   const targetsMentions = [
+    delegation ? mention(delegation) : null,
     afterResponsible ? mention(afterResponsible) : null,
-    afterBackupResponsible
-      ? mention(afterBackupResponsible)
-      : null,
     ccMentions || null,
   ]
     .filter(Boolean)
