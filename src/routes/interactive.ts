@@ -1800,8 +1800,26 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const task = await prisma.task.findFirst({
             where: {
               id: taskId,
-              status: { notIn: ["done", "cancelled"] },
-              delegation: userSlackId,
+
+              status: {
+                notIn: ["done", "cancelled"],
+              },
+
+              OR: [
+                {
+                  delegation: userSlackId,
+                },
+                {
+                  responsible: userSlackId,
+                },
+                {
+                  carbonCopies: {
+                    some: {
+                      slackUserId: userSlackId,
+                    },
+                  },
+                },
+              ],
             },
             select: {
               id: true,
@@ -1838,7 +1856,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
             await sendBotDm(
               slack,
               userSlackId,
-              "⚠️ Apenas quem delegou a tarefa pode editá-la."
+              "⚠️ Apenas o delegador, o responsável ou uma pessoa em cópia pode editar esta atividade."
             );
 
             return reply.status(200).send();
@@ -2494,6 +2512,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
           const updated = await updateTaskService({
             taskId,
             delegationSlackId: userSlackId,
+            requesterSlackId: userSlackId,
             title,
             description,
             termIso,
