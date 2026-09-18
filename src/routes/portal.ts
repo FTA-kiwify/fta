@@ -3634,6 +3634,8 @@ export async function portalRoutes(app: FastifyInstance) {
 
           responsible:
             updated.after.responsible,
+          delegation:
+            updated.after.delegation ?? null,
 
           carbonCopies:
             allCc,
