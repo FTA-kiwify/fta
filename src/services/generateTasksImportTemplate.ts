@@ -189,11 +189,10 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
   listsSheet.getCell("E2").value = "não";
   listsSheet.getCell("E3").value = "sim";
 
-  // =====================================================
+    // =====================================================
   // DROPDOWNS
   // =====================================================
 
-  // Aplicamos em várias linhas para a pessoa poder preencher o arquivo.
   const firstDataRow = 2;
   const lastDataRow = 501;
 
@@ -206,37 +205,37 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     };
   }
 
-  // H = Urgência
+  // J = Urgência
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`H${row}`).dataValidation = {
+    tasksSheet.getCell(`J${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$B$2:$B$4"],
     };
   }
 
-  // I = Tipo de prazo
+  // K = Tipo de prazo
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`I${row}`).dataValidation = {
+    tasksSheet.getCell(`K${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$C$2:$C$3"],
     };
   }
 
-  // J = Recorrência
+  // L = Recorrência
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`J${row}`).dataValidation = {
+    tasksSheet.getCell(`L${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$D$2:$D$9"],
     };
   }
 
-  // K = Processo
+  // M = Processo
   if (processes.length > 0) {
     for (let row = firstDataRow; row <= lastDataRow; row++) {
-      tasksSheet.getCell(`K${row}`).dataValidation = {
+      tasksSheet.getCell(`M${row}`).dataValidation = {
         type: "list",
         allowBlank: true,
         formulae: [
@@ -251,18 +250,18 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
     }
   }
 
-  // L = Privacidade
+  // N = Privacidade
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`L${row}`).dataValidation = {
+    tasksSheet.getCell(`N${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$E$2:$E$3"],
     };
   }
 
-  // M = Turbo dia anterior
+  // O = Turbo dia anterior
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`M${row}`).dataValidation = {
+    tasksSheet.getCell(`O${row}`).dataValidation = {
       type: "list",
       allowBlank: true,
       formulae: ["'_Listas'!$E$2:$E$3"],
@@ -274,15 +273,15 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
   // =====================================================
 
   for (let row = firstDataRow; row <= lastDataRow; row++) {
-    tasksSheet.getCell(`F${row}`).numFmt = "dd/mm/yyyy";
-    tasksSheet.getCell(`G${row}`).numFmt = "hh:mm";
-    tasksSheet.getCell(`N${row}`).numFmt = "hh:mm";
+    tasksSheet.getCell(`H${row}`).numFmt = "dd/mm/yyyy";
+    tasksSheet.getCell(`I${row}`).numFmt = "hh:mm";
+    tasksSheet.getCell(`P${row}`).numFmt = "hh:mm";
   }
 
   tasksSheet.autoFilter = {
-  from: "A1",
-  to: "R1",
-};
+    from: "A1",
+    to: "R1",
+  };
 
   // =====================================================
   // ABA DE INSTRUÇÕES
