@@ -140,6 +140,8 @@ export async function updateTaskService(args: {
   taskId: string;
   delegationSlackId: string;
 
+  requesterSlackId: string;
+
   title: string;
   description: string | null;
   processId: string | null;
@@ -163,6 +165,7 @@ export async function updateTaskService(args: {
   const {
     taskId,
     delegationSlackId,
+    requesterSlackId,
     title,
     description,
     processId,
@@ -224,8 +227,18 @@ export async function updateTaskService(args: {
 
   if (!before) throw new Error(`Task not found: ${taskId}`);
   const isOnDemand = before.taskType === "on_demand";
-  if ((before.delegation ?? null) !== delegationSlackId) {
-    throw new Error("Not allowed to edit this task");
+  const canEdit =
+    before.delegation === requesterSlackId ||
+    before.responsible === requesterSlackId ||
+    before.carbonCopies.some(
+      copy =>
+        copy.slackUserId === requesterSlackId
+    );
+
+  if (!canEdit) {
+    throw new Error(
+      "Not allowed to edit this task"
+    );
   }
 
   const responsibleChanged =

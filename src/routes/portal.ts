@@ -2650,18 +2650,18 @@ export async function portalRoutes(app: FastifyInstance) {
           );
       }
 
-      if (
-        task.delegation !==
-        portalUser.slackUserId
-      ) {
+      const canEdit =
+        task.delegation ===
+        portalUser.slackUserId ||
+        task.responsible ===
+        portalUser.slackUserId ||
+        task.carbonCopies.some(
+          cc =>
+            cc.slackUserId ===
+            portalUser.slackUserId
+        );
 
-        const delegatedByName =
-          task.delegation
-            ? await getSlackUserName(
-              task.delegation
-            )
-            : "outro usuário";
-
+      if (!canEdit) {
         return reply
           .code(403)
           .send(`
@@ -2688,9 +2688,9 @@ export async function portalRoutes(app: FastifyInstance) {
             line-height:1.6;
           "
         >
-          Esta tarefa foi delegada por
-          <strong>${delegatedByName}</strong>.
-          Apenas quem criou a tarefa pode editá-la.
+          Apenas o delegador, o responsável
+          ou uma pessoa em cópia pode editar
+          esta atividade.
         </p>
       </div>
     `);
@@ -3422,6 +3422,8 @@ export async function portalRoutes(app: FastifyInstance) {
             taskId,
 
             delegationSlackId:
+              portalUser.slackUserId,
+            requesterSlackId:
               portalUser.slackUserId,
 
             title,
