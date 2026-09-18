@@ -2591,6 +2591,18 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                 oldTitle: before.title ?? null,
                 newTitle: after.title ?? null,
 
+                oldDescription:
+                  before.description ?? null,
+
+                newDescription:
+                  after.description ?? null,
+
+                oldProcessId:
+                  before.processId ?? null,
+
+                newProcessId:
+                  after.processId ?? null,
+
                 oldTerm: before.term ?? null,
                 newTerm: after.term ?? null,
 

@@ -17,6 +17,12 @@ type NotifyTaskEditedArgs = {
   oldTitle?: string | null;
   newTitle?: string | null;
 
+  oldDescription?: string | null;
+  newDescription?: string | null;
+
+  oldProcessId?: string | null;
+  newProcessId?: string | null;
+
   oldTerm?: Date | string | null; // Date do Prisma ou "YYYY-MM-DD"
   newTerm?: Date | string | null;
 
@@ -190,6 +196,10 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
 
     oldTitle,
     newTitle,
+    oldDescription,
+    newDescription,
+    oldProcessId,
+    newProcessId,
     oldTerm,
     newTerm,
     oldDeadlineTime,
@@ -225,8 +235,7 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
   const afterResponsible =
     (newResponsible ?? responsible ?? "").trim();
 
-  const afterBackupResponsible =
-    (newBackupResponsible ?? "").trim();
+
 
   const participants = uniq([
     delegation,
@@ -244,6 +253,58 @@ export async function notifyTaskEdited(args: NotifyTaskEditedArgs) {
 
   if (!sameString(oldTitle ?? null, newTitle ?? null) && (oldTitle || newTitle)) {
     changes.push(`• *Título:* ${oldTitle ?? "_vazio_"} → ${newTitle ?? "_vazio_"}`);
+  }
+
+  // Descrição
+  if (
+    !sameString(
+      oldDescription ?? null,
+      newDescription ?? null
+    )
+  ) {
+    changes.push(
+      "• *Descrição:* alterada"
+    );
+  }
+
+
+  // Processo
+  if (
+    !sameString(
+      oldProcessId ?? null,
+      newProcessId ?? null
+    )
+  ) {
+
+    const oldProcess =
+      oldProcessId
+        ? await prisma.process.findUnique({
+          where: {
+            id: oldProcessId,
+          },
+          select: {
+            title: true,
+          },
+        })
+        : null;
+
+    const newProcess =
+      newProcessId
+        ? await prisma.process.findUnique({
+          where: {
+            id: newProcessId,
+          },
+          select: {
+            title: true,
+          },
+        })
+        : null;
+
+    changes.push(
+      `• *Processo:* ${oldProcess?.title ?? "_nenhum_"
+      } → ${newProcess?.title ?? "_nenhum_"
+      }`
+    );
   }
 
   const oldDue = formatDue(oldTerm ?? null, oldDeadlineTime ?? null);
