@@ -3309,6 +3309,12 @@ export async function portalRoutes(app: FastifyInstance) {
             delegation: true,
             responsible: true,
             status: true,
+
+            carbonCopies: {
+              select: {
+                slackUserId: true,
+              },
+            },
           },
         });
 
@@ -3320,15 +3326,23 @@ export async function portalRoutes(app: FastifyInstance) {
           });
       }
 
-      if (
-        currentTask.delegation !==
-        portalUser.slackUserId
-      ) {
+      const canEdit =
+        currentTask.delegation ===
+        portalUser.slackUserId ||
+        currentTask.responsible ===
+        portalUser.slackUserId ||
+        currentTask.carbonCopies.some(
+          copy =>
+            copy.slackUserId ===
+            portalUser.slackUserId
+        );
+
+      if (!canEdit) {
         return reply
           .code(403)
           .send({
             error:
-              "Apenas quem criou a tarefa pode editá-la.",
+              "Apenas o delegador, o responsável ou uma pessoa em cópia pode editar esta atividade.",
           });
       }
 
