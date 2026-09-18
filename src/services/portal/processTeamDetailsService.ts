@@ -37,6 +37,8 @@ export async function getProcessTeamDetails(
                 where: {
                   status: "pending",
                   calendarPrivate: false,
+                  taskType: "normal",
+
                 },
               },
             },

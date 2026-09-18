@@ -56,6 +56,7 @@ export async function getTeams() {
 
       const openTasks = await prisma.task.count({
         where: {
+          taskType: "normal",
           status: {
             in: [
               "pending",
@@ -72,6 +73,7 @@ export async function getTeams() {
 
       const todayTasks = await prisma.task.count({
         where: {
+          taskType: "normal",
           status: {
             in: [
               "pending",

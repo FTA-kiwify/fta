@@ -44,6 +44,7 @@ export async function getSubTeams(
 
       const openTasks = await prisma.task.count({
         where: {
+          taskType: "normal",
           responsible: {
             in: slackIds,
           },
@@ -66,6 +67,7 @@ export async function getSubTeams(
 
       const todayTasks = await prisma.task.count({
         where:{
+          taskType: "normal",
           responsible:{
             in: slackIds,
           },
