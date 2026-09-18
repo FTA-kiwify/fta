@@ -3660,6 +3660,18 @@ export async function portalRoutes(app: FastifyInstance) {
           newTitle:
             updated.after.title,
 
+          oldDescription:
+            updated.before.description,
+
+          newDescription:
+            updated.after.description,
+
+          oldProcessId:
+            updated.before.processId,
+
+          newProcessId:
+            updated.after.processId,
+
           oldTerm:
             updated.before.term,
 
