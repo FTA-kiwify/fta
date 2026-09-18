@@ -280,9 +280,9 @@ export async function generateTasksImportTemplate(): Promise<Buffer> {
   }
 
   tasksSheet.autoFilter = {
-    from: "A1",
-    to: "P1",
-  };
+  from: "A1",
+  to: "R1",
+};
 
   // =====================================================
   // ABA DE INSTRUÇÕES
