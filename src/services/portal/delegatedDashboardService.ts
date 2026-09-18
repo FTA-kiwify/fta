@@ -80,6 +80,7 @@ export async function getDelegatedDashboardData(
       where: {
         ...delegatedWhere,
         status: "pending",
+        taskType: "normal",
       },
     }),
 
@@ -87,6 +88,7 @@ export async function getDelegatedDashboardData(
       where: {
         ...delegatedWhere,
         status: "pending",
+        taskType: "normal",
         term: {
           gte: today,
           lt: tomorrow,
@@ -99,6 +101,7 @@ export async function getDelegatedDashboardData(
         ...delegatedWhere,
         status: "pending",
         urgency: "turbo",
+        taskType: "normal",
       },
     }),
 

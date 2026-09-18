@@ -12,7 +12,9 @@ export async function getCollaborators(): Promise<Collaborator[]> {
   const tasks = await prisma.task.findMany({
     where: {
       status: "pending",
-      calendarPrivate: false
+      calendarPrivate: false,
+      taskType: "normal",
+
     },
     select: {
       responsible: true,

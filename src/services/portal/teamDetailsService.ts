@@ -179,7 +179,13 @@ export async function getTeamDetails(
 
     });
 
-    const todayTasks = tasks.filter(task => {
+    const normalTasks =
+        tasks.filter(
+            task =>
+                task.taskType !== "on_demand"
+        );
+
+    const todayTasks = normalTasks.filter(task => {
 
         if (!task.term) return false;
 
@@ -439,7 +445,7 @@ export async function getTeamDetails(
         isTeam: true,
         slackUserId: team.id,
         name: team.name,
-        totalTasks: tasks.length,
+        totalTasks: normalTasks.length,
         todayTasks,
         recurrences,
         urgencies,

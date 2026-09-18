@@ -93,6 +93,7 @@ export async function getCollaboratorDetails(
   const tasks = await prisma.task.findMany({
 
     where: {
+      taskType: "normal",
       responsible: slackUserId,
       status: "pending",
       calendarPrivate: false,
@@ -140,18 +141,25 @@ export async function getCollaboratorDetails(
 
     });
 
-  const todayTasks = tasks.filter(task => {
-
-    if (!task.term) {
-      return false;
-    }
-
-    return (
-      task.term >= today &&
-      task.term < tomorrow
+  const normalTasks =
+    tasks.filter(
+      task =>
+        task.taskType !== "on_demand"
     );
 
-  }).length;
+  const todayTasks =
+    normalTasks.filter(task => {
+
+      if (!task.term) {
+        return false;
+      }
+
+      return (
+        task.term >= today &&
+        task.term < tomorrow
+      );
+
+    }).length;
 
 
 
@@ -397,7 +405,7 @@ export async function getCollaboratorDetails(
     deactivatedAt:
       collaboratorState?.deactivatedAt ?? null,
 
-    totalTasks: tasks.length,
+    totalTasks: normalTasks.length,
 
     todayTasks,
 

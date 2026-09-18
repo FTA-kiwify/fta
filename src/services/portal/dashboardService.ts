@@ -62,6 +62,7 @@ export async function getDashboardData(
       where: {
         status: "pending",
         responsible: slackUserId,
+        taskType: "normal",
       },
     }),
 
@@ -69,6 +70,7 @@ export async function getDashboardData(
       where: {
         status: "pending",
         responsible: slackUserId,
+        taskType: "normal",
         term: {
           gte: today,
           lt: tomorrow,
@@ -81,6 +83,7 @@ export async function getDashboardData(
         status: "pending",
         responsible: slackUserId,
         urgency: "turbo",
+        taskType: "normal",
       },
     }),
 
