@@ -374,7 +374,7 @@ export async function getTeamDetails(
 
     const themeMap = new Map<string, CollaboratorTask[]>();
 
-    for (const task of tasks) {
+    for (const task of normalTasks) {
 
         const theme =
             task.process?.theme?.trim() ||
@@ -461,6 +461,7 @@ export async function getTeamDetails(
                 openTasks: await prisma.task.count({
                     where: {
                         responsible: slackUserId,
+                        taskType: "normal",
                         calendarPrivate: false,
                         status: {
                             in: [
