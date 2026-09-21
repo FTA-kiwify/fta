@@ -93,7 +93,6 @@ export async function getCollaboratorDetails(
   const tasks = await prisma.task.findMany({
 
     where: {
-      taskType: "normal",
       responsible: slackUserId,
       status: "pending",
       calendarPrivate: false,
@@ -344,7 +343,7 @@ export async function getCollaboratorDetails(
     CollaboratorTask[]
   >();
 
-  for (const task of tasks) {
+  for (const task of normalTasks) {
 
     const themeName =
       task.process?.theme?.trim() ||
