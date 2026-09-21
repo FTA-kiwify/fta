@@ -531,8 +531,20 @@ export async function portalRoutes(app: FastifyInstance) {
       const path =
         request.url.split("?")[0];
 
+      /*
+ * Classificação do acesso.
+ *
+ * GETs de modal são registrados separadamente
+ * das páginas normais do Portal.
+ */
+      const isModal =
+        path.endsWith("/modal");
+
+      /*
+       * Continuamos ignorando endpoints auxiliares
+       * que não representam navegação do usuário.
+       */
       const ignoredPaths = [
-        "/modal",
         "/template",
         "/documentation",
       ];
@@ -557,7 +569,9 @@ export async function portalRoutes(app: FastifyInstance) {
           portalUser.email ?? null,
 
         action:
-          "PAGE_VIEW",
+          isModal
+            ? "MODAL_OPENED"
+            : "PAGE_VIEW",
 
         path,
       });
