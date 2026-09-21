@@ -9,6 +9,7 @@ type UpcomingTaskProps = {
   // Portal Dashboard:
   // mostra checkbox para conclusão em lote.
   selectable?: boolean;
+  selectionType?: "task" | "aor";
 };
 
 function urgencyBadge(
@@ -95,7 +96,7 @@ export function upcomingTask(
       >
 
         ${task.selectable
-          ? `
+      ? `
               <div
                 style="
                   padding-top:2px;
@@ -106,9 +107,15 @@ export function upcomingTask(
 
                 <input
                   type="checkbox"
-                  class="portal-task-complete-checkbox"
-                  value="${task.id}"
-                  onchange="portalUpdateCompleteSelection()"
+                  class="${task.selectionType === "aor"
+        ? "portal-aor-checkbox"
+        : "portal-task-complete-checkbox"
+      }"
+value="${task.id}"
+onchange="${task.selectionType === "aor"
+        ? "portalUpdateAorSelection()"
+        : "portalUpdateCompleteSelection()"
+      }"
                   onclick="event.stopPropagation()"
                   style="
                     width:18px;
@@ -120,17 +127,17 @@ export function upcomingTask(
 
               </div>
             `
-          : ""
-        }
+      : ""
+    }
 
         <div style="flex:1; min-width:0;">
 
           <div style="margin-bottom:10px;">
 
             ${task.urgency
-              ? urgencyBadge(task.urgency)
-              : ""
-            }
+      ? urgencyBadge(task.urgency)
+      : ""
+    }
 
           </div>
 
@@ -146,9 +153,9 @@ export function upcomingTask(
 
           ${task.hideResponsible
 
-            ? (
-              task.deadlineTime
-                ? `
+      ? (
+        task.deadlineTime
+          ? `
                     <div
                       style="
                         color:#6B7280;
@@ -158,10 +165,10 @@ export function upcomingTask(
                       🕒 ${task.deadlineTime}
                     </div>
                   `
-                : ""
-            )
+          : ""
+      )
 
-            : `
+      : `
                 <div
                   style="
                     display:flex;
@@ -177,17 +184,17 @@ export function upcomingTask(
                   </span>
 
                   ${task.deadlineTime
-                    ? `
+        ? `
                         <span>
                           🕒 ${task.deadlineTime}
                         </span>
                       `
-                    : ""
-                  }
+        : ""
+      }
 
                 </div>
               `
-          }
+    }
 
         </div>
 

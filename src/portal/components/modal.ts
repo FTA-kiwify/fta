@@ -445,6 +445,200 @@ window.portalOpenRescheduleSelected = async function () {
     "520px"
   );
 };
+window.portalUpdateAorSelection =
+  function () {
+
+    const selected =
+      document.querySelectorAll(
+        ".portal-aor-checkbox:checked"
+      );
+
+    const count =
+      selected.length;
+
+    const editButton =
+      document.getElementById(
+        "portal-aor-edit-button"
+      );
+
+    const cancelButton =
+      document.getElementById(
+        "portal-aor-cancel-button"
+      );
+
+    if (editButton) {
+      const canEdit =
+        count === 1;
+
+      editButton.disabled =
+        !canEdit;
+
+      editButton.style.opacity =
+        canEdit ? "1" : ".5";
+
+      editButton.style.cursor =
+        canEdit
+          ? "pointer"
+          : "not-allowed";
+
+      editButton.textContent =
+        count > 1
+          ? "✏️ Editar apenas 1 AOR"
+          : "✏️ Editar";
+    }
+
+    if (cancelButton) {
+      const canCancel =
+        count > 0;
+
+      cancelButton.disabled =
+        !canCancel;
+
+      cancelButton.style.opacity =
+        canCancel ? "1" : ".5";
+
+      cancelButton.style.cursor =
+        canCancel
+          ? "pointer"
+          : "not-allowed";
+
+      cancelButton.textContent =
+        count === 0
+          ? "✕ Cancelar AOR"
+          : count === 1
+            ? "✕ Cancelar 1 AOR"
+            : "✕ Cancelar " +
+              count +
+              " AORs";
+    }
+  };
+
+  window.portalOpenEditSelectedAor =
+  async function () {
+
+    const selected =
+      Array.from(
+        document.querySelectorAll(
+          ".portal-aor-checkbox:checked"
+        )
+      );
+
+    if (selected.length !== 1) {
+      return;
+    }
+
+    const taskId =
+      selected[0].value;
+
+    if (!taskId) {
+      return;
+    }
+
+    await openPortalModal(
+      "/portal/tasks/" +
+        encodeURIComponent(taskId) +
+        "/edit/modal",
+      "720px"
+    );
+  };
+  window.portalCancelSelectedAors =
+  async function () {
+
+    const selected =
+      Array.from(
+        document.querySelectorAll(
+          ".portal-aor-checkbox:checked"
+        )
+      );
+
+    const taskIds =
+      selected
+        .map(checkbox =>
+          checkbox.value
+        )
+        .filter(Boolean);
+
+    if (!taskIds.length) {
+      return;
+    }
+
+    const message =
+      taskIds.length === 1
+        ? "Cancelar este AOR?"
+        : "Cancelar os " +
+          taskIds.length +
+          " AORs selecionados?";
+
+    if (!confirm(message)) {
+      return;
+    }
+
+    const button =
+      document.getElementById(
+        "portal-aor-cancel-button"
+      );
+
+    const originalText =
+      button?.textContent;
+
+    if (button) {
+      button.disabled = true;
+      button.style.opacity = ".6";
+      button.style.cursor = "wait";
+      button.textContent =
+        "Cancelando...";
+    }
+
+    try {
+
+      const response =
+        await fetch(
+          "/portal/tasks/cancel",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                taskIds,
+              }),
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+          "Não foi possível cancelar."
+        );
+      }
+
+      window.location.reload();
+
+    } catch (error) {
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível cancelar o AOR."
+      );
+
+      if (button) {
+        button.disabled = false;
+        button.style.opacity = "1";
+        button.style.cursor = "pointer";
+        button.textContent =
+          originalText ||
+          "✕ Cancelar AOR";
+      }
+    }
+  };
 window.portalOpenEditSelected = async function () {
 
   const selected = Array.from(
