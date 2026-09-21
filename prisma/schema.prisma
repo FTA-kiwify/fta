@@ -151,6 +151,35 @@ model TaskAuditLog {
   @@map("task-audit-log")
 }
 
+model PortalAuditLog {
+  id String @id @default(uuid())
+
+  slackUserId String
+  userName    String?
+  userEmail   String?
+
+  action String
+
+  entityType  String?
+  entityId    String?
+  entityTitle String?
+
+  path String?
+
+  beforeJson Json?
+  afterJson  Json?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([slackUserId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([entityType, entityId])
+
+  @@map("portal-audit-logs")
+}
+
 model Team {
   id          String  @id @default(uuid())
   name        String

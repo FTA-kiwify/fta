@@ -25,8 +25,9 @@ export function layout(args: {
     ? `
     <nav class="nav">
       <div class="nav-left">
-        <a href="/admin/tasks">Tasks</a>
-      </div>
+  <a href="/admin/tasks">Tasks</a>
+  <a href="/admin/audit">Auditoria</a>
+</div>
       <div class="nav-right">
         <span class="muted">${esc(user)}</span>
         <form method="post" action="/admin/logout" style="display:inline">
@@ -104,7 +105,16 @@ export function fmtDate(d: Date | null | undefined) {
 
 export function fmtDateTime(d: Date | null | undefined) {
   if (!d) return "";
-  // YYYY-MM-DD HH:mm
-  const iso = d.toISOString();
-  return `${iso.slice(0, 10)} ${iso.slice(11, 16)}Z`;
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  ).format(d);
 }
