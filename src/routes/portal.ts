@@ -25,6 +25,7 @@ import { getDashboardTaskList } from "../services/portal/dashboardTaskListServic
 import { getDelegatedTaskList } from "../services/portal/delegatedTaskListService";
 import { dashboardTasksModal } from "../portal/components/dashboardTasksModal";
 import { getCollaboratorTaskList } from "../services/portal/collaboratorTaskListService";
+import { logPortalAction } from "../services/portal/portalAuditService";
 
 import { portalLoginPage } from "../portal/pages/login";
 import { getTeamTaskList } from "../services/portal/teamTaskListService";
@@ -512,6 +513,57 @@ export async function portalRoutes(app: FastifyInstance) {
     }
   );
 
+  app.addHook(
+    "preHandler",
+    async (request) => {
+
+      if (request.method !== "GET") {
+        return;
+      }
+
+      const portalUser =
+        getPortalUser(request);
+
+      if (!portalUser) {
+        return;
+      }
+
+      const path =
+        request.url.split("?")[0];
+
+      const ignoredPaths = [
+        "/modal",
+        "/template",
+        "/documentation",
+      ];
+
+      if (
+        ignoredPaths.some(
+          suffix =>
+            path.endsWith(suffix)
+        )
+      ) {
+        return;
+      }
+
+      void logPortalAction({
+        slackUserId:
+          portalUser.slackUserId,
+
+        userName:
+          portalUser.name ?? null,
+
+        userEmail:
+          portalUser.email ?? null,
+
+        action:
+          "PAGE_VIEW",
+
+        path,
+      });
+    }
+  );
+
   app.get("/portal/login", async (_request, reply) => {
 
     return reply
@@ -706,6 +758,32 @@ export async function portalRoutes(app: FastifyInstance) {
           actorSlackId: portalUser.slackUserId,
         });
 
+        await logPortalAction({
+          slackUserId:
+            portalUser.slackUserId,
+
+          userName:
+            portalUser.name ?? null,
+
+          userEmail:
+            portalUser.email ?? null,
+
+          action:
+            "BACKUP_STARTED",
+
+          entityType:
+            "collaborator",
+
+          entityId:
+            slackUserId,
+
+          path:
+            request.url,
+
+          metadata:
+            result,
+        });
+
         return reply.send({
           ok: true,
           ...result,
@@ -756,6 +834,32 @@ export async function portalRoutes(app: FastifyInstance) {
           slack,
           slackUserId,
           actorSlackId: portalUser.slackUserId,
+        });
+
+        await logPortalAction({
+          slackUserId:
+            portalUser.slackUserId,
+
+          userName:
+            portalUser.name ?? null,
+
+          userEmail:
+            portalUser.email ?? null,
+
+          action:
+            "BACKUP_STOPPED",
+
+          entityType:
+            "collaborator",
+
+          entityId:
+            slackUserId,
+
+          path:
+            request.url,
+
+          metadata:
+            result,
         });
 
         return reply.send({
@@ -982,6 +1086,42 @@ export async function portalRoutes(app: FastifyInstance) {
             portalUser.slackUserId,
           taskBackups,
         });
+
+        if (result.deactivated) {
+          await logPortalAction({
+            slackUserId:
+              portalUser.slackUserId,
+
+            userName:
+              portalUser.name ?? null,
+
+            userEmail:
+              portalUser.email ?? null,
+
+            action:
+              "COLLABORATOR_DEACTIVATED",
+
+            entityType:
+              "collaborator",
+
+            entityId:
+              slackUserId,
+
+            path:
+              request.url,
+
+            metadata: {
+              transferred:
+                result.transferred,
+
+              cancelledPrivate:
+                result.cancelledPrivate,
+
+              total:
+                result.total,
+            },
+          });
+        }
 
         return reply.send({
           ok: result.deactivated,
@@ -2369,6 +2509,40 @@ export async function portalRoutes(app: FastifyInstance) {
               result.fatalError,
           });
       }
+
+      await logPortalAction({
+        slackUserId:
+          portalUser.slackUserId,
+
+        userName:
+          portalUser.name ?? null,
+
+        userEmail:
+          portalUser.email ?? null,
+
+        action:
+          "BATCH_IMPORT",
+
+        entityType:
+          "task",
+
+        path:
+          request.url,
+
+        metadata: {
+          fileName:
+            file.filename ?? null,
+
+          created:
+            result.created.length,
+
+          failed:
+            result.failed.length,
+
+          failures:
+            result.failed,
+        },
+      });
 
       return reply.send({
         created:

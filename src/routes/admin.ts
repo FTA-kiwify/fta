@@ -84,6 +84,23 @@ function auditActionLabel(action: string) {
       return "📅 Prazo alterado";
     case "TASK_CANCELLED":
       return "❌ Tarefa cancelada";
+    case "TASK_RESPONSIBLE_TRANSFERRED":
+      return "👤 Responsável transferido";
+
+    case "PAGE_VIEW":
+      return "👁️ Página acessada";
+
+    case "BATCH_IMPORT":
+      return "📦 Importação em lote";
+
+    case "BACKUP_STARTED":
+      return "🏝️ Backup iniciado";
+
+    case "BACKUP_STOPPED":
+      return "🏝️ Backup encerrado";
+
+    case "COLLABORATOR_DEACTIVATED":
+      return "🚪 Colaborador desligado";
     default:
       return action;
   }
@@ -116,7 +133,8 @@ function auditValue(value: any) {
 const AUDIT_FIELDS: Record<string, string> = {
   title: "📝 Título",
   description: "📝 Descrição",
-  notionProcessUrl: "🔗 Processo",
+  processId: "📚 Processo",
+  notionProcessUrl: "🔗 URL do processo",
   responsible: "👤 Responsável",
   delegation: "👤 Delegador",
   term: "📅 Prazo",
@@ -303,6 +321,720 @@ export async function adminRoutes(app: FastifyInstance) {
   // ✅ Tudo abaixo exige login
   app.register(async (protectedApp) => {
     protectedApp.addHook("preHandler", requireAdmin);
+
+    protectedApp.get(
+      "/admin/audit",
+      async (request, reply) => {
+
+        const user =
+          getAdminUser(request);
+
+        const query =
+          request.query as {
+            user?: string;
+            action?: string;
+            days?: string;
+            page?: string;
+          };
+
+        const userFilter =
+          pickString(query.user);
+
+        const actionFilter =
+          pickString(query.action);
+
+        const days =
+          Math.max(
+            1,
+            Math.min(
+              90,
+              Number(query.days ?? 7) || 7
+            )
+          );
+
+        const page =
+          Math.max(
+            1,
+            Number(query.page ?? 1) || 1
+          );
+
+        const pageSize = 50;
+
+        const since =
+          new Date(
+            Date.now() -
+            days * 24 * 60 * 60 * 1000
+          );
+
+        /*
+         * ==========================================
+         * PORTAL AUDIT
+         * ==========================================
+         */
+
+        const portalWhere: any = {
+          createdAt: {
+            gte: since,
+          },
+        };
+
+        if (userFilter) {
+          portalWhere.slackUserId =
+            userFilter;
+        }
+
+        if (actionFilter) {
+          portalWhere.action =
+            actionFilter;
+        }
+
+        /*
+         * ==========================================
+         * TASK AUDIT
+         * ==========================================
+         */
+
+        const taskWhere: any = {
+          createdAt: {
+            gte: since,
+          },
+        };
+
+        if (userFilter) {
+          taskWhere.actorSlackId =
+            userFilter;
+        }
+
+        if (actionFilter) {
+          taskWhere.action =
+            actionFilter;
+        }
+
+        const [
+          portalLogs,
+          taskLogs,
+        ] = await Promise.all([
+
+          prisma.portalAuditLog.findMany({
+            where:
+              portalWhere,
+
+            orderBy: {
+              createdAt: "desc",
+            },
+
+            take: 1000,
+          }),
+
+          prisma.taskAuditLog.findMany({
+            where:
+              taskWhere,
+
+            include: {
+              task: {
+                select: {
+                  id: true,
+                  title: true,
+                  taskType: true,
+                },
+              },
+            },
+
+            orderBy: {
+              createdAt: "desc",
+            },
+
+            take: 1000,
+          }),
+        ]);
+
+        /*
+         * ==========================================
+         * TIMELINE ÚNICA
+         * ==========================================
+         */
+
+        const timeline = [
+
+          ...portalLogs.map(log => ({
+            source:
+              "portal" as const,
+
+            id:
+              log.id,
+
+            slackUserId:
+              log.slackUserId,
+
+            userName:
+              log.userName,
+
+            action:
+              log.action,
+
+            title:
+              log.entityTitle,
+
+            path:
+              log.path,
+
+            beforeJson:
+              log.beforeJson,
+
+            afterJson:
+              log.afterJson,
+
+            metadata:
+              log.metadata,
+
+            createdAt:
+              log.createdAt,
+          })),
+
+          ...taskLogs.map(log => ({
+            source:
+              "task" as const,
+
+            id:
+              log.id,
+
+            slackUserId:
+              log.actorSlackId,
+
+            userName:
+              log.actorName,
+
+            action:
+              log.action,
+
+            title:
+              log.task?.title ?? null,
+
+            path:
+              null,
+
+            beforeJson:
+              log.beforeJson,
+
+            afterJson:
+              log.afterJson,
+
+            metadata:
+              null,
+
+            createdAt:
+              log.createdAt,
+          })),
+
+        ].sort(
+          (a, b) =>
+            b.createdAt.getTime() -
+            a.createdAt.getTime()
+        );
+
+        /*
+         * Resolve nomes que não estejam
+         * gravados diretamente no log.
+         */
+
+        const slackIds =
+          Array.from(
+            new Set(
+              timeline
+                .map(item =>
+                  item.slackUserId
+                )
+                .filter(
+                  (id): id is string =>
+                    Boolean(id)
+                )
+            )
+          );
+
+        const names =
+          await resolveManySlackNames(
+            slackIds
+          );
+
+        /*
+         * ==========================================
+         * PAGINAÇÃO
+         * ==========================================
+         */
+
+        const total =
+          timeline.length;
+
+        const totalPages =
+          Math.max(
+            1,
+            Math.ceil(
+              total / pageSize
+            )
+          );
+
+        const pageRows =
+          timeline.slice(
+            (page - 1) * pageSize,
+            page * pageSize
+          );
+
+        /*
+         * ==========================================
+         * RESUMO
+         * ==========================================
+         */
+
+        const uniqueUsers =
+          new Set(
+            timeline
+              .map(item =>
+                item.slackUserId
+              )
+              .filter(Boolean)
+          ).size;
+
+        const pageViews =
+          timeline.filter(
+            item =>
+              item.action ===
+              "PAGE_VIEW"
+          ).length;
+
+        const functionalActions =
+          timeline.filter(
+            item =>
+              item.action !==
+              "PAGE_VIEW"
+          ).length;
+
+        /*
+         * ==========================================
+         * HTML
+         * ==========================================
+         */
+
+        const rows =
+          pageRows
+            .map(item => {
+
+              const actor =
+                item.userName ||
+                (
+                  item.slackUserId
+                    ? names[
+                    item.slackUserId
+                    ]
+                    : null
+                ) ||
+                item.slackUserId ||
+                "Sistema";
+
+              const detail =
+                item.title
+                  ? escHtml(
+                    item.title
+                  )
+                  : item.path
+                    ? `<span class="mono">${escHtml(
+                      item.path
+                    )}</span>`
+                    : "—";
+
+              let extra = "";
+
+              if (
+                item.action ===
+                "BATCH_IMPORT" &&
+                item.metadata &&
+                typeof item.metadata ===
+                "object"
+              ) {
+                const meta =
+                  item.metadata as any;
+
+                extra = `
+              <div class="small">
+                ${Number(
+                  meta.created ?? 0
+                )} criada(s)
+                ·
+                ${Number(
+                  meta.failed ?? 0
+                )} falha(s)
+              </div>
+            `;
+              }
+              const changesHtml =
+                item.beforeJson &&
+                  item.afterJson
+                  ? renderAuditChanges(
+                    item.beforeJson,
+                    item.afterJson
+                  )
+                  : "";
+
+              const detailsHtml =
+                changesHtml
+                  ? `
+      <details
+        style="
+          margin-top:8px;
+        "
+      >
+        <summary
+          style="
+            cursor:pointer;
+            color:#9aa4b2;
+            font-size:12px;
+          "
+        >
+          Ver alterações
+        </summary>
+
+        <div
+          style="
+            margin-top:8px;
+            padding:10px;
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:10px;
+          "
+        >
+          ${changesHtml}
+        </div>
+      </details>
+    `
+                  : "";
+
+              return `
+            <tr>
+              <td>
+                ${escHtml(
+                fmtDateTime(
+                  item.createdAt
+                )
+              )}
+              </td>
+
+              <td>
+                <div>
+                  ${escHtml(actor)}
+                </div>
+
+                ${item.slackUserId
+                  ? `
+                      <div class="small mono">
+                        ${escHtml(
+                    item.slackUserId
+                  )}
+                      </div>
+                    `
+                  : ""
+                }
+              </td>
+
+              <td>
+                ${escHtml(
+                  auditActionLabel(
+                    item.action
+                  )
+                )}
+              </td>
+
+              <td>
+  ${detail}
+  ${extra}
+  ${detailsHtml}
+</td>
+
+              <td>
+                <span class="pill">
+                  ${item.source ===
+                  "task"
+                  ? "Task"
+                  : "Portal"
+                }
+                </span>
+              </td>
+            </tr>
+          `;
+            })
+            .join("");
+
+        const actions =
+          Array.from(
+            new Set(
+              timeline.map(
+                item =>
+                  item.action
+              )
+            )
+          )
+            .sort()
+            .map(
+              action => `
+            <option
+              value="${escHtml(action)}"
+              ${action ===
+                  actionFilter
+                  ? "selected"
+                  : ""
+                }
+            >
+              ${escHtml(
+                  auditActionLabel(
+                    action
+                  )
+                )}
+            </option>
+          `
+            )
+            .join("");
+
+        const body = `
+      <div class="topbar">
+        <div>
+          <h1>📊 Auditoria do Portal</h1>
+
+          <div class="muted">
+            Histórico de uso e ações realizadas no FTA.
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="row"
+        style="
+          margin-top:18px;
+        "
+      >
+        <div class="card">
+          <div class="small">
+            Usuários ativos
+          </div>
+
+          <div
+            style="
+              font-size:28px;
+              font-weight:700;
+              margin-top:4px;
+            "
+          >
+            ${uniqueUsers}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="small">
+            Páginas acessadas
+          </div>
+
+          <div
+            style="
+              font-size:28px;
+              font-weight:700;
+              margin-top:4px;
+            "
+          >
+            ${pageViews}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="small">
+            Ações realizadas
+          </div>
+
+          <div
+            style="
+              font-size:28px;
+              font-weight:700;
+              margin-top:4px;
+            "
+          >
+            ${functionalActions}
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="card"
+        style="
+          margin-top:18px;
+        "
+      >
+        <form
+          method="get"
+          action="/admin/audit"
+          class="filters"
+        >
+
+          <div>
+            <label>
+              Slack User ID
+            </label>
+
+            <input
+              name="user"
+              value="${escHtml(
+          userFilter
+        )}"
+              placeholder="U123..."
+            />
+          </div>
+
+          <div>
+            <label>
+              Ação
+            </label>
+
+            <select name="action">
+              <option value="">
+                Todas
+              </option>
+
+              ${actions}
+            </select>
+          </div>
+
+          <div>
+            <label>
+              Período
+            </label>
+
+            <select name="days">
+              ${[1, 7, 15, 30, 90]
+            .map(
+              value => `
+                      <option
+                        value="${value}"
+                        ${value ===
+                  days
+                  ? "selected"
+                  : ""
+                }
+                      >
+                        Últimos ${value} dia(s)
+                      </option>
+                    `
+            )
+            .join("")
+          }
+            </select>
+          </div>
+
+          <div>
+            <button type="submit">
+              Filtrar
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+      <div
+        class="card"
+        style="
+          margin-top:18px;
+          overflow-x:auto;
+        "
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>Data/hora</th>
+              <th>Usuário</th>
+              <th>Ação</th>
+              <th>Detalhe</th>
+              <th>Origem</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            ${rows ||
+          `
+                <tr>
+                  <td
+                    colspan="5"
+                    class="muted"
+                  >
+                    Nenhum registro encontrado.
+                  </td>
+                </tr>
+              `
+          }
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          margin-top:14px;
+        "
+      >
+        <div class="small">
+          ${total} registros
+          · página ${page}
+          de ${totalPages}
+        </div>
+
+        <div
+          style="
+            display:flex;
+            gap:8px;
+          "
+        >
+          ${page > 1
+            ? `
+                <a
+                  class="pill"
+                  href="/admin/audit?days=${days}&user=${encodeURIComponent(
+              userFilter
+            )}&action=${encodeURIComponent(
+              actionFilter
+            )}&page=${page - 1}"
+                >
+                  ← Anterior
+                </a>
+              `
+            : ""
+          }
+
+          ${page < totalPages
+            ? `
+                <a
+                  class="pill"
+                  href="/admin/audit?days=${days}&user=${encodeURIComponent(
+              userFilter
+            )}&action=${encodeURIComponent(
+              actionFilter
+            )}&page=${page + 1}"
+                >
+                  Próxima →
+                </a>
+              `
+            : ""
+          }
+        </div>
+      </div>
+    `;
+
+        return reply
+          .type("text/html")
+          .send(
+            layout({
+              title:
+                "FTA Admin - Auditoria",
+
+              user,
+
+              body,
+            })
+          );
+      }
+    );
 
     // TASKS (LISTA)
     protectedApp.get("/admin/tasks", async (request, reply) => {
