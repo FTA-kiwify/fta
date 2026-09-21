@@ -32,6 +32,7 @@ export async function startCollaboratorBackup(args: {
     where: {
       responsible: slackUserId,
       status: "pending",
+      taskType: "normal",
       calendarPrivate: false,
       backupActive: false,
 
