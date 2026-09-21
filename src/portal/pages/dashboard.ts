@@ -258,7 +258,6 @@ export function dashboardPage(data: DashboardData) {
       `,
           })}
 
-          <div
   <div
   style="
     margin-top:18px;
@@ -375,6 +374,7 @@ export function dashboardPage(data: DashboardData) {
                 : `Delegada por ${task.delegatedByName}`,
             deadlineTime: task.deadlineTime,
             selectable: true,
+            selectionType: "aor",
           })
         )
         .join("")
@@ -384,6 +384,50 @@ export function dashboardPage(data: DashboardData) {
         </p>
       `
     }
+
+    <div
+  style="
+    margin-top:18px;
+    padding-top:18px;
+    border-top:1px solid #E5E7EB;
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  "
+>
+  <button
+    id="portal-aor-edit-button"
+    type="button"
+    class="btn-secondary"
+    disabled
+    onclick="portalOpenEditSelectedAor()"
+    style="
+      opacity:.5;
+      cursor:not-allowed;
+      min-width:150px;
+    "
+  >
+    ✏️ Editar
+  </button>
+
+  <button
+    id="portal-aor-cancel-button"
+    type="button"
+    class="btn-primary"
+    disabled
+    onclick="portalCancelSelectedAors()"
+    style="
+      opacity:.5;
+      cursor:not-allowed;
+      min-width:170px;
+      background:#DC2626;
+    "
+  >
+    ✕ Cancelar AOR
+  </button>
+</div>
 
 </div>
 
