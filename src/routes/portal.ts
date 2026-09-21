@@ -546,7 +546,7 @@ export async function portalRoutes(app: FastifyInstance) {
         return;
       }
 
-      void logPortalAction({
+      await logPortalAction({
         slackUserId:
           portalUser.slackUserId,
 
