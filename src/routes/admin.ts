@@ -101,6 +101,9 @@ function auditActionLabel(action: string) {
 
     case "COLLABORATOR_DEACTIVATED":
       return "🚪 Colaborador desligado";
+
+    case "MODAL_OPENED":
+      return "🪟 Modal aberto";
     default:
       return action;
   }
