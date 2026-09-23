@@ -16,6 +16,7 @@ export type ReportOption = {
 export type ReportRow = {
   id: string;
   title: string;
+  taskType: "normal" | "on_demand";
   responsibleId: string;
   responsibleName: string;
   backupResponsibleId: string | null;
@@ -245,6 +246,7 @@ export async function getReportData(
     select: {
       id: true,
       title: true,
+      taskType: true,
       responsible: true,
       backupResponsible: true,
       recurrence: true,
@@ -339,6 +341,8 @@ export async function getReportData(
       return {
         id: task.id,
         title: task.title,
+
+        taskType: task.taskType,
 
         responsibleId: task.responsible,
 
