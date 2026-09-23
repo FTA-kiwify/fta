@@ -2688,6 +2688,7 @@ export async function portalRoutes(app: FastifyInstance) {
             description: true,
             processId: true,
             responsible: true,
+            backupResponsible: true,
             calendarPrivate: true,
             taskType: true,
 
@@ -2750,7 +2751,8 @@ export async function portalRoutes(app: FastifyInstance) {
                 responsible:
                   template.responsible,
 
-                backupResponsible: null,
+                backupResponsible:
+                  template.backupResponsible ?? null,
 
                 term: null,
                 deadlineTime: null,
