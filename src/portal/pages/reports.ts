@@ -118,6 +118,7 @@ function activityRow(
         display:grid;
         grid-template-columns:
   minmax(260px,2fr)
+  minmax(90px,.6fr)
   minmax(170px,1fr)
   minmax(170px,1fr)
   minmax(130px,.8fr)
@@ -151,6 +152,19 @@ function activityRow(
       </div>
 
       <div
+  style="
+    color:#475569;
+    font-size:14px;
+    font-weight:600;
+  "
+>
+  ${row.taskType === "on_demand"
+      ? "AOR"
+      : "Tarefa"
+    }
+</div>
+
+      <div
         style="
           color:#475569;
           font-size:14px;
@@ -166,8 +180,8 @@ function activityRow(
   "
 >
   ${escapeHtml(
-    row.backupResponsibleName
-  )}
+      row.backupResponsibleName
+    )}
 </div>
 
       <div
@@ -177,8 +191,8 @@ function activityRow(
         "
       >
         ${escapeHtml(
-    recurrenceLabel(row.recurrence)
-  )}
+      recurrenceLabel(row.recurrence)
+    )}
       </div>
 
       <div
@@ -188,8 +202,8 @@ function activityRow(
         "
       >
         ${escapeHtml(
-    row.processTitle ?? "—"
-  )}
+      row.processTitle ?? "—"
+    )}
       </div>
 
       <div
@@ -199,8 +213,8 @@ function activityRow(
         "
       >
         ${escapeHtml(
-    row.verticalName ?? "—"
-  )}
+      row.verticalName ?? "—"
+    )}
       </div>
 
       <div
@@ -210,8 +224,8 @@ function activityRow(
         "
       >
         ${escapeHtml(
-    row.teamName ?? "—"
-  )}
+      row.teamName ?? "—"
+    )}
       </div>
 
       <div
@@ -704,7 +718,7 @@ export function reportsPage(
 
               <div
                 style="
-                  min-width:1220px;
+                  min-width:1320px;
                 "
               >
 
@@ -715,6 +729,7 @@ export function reportsPage(
                     display:grid;
                     grid-template-columns:
   minmax(260px,2fr)
+  minmax(90px,.6fr)
   minmax(170px,1fr)
   minmax(170px,1fr)
   minmax(130px,.8fr)
@@ -732,6 +747,8 @@ export function reportsPage(
                 >
 
                   <div>Atividade</div>
+
+                  <div>Tipo</div>
 
                   <div>
                     Responsável

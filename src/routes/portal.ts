@@ -2239,6 +2239,11 @@ export async function portalRoutes(app: FastifyInstance) {
             width: 42,
           },
           {
+            header: "Tipo",
+            key: "taskTypeLabel",
+            width: 14,
+          },
+          {
             header: "Responsável",
             key: "responsibleName",
             width: 28,
@@ -2279,6 +2284,10 @@ export async function portalRoutes(app: FastifyInstance) {
 
           worksheet.addRow({
             title: row.title,
+            taskTypeLabel:
+              row.taskType === "on_demand"
+                ? "AOR"
+                : "Tarefa",
             responsibleName:
               row.responsibleName,
             backupResponsibleName:
@@ -2344,7 +2353,7 @@ export async function portalRoutes(app: FastifyInstance) {
 
         worksheet.autoFilter = {
           from: "A1",
-          to: "G1",
+          to: "I1",
         };
 
         worksheet.eachRow(
@@ -2358,14 +2367,14 @@ export async function portalRoutes(app: FastifyInstance) {
               vertical: "top",
             };
 
-            row.getCell(5).value =
-              row.getCell(5).value
+            row.getCell(7).value =
+              row.getCell(7).value
                 ? {
                   text: String(
-                    row.getCell(5).value
+                    row.getCell(7).value
                   ),
                   hyperlink: String(
-                    row.getCell(5).value
+                    row.getCell(7).value
                   ),
                 }
                 : "";
