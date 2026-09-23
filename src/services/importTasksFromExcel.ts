@@ -632,8 +632,10 @@ export async function importTasksFromExcelBuffer(args: {
           colNumber;
       }
 
+
       if (
         [
+          "e_mail_do_backup",
           "email_do_backup",
           "backup_email",
           "email_do_responsavel_backup",
