@@ -386,6 +386,7 @@ export async function completeTaskFlow({
                             deadlineTime:
                                 task.deadlineTime ??
                                 null,
+                            notifyParticipants: false,
                         })
                 )
         );

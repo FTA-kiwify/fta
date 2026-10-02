@@ -4138,6 +4138,9 @@ export async function portalRoutes(app: FastifyInstance) {
             responsibleSlackId:
               task.responsible,
 
+            delegationSlackId:
+              task.delegation,
+
             backupResponsibleSlackId:
               task.backupResponsible ?? null,
 
