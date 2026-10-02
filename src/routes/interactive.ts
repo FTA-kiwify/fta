@@ -1522,6 +1522,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                     carbonCopies: n.carbonCopiesSlackIds ?? [],
                     term: n.term,
                     deadlineTime: n.deadlineTime ?? null,
+                    notifyParticipants: false,
                   })
                 )
             );
@@ -1724,6 +1725,7 @@ export async function interactive(app: FastifyInstance, slack: WebClient) {
                   slack,
                   canceledBySlackId: userSlackId,
                   responsibleSlackId: t.responsible,
+                  delegationSlackId: t.delegation,
                   backupResponsibleSlackId: t.backupResponsible ?? null,
                   carbonCopiesSlackIds: t.carbonCopies.map((c) => c.slackUserId),
                   taskTitle: t.title,

@@ -36,6 +36,7 @@ export async function notifyTaskCanceledGroup(args: {
   slack: WebClient;
   canceledBySlackId: string;
   responsibleSlackId: string;
+  delegationSlackId?: string | null;
   backupResponsibleSlackId?: string | null;
   carbonCopiesSlackIds: string[];
   taskTitle: string;
@@ -44,6 +45,7 @@ export async function notifyTaskCanceledGroup(args: {
     slack,
     canceledBySlackId,
     responsibleSlackId,
+    delegationSlackId,
     backupResponsibleSlackId,
     carbonCopiesSlackIds,
     taskTitle,
@@ -53,6 +55,7 @@ export async function notifyTaskCanceledGroup(args: {
   const participants = [
     canceledBySlackId,
     responsibleSlackId,
+    delegationSlackId ?? "",
     backupResponsibleSlackId ?? "",
     ...(carbonCopiesSlackIds ?? []),
   ];
@@ -65,6 +68,7 @@ export async function notifyTaskCanceledGroup(args: {
   // ✅ demais envolvidos (sem duplicar e sem repetir o canceledBy)
   const others = uniqMentions([
     responsibleSlackId,
+    delegationSlackId ?? "",
     backupResponsibleSlackId ?? "",
     ...(carbonCopiesSlackIds ?? []),
   ]).filter(

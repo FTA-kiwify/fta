@@ -196,6 +196,7 @@ export async function deactivateCollaborator(args: {
                 id: true,
                 title: true,
                 responsible: true,
+                delegation: true,
                 backupResponsible: true,
 
                 carbonCopies: {
@@ -310,6 +311,8 @@ export async function deactivateCollaborator(args: {
 
                     responsibleSlackId:
                         task.responsible,
+                    delegationSlackId:
+                        task.delegation,
 
                     backupResponsibleSlackId:
                         task.backupResponsible ??

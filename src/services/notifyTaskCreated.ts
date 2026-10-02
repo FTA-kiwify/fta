@@ -16,6 +16,7 @@ export type NotifyTaskCreatedArgs = {
 
   term?: Date | null;
   deadlineTime?: string | null;
+  notifyParticipants?: boolean;
 };
 
 async function openDm(slack: WebClient, userId: string) {
@@ -50,7 +51,14 @@ function formatMentions(ids: string[]) {
 }
 
 export async function notifyTaskCreated(args: NotifyTaskCreatedArgs) {
-  const { slack, taskId, createdBy, responsible, carbonCopies } = args;
+  const {
+    slack,
+    taskId,
+    createdBy,
+    responsible,
+    carbonCopies,
+    notifyParticipants = true,
+  } = args;
   const ccUnique = Array.from(new Set(carbonCopies ?? [])).filter(Boolean);
 
   // busca a task pra garantir dados atuais
@@ -78,7 +86,11 @@ export async function notifyTaskCreated(args: NotifyTaskCreatedArgs) {
   // =======================================
   // 0) Mensagem pro criador (delegador)
   // =======================================
-  if (createdBy && createdBy !== responsible) {
+  if (
+    notifyParticipants &&
+    createdBy &&
+    createdBy !== responsible
+  ) {
     try {
       const ccForCreator = ccUnique.filter((id) => id !== responsible && id !== createdBy);
       const ccText = formatMentions(ccForCreator);
@@ -185,6 +197,7 @@ export async function notifyTaskCreated(args: NotifyTaskCreatedArgs) {
   // 2) Mensagem para o Backup
   // =======================================
   if (
+    notifyParticipants &&
     backupResponsible &&
     backupResponsible !== responsible &&
     backupResponsible !== createdBy
@@ -243,47 +256,68 @@ export async function notifyTaskCreated(args: NotifyTaskCreatedArgs) {
   // =======================================
   // 2) Mensagem pros CCs
   // =======================================
-  const ccText = `👀 <@${createdBy}> atribuiu a atividade *${title}* para <@${responsible}> (você está em cópia)`;
 
-  const ccToNotify = ccUnique.filter(
-    (ccId) =>
-      ccId !== backupResponsible
-  );
+  if (notifyParticipants) {
+    const ccText =
+      `👀 <@${createdBy}> atribuiu a atividade *${title}* para <@${responsible}> (você está em cópia)`;
 
-  await Promise.all(
-    ccToNotify.map(async (ccId) => {
-      try {
-        if (!ccId) return;
-        if (ccId === responsible) return;
+    const ccToNotify = ccUnique.filter(
+      (ccId) =>
+        ccId !== backupResponsible
+    );
 
-        const channelId = await openDm(slack, ccId);
+    await Promise.all(
+      ccToNotify.map(async (ccId) => {
+        try {
+          if (!ccId) return;
+          if (ccId === responsible) return;
 
-        await slack.chat.postMessage({
-          channel: channelId,
-          text: ccText,
-          blocks: [
-            { type: "section", text: { type: "mrkdwn", text: ccText } },
-            {
-              type: "section",
-              block_id: "task_due",
-              text: { type: "mrkdwn", text: `*Prazo:* ${prazo}` },
-            } as any,
-            {
-              type: "actions",
-              elements: [
-                {
-                  type: "button",
-                  text: { type: "plain_text", text: ":thread: Abrir thread" },
-                  action_id: TASKS_SEND_QUESTION_ACTION_ID,
-                  value: taskId,
+          const channelId =
+            await openDm(slack, ccId);
+
+          await slack.chat.postMessage({
+            channel: channelId,
+            text: ccText,
+            blocks: [
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: ccText,
                 },
-              ],
-            },
-          ],
-        });
-      } catch (e) {
-        console.error(`[notifyTaskCreated] failed to notify CC ${ccId}:`, e);
-      }
-    })
-  );
+              },
+              {
+                type: "section",
+                block_id: "task_due",
+                text: {
+                  type: "mrkdwn",
+                  text: `*Prazo:* ${prazo}`,
+                },
+              } as any,
+              {
+                type: "actions",
+                elements: [
+                  {
+                    type: "button",
+                    text: {
+                      type: "plain_text",
+                      text: ":thread: Abrir thread",
+                    },
+                    action_id:
+                      TASKS_SEND_QUESTION_ACTION_ID,
+                    value: taskId,
+                  },
+                ],
+              },
+            ],
+          });
+        } catch (e) {
+          console.error(
+            `[notifyTaskCreated] failed to notify CC ${ccId}:`,
+            e
+          );
+        }
+      })
+    );
+  }
 }

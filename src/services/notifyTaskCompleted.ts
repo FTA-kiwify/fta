@@ -91,7 +91,6 @@ export async function notifyTaskCompleted(args: {
   const participants = uniq([
     responsibleId,
     delegationId,
-    backupResponsibleId ?? "",
     ...ccIds,
   ]);
 
@@ -101,7 +100,6 @@ export async function notifyTaskCompleted(args: {
 
   const otherParticipants = uniq([
     delegationId,
-    backupResponsibleId ?? "",
     ...ccIds,
   ]).filter((id) => id !== responsibleId);
 
@@ -162,27 +160,23 @@ export async function notifyTaskCompleted(args: {
   // =========================================================
 
   if (isSelfOnly) {
-    if (task.slackOpenChannelId && task.slackOpenMessageTs) {
-      // ✅ cria uma mensagem na thread (não na raiz) com botão Reabrir
-      await postThreadMessageWithReopen(slack, {
-        channel: task.slackOpenChannelId,
-        threadTs: task.slackOpenMessageTs,
-        taskId,
-        text: `🧾 Tarefa concluída.`,
-      });
-
-      // ✅ e também coloca o feedback na thread (sem botão)
-      await slack.chat.postMessage({
-        channel: task.slackOpenChannelId,
-        thread_ts: task.slackOpenMessageTs,
-        text: rootDmText,
-      });
-      await slack.chat.postMessage({
-        channel: task.slackOpenChannelId,
-        thread_ts: task.slackOpenMessageTs,
-        text: feedbackText,
-      });
+    if (
+      task.slackOpenChannelId &&
+      task.slackOpenMessageTs
+    ) {
+      await postThreadMessageWithReopen(
+        slack,
+        {
+          channel:
+            task.slackOpenChannelId,
+          threadTs:
+            task.slackOpenMessageTs,
+          taskId,
+          text: `🧾 Tarefa concluída.`,
+        }
+      );
     }
+
     return;
   }
 
